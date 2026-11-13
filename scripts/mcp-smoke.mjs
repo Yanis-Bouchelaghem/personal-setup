@@ -21,13 +21,18 @@ console.log("instructions:\n", client.getInstructions(), "\n");
 const { tools } = await client.listTools();
 console.log("tools:", tools.map((tool) => tool.name).join(", "));
 
-const guide = await client.callTool({ name: "restitution_guide", arguments: {} });
+const guide = await client.callTool({
+    name: "restitution_guide",
+    arguments: {},
+});
 console.log("guide starts:", guide.content[0].text.split("\n")[0]);
 
 const submit = (args) =>
     client.callTool({ name: "restitution_submit", arguments: args });
 const show = (label, result) =>
-    console.log(`${label}${result.isError ? " [error]" : ""}:\n${result.content[0].text}\n`);
+    console.log(
+        `${label}${result.isError ? " [error]" : ""}:\n${result.content[0].text}\n`,
+    );
 
 show(
     "partial (only one file explained)",
@@ -36,12 +41,21 @@ show(
             {
                 title: "Reject plain-http Apigee URLs",
                 steps: [
-                    { file: "src/config.ts", why: "Require https, so tokens never leave in clear text." },
-                    { file: "src/nope.ts", why: "Point at a file that did not change, to see the warning." },
+                    {
+                        file: "src/config.ts",
+                        why: "Require https, so tokens never leave in clear text.",
+                    },
+                    {
+                        file: "src/nope.ts",
+                        why: "Point at a file that did not change, to see the warning.",
+                    },
                 ],
             },
         ],
     }),
 );
-show("invalid (no steps)", await submit({ goals: [{ title: "Empty", steps: [] }] }));
+show(
+    "invalid (no steps)",
+    await submit({ goals: [{ title: "Empty", steps: [] }] }),
+);
 await client.close();

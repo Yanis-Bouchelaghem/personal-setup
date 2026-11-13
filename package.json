@@ -64,7 +64,19 @@
           "name": "Plan"
         }
       ]
-    }
+    },
+    "commands": [
+      {
+        "command": "restitution.connectAgents",
+        "title": "Restitution: Connect agents"
+      }
+    ],
+    "mcpServerDefinitionProviders": [
+      {
+        "id": "restitution.mcp",
+        "label": "Restitution"
+      }
+    ]
   },
   "activationEvents": [
     "onStartupFinished"

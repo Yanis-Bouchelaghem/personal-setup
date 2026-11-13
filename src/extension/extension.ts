@@ -1,6 +1,13 @@
+import { homedir } from "node:os";
+
 import * as vscode from "vscode";
 
 import { findGitRoot } from "../node/gitRoot";
+import {
+    connectAgents,
+    installServer,
+    registerCopilotServer,
+} from "./connectAgents";
 import { openInEditor } from "./openInEditor";
 import { PlanViewProvider } from "./planView";
 import { watchRestitution } from "./watchRestitution";
@@ -24,6 +31,23 @@ export function activate(context: vscode.ExtensionContext): void {
             PlanViewProvider.viewType,
             plan,
             { webviewOptions: { retainContextWhenHidden: true } },
+        ),
+    );
+
+    // The MCP server lives at a stable path so agent configs survive updates.
+    const serverPath = installServer(context);
+    serverPath.then(
+        (path) => context.subscriptions.push(registerCopilotServer(path)),
+        (error: unknown) =>
+            log.error(`Could not install the MCP server: ${String(error)}`),
+    );
+    context.subscriptions.push(
+        vscode.commands.registerCommand("restitution.connectAgents", async () =>
+            connectAgents(
+                await serverPath,
+                folder?.uri.fsPath ?? homedir(),
+                log,
+            ),
         ),
     );
 
