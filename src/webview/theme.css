@@ -242,7 +242,9 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-    .card {
+    .card,
+    .tab,
+    .tab::before {
         transition: none;
     }
 }
@@ -426,34 +428,65 @@ body {
 
 .tab {
     position: relative;
+    isolation: isolate;
     display: flex;
     flex: 0 1 170px;
     align-items: center;
     min-width: 76px;
     max-width: 200px;
     color: var(--vscode-tab-inactiveForeground, var(--muted));
+    /* The bar under the tab: invisible, previewed on hover, solid when active. */
+    box-shadow: inset 0 -2px 0 transparent;
     transition:
-        color 0.12s ease,
-        background-color 0.12s ease;
+        color 0.15s ease,
+        box-shadow 0.15s ease;
+}
+
+/* A soft wash that fades out downwards, so it never ends in a hard edge. */
+.tab::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: 0;
+    background: linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--fg) 13%, transparent),
+        transparent
+    );
+    transition: opacity 0.15s ease;
 }
 
 .tab:hover {
     color: var(--vscode-tab-activeForeground, var(--fg));
+    box-shadow: inset 0 -2px 0
+        color-mix(in srgb, var(--accent) 50%, transparent);
+}
+
+.tab:hover::before {
+    opacity: 1;
+}
+
+.tab:active::before {
+    background: linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--fg) 20%, transparent),
+        transparent
+    );
 }
 
 .tab.active {
     color: var(--vscode-tab-activeForeground, var(--fg));
+    box-shadow: inset 0 -2px 0 var(--accent);
 }
 
-/* The active tab is marked by a bar along its bottom edge. */
 .tab.active::before {
-    content: "";
-    position: absolute;
-    right: 0;
-    bottom: 0;
-    left: 0;
-    height: 2px;
-    background: var(--accent);
+    opacity: 1;
+    background: linear-gradient(
+        to bottom,
+        color-mix(in srgb, var(--accent) 18%, transparent),
+        transparent
+    );
 }
 
 /* The thin | between tabs. */
