@@ -1,0 +1,13 @@
+{
+    "$schema": "./node_modules/oxfmt/configuration_schema.json",
+    "ignorePatterns": ["dist", ".shots", "package-lock.json"],
+    "printWidth": 80,
+    "tabWidth": 4,
+    "sortImports": true,
+    "overrides": [
+        {
+            "files": ["package.json"],
+            "options": { "tabWidth": 2 }
+        }
+    ]
+}

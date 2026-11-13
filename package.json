@@ -1,0 +1,70 @@
+{
+  "name": "restitution",
+  "displayName": "Restitution",
+  "version": "0.0.1",
+  "private": true,
+  "description": "A short reading guide for the changes an agent just made.",
+  "license": "UNLICENSED",
+  "publisher": "local",
+  "main": "./dist/extension.js",
+  "scripts": {
+    "build": "node esbuild.mjs && vite build",
+    "watch": "node esbuild.mjs --watch",
+    "webview:dev": "vite",
+    "shots": "node scripts/shots.mjs",
+    "test": "vitest run",
+    "lint": "oxlint",
+    "lint:fix": "oxlint --fix",
+    "format": "oxfmt",
+    "format:check": "oxfmt --check",
+    "typecheck": "tsc",
+    "check": "npm run format:check && npm run lint && npm run typecheck && npm test"
+  },
+  "dependencies": {
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/vscode": "^1.144.0",
+    "@vitejs/plugin-react": "^6.3.0",
+    "esbuild": "^0.28.2",
+    "eslint-plugin-sonarjs": "^4.2.2",
+    "oxfmt": "^0.78.0",
+    "oxlint": "^1.93.0",
+    "oxlint-tsgolint": "^7.0.2007",
+    "puppeteer-core": "^25.17.0",
+    "typescript": "^6.0.3",
+    "vite": "^8.3.8",
+    "vitest": "^5.1.0"
+  },
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "restitution",
+          "title": "Restitution",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "restitution": [
+        {
+          "type": "webview",
+          "id": "restitution.plan",
+          "name": "Plan"
+        }
+      ]
+    }
+  },
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "engines": {
+    "vscode": "^1.144.0"
+  }
+}

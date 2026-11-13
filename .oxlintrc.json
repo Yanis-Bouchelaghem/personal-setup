@@ -1,0 +1,47 @@
+{
+    "$schema": "./node_modules/oxlint/configuration_schema.json",
+    "plugins": ["typescript", "unicorn", "oxc"],
+    "jsPlugins": ["eslint-plugin-sonarjs"],
+    "categories": {
+        "correctness": "error",
+        "suspicious": "warn"
+    },
+    "rules": {
+        "sonarjs/cognitive-complexity": ["error", 15],
+        // Webview.postMessage has no targetOrigin; the rule is for window.postMessage.
+        "unicorn/require-post-message-target-origin": "off"
+    },
+    "overrides": [
+        {
+            "files": ["src/core/**"],
+            "rules": {
+                "no-restricted-imports": [
+                    "error",
+                    {
+                        "patterns": [
+                            {
+                                "group": [
+                                    "vscode",
+                                    "node:*",
+                                    "../extension/*",
+                                    "../mcp/*",
+                                    "../node/*",
+                                    "../webview/*"
+                                ],
+                                "message": "core is pure TypeScript: it must not import vscode, node or other layers."
+                            }
+                        ]
+                    }
+                ]
+            }
+        }
+    ],
+    "env": {
+        "builtin": true
+    },
+    "options": {
+        "typeAware": true,
+        "typeCheck": true,
+        "maxWarnings": 0
+    }
+}
