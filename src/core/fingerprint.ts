@@ -12,10 +12,11 @@ function fnv1a(text: string): string {
 }
 
 /**
- * Identity of what a reader looked at: the file and the lines that changed.
- * The words are only display, so an agent rewording a step doesn't send the
- * reader back to code they already read; line numbers and context are left
- * out too. A step with no code behind it falls back to its text.
+ * Identity of a step as the reader saw it: its words, its connector, its file
+ * and the lines it changed. Anything the agent changes in a step changes its
+ * fingerprint, so the step comes back unviewed and marked as updated; a step
+ * the agent leaves alone keeps it. Line numbers and context are left out, so
+ * an edit elsewhere in the file doesn't count as a change to this step.
  */
 export function stepFingerprint(step: Step, hunks: Hunk[]): string {
     const changes = hunks
@@ -23,7 +24,9 @@ export function stepFingerprint(step: Step, hunks: Hunk[]): string {
         .filter((line) => line.kind !== "ctx")
         .map((line) => `${line.kind}${line.text}`)
         .join("\n");
-    return fnv1a([step.file ?? "", changes || step.why].join("\0"));
+    return fnv1a(
+        [step.file ?? "", changes, step.why, step.link ?? "then"].join("\0"),
+    );
 }
 
 /** The fingerprint of every step, goal by goal, against the current diffs. */

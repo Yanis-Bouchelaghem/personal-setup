@@ -3,34 +3,46 @@ import { Fragment, useLayoutEffect } from "react";
 import type { FileDiff } from "../core/diff";
 import type { OpenRequest } from "../core/messages";
 import type { Goal } from "../core/restitution";
+import type { ReviewRequest } from "../core/review";
 import { Connector } from "./Connector";
 import { ChevronIcon } from "./Icons";
 import { StepCard } from "./StepCard";
 import { useScrollAnchor } from "./useScrollAnchor";
 
+/** Where a step stands for the reader. */
+export type StepState = {
+    fingerprint: string;
+    viewed: boolean;
+    updated: boolean;
+    request: ReviewRequest | undefined;
+};
+
 export function GoalSection({
     goal,
     number,
-    fingerprints,
-    viewed,
+    steps,
     diffs,
     folded,
     onToggleFold,
     onViewedChange,
+    onRequestChange,
     onOpenRequest,
-    onClarify,
 }: {
     goal: Goal;
     number: number;
-    /** One per step: what the Viewed state is keyed by. */
-    fingerprints: string[];
-    viewed: ReadonlySet<string>;
+    /** One per step, in order. */
+    steps: StepState[];
     diffs: Record<string, FileDiff>;
     folded: boolean;
     onToggleFold: () => void;
     onViewedChange: (fingerprint: string, viewed: boolean) => void;
+    onRequestChange: (
+        fingerprint: string,
+        label: string,
+        clarify: boolean,
+        comment: string | undefined,
+    ) => void;
     onOpenRequest: (request: OpenRequest) => void;
-    onClarify: (stepIndex: number) => void;
 }) {
     const { box, head, remember } = useScrollAnchor<
         HTMLElement,
@@ -55,9 +67,8 @@ export function GoalSection({
         return () => observer.disconnect();
     }, [box, head]);
 
-    const done = fingerprints.filter((fingerprint) =>
-        viewed.has(fingerprint),
-    ).length;
+    const done = steps.filter((state) => state.viewed).length;
+    const updated = steps.some((state) => state.updated);
 
     return (
         <section
@@ -81,6 +92,12 @@ export function GoalSection({
                     </span>
                     <span className="goal-no">{number}</span>
                     <span className="goal-title">{goal.title}</span>
+                    {updated && (
+                        <span
+                            className="updated-dot"
+                            title="Has new or changed steps"
+                        />
+                    )}
                     <span className="goal-progress" title="Steps viewed">
                         {done}/{goal.steps.length}
                     </span>
@@ -90,7 +107,9 @@ export function GoalSection({
             {!folded && (
                 <div className="steps">
                     {goal.steps.map((step, index) => {
-                        const fingerprint = fingerprints[index] ?? "";
+                        const state = steps[index];
+                        const label = `${number}.${index + 1}`;
+                        const fingerprint = state?.fingerprint ?? "";
                         return (
                             <Fragment key={`${index}-${step.why}`}>
                                 {index > 0 && (
@@ -98,14 +117,23 @@ export function GoalSection({
                                 )}
                                 <StepCard
                                     step={step}
-                                    label={`${number}.${index + 1}`}
+                                    label={label}
                                     diffs={diffs}
-                                    viewed={viewed.has(fingerprint)}
+                                    viewed={state?.viewed ?? false}
+                                    updated={state?.updated ?? false}
+                                    request={state?.request}
                                     onViewedChange={(on) =>
                                         onViewedChange(fingerprint, on)
                                     }
+                                    onRequestChange={(clarify, comment) =>
+                                        onRequestChange(
+                                            fingerprint,
+                                            label,
+                                            clarify,
+                                            comment,
+                                        )
+                                    }
                                     onOpenRequest={onOpenRequest}
-                                    onClarify={() => onClarify(index)}
                                 />
                             </Fragment>
                         );

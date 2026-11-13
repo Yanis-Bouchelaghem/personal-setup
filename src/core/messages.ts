@@ -1,5 +1,6 @@
 import type { FileDiff, LineRange } from "./diff";
 import type { Restitution } from "./restitution";
+import type { ReviewAction, ReviewRequest } from "./review";
 
 /** One restitution file, shown as a tab. A broken file only breaks its own tab. */
 export type Tab =
@@ -9,8 +10,12 @@ export type Tab =
           label: string;
           updatedAt: number;
           restitution: Restitution;
-          /** Fingerprints of the steps the human marked Viewed. */
+          /** Steps marked Viewed (by fingerprint): folded to their header. */
           viewed: string[];
+          /** Steps the reader was already shown; absent before the first look. */
+          known?: string[];
+          /** What the reader asks the agent, still open. */
+          requests: ReviewRequest[];
       }
     | {
           kind: "error";
@@ -62,20 +67,24 @@ export type CloseTab = { type: "closeTab"; id: string };
 
 export type ReopenTab = { type: "reopenTab" };
 
-export type SetViewed = {
-    type: "setViewed";
+/** Change the reader's review of a tab: Viewed, known steps, requests. */
+export type ReviewMessage = {
+    type: "review";
     tabId: string;
-    fingerprint: string;
-    viewed: boolean;
+    action: ReviewAction;
 };
 
-/** Put text on the clipboard: the Clarify prompt, to paste to an agent. */
-export type CopyPrompt = { type: "copyPrompt"; text: string };
+/** Copy the feedback prompt for the agent, and mark the requests as sent. */
+export type CopyFeedback = {
+    type: "copyFeedback";
+    tabId: string;
+    text: string;
+};
 
 export type FromWebview =
     | { type: "ready" }
     | OpenRequest
     | CloseTab
     | ReopenTab
-    | SetViewed
-    | CopyPrompt;
+    | ReviewMessage
+    | CopyFeedback;

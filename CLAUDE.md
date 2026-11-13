@@ -15,7 +15,7 @@ Read `docs/DESIGN.md` first: it holds the decisions, the file format and the wri
 ## Rules
 
 - Keep it simple: no abstraction without a second real case, and no backward-compatibility code: this is a young tool, so change formats freely.
-- Small modules with one job. `src/node/store/` is one file per concern (paths, files, exclude, review, tabs, archive, viewState); webview state lives in hooks (`useViewed`, `useGoalFolding`, `useUnread`).
+- Small modules with one job. `src/node/store/` is one file per concern (paths, files, exclude, review, tabs, archive, viewState); webview state lives in hooks (`useReview`, `useGoalFolding`, `useUnread`).
 - `src/core` is pure TypeScript. It must not import `vscode`, `node:*` or other layers (oxlint enforces it).
 - TypeScript stays on 6.x: the sonarjs lint plugin breaks on the 7.x native compiler.
 - Colours come from `--vscode-*` variables only.

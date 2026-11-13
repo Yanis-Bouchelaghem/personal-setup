@@ -6,10 +6,11 @@ import {
     type Restitution,
     tabLabel,
 } from "../../core/restitution";
+import { pendingRequests } from "../../core/review";
 import { ensureRestitutionDir } from "./exclude";
 import { listNames, orMissing, writeAtomically } from "./files";
 import { assertTabId, restitutionDir, tabFile, tabIds } from "./paths";
-import { readViewed } from "./review";
+import { readReview } from "./review";
 
 async function readTab(gitRoot: string, id: string): Promise<Tab | undefined> {
     const file = tabFile(gitRoot, id);
@@ -30,13 +31,16 @@ async function readTab(gitRoot: string, id: string): Promise<Tab | undefined> {
                 errors: parsed.errors,
             } satisfies Tab;
         }
+        const review = await readReview(gitRoot, id);
         return {
             kind: "ok",
             id,
             label: tabLabel(parsed.value),
             updatedAt,
             restitution: parsed.value,
-            viewed: await readViewed(gitRoot, id),
+            viewed: review.viewed,
+            ...(review.known ? { known: review.known } : {}),
+            requests: pendingRequests(review, updatedAt),
         } satisfies Tab;
     });
 }

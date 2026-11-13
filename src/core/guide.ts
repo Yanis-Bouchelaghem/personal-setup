@@ -1,12 +1,12 @@
 /**
  * What agents are told. The MCP server sends SERVER_INSTRUCTIONS at startup
- * (clients may put them in the system prompt) and returns GUIDE from
- * restitution_guide.
+ * (clients may put them in the system prompt), returns GUIDE from
+ * restitution_guide and FEEDBACK_GUIDE from restitution_feedback.
  */
 
 export const SERVER_INSTRUCTIONS = `Restitution gives the human a short reading guide to the code changes you just made, shown in their editor.
 After you finish a code change the user asked for, call restitution_guide once, then restitution_submit with your steps. Skip it for answers that changed no code.
-If the user pastes a request to clarify a step of a restitution, follow "Clarifying a step" in restitution_guide.
+If the user pastes their review of a restitution (steps to clarify, comments), call restitution_feedback with its id first.
 It is optional for the user and must never block your work.`;
 
 export const GUIDE = `# Writing a restitution
@@ -18,7 +18,7 @@ A restitution is a reading guide for the human who asked for the change. They re
 Call restitution_submit with:
 { id?, label?, request?, goals: [ { title, ref?, steps: [ { file?, lines?, why, link? } ] } ] }
 
-Leave "id" out, except when the user asks you to update an existing restitution (see "Clarifying a step").
+Leave "id" out, except when you update an existing restitution after the user's review (restitution_feedback tells you).
 
 - A step that points at code gives BOTH "file" and "lines" (a step that only explains something gives neither).
   - "file" is the path relative to the git root.
@@ -65,17 +65,6 @@ Each step is a card. Between two cards of the same goal sits one connector word,
 
 Goals have no connectors between them: they are independent.
 
-## Clarifying a step
-
-The user can press Clarify on a step they did not follow, and paste you a prompt naming the step (for example "3.1"), the restitution's file (.restitution/<id>.json) and its id. Then:
-
-1. Read that file: it is the whole restitution as the user sees it.
-2. Replace that one step with several smaller steps, in the same place in the same goal. Split it by change: each smaller step shows only the lines of its own change (with a little context), says what that change does and why, and continues the sentence after a connector word. The first of them keeps the original step's connector.
-3. Keep every other step and goal exactly as it was.
-4. Call restitution_submit with the whole restitution and "id" set to the id from the prompt, so the same tab is updated instead of a new one appearing.
-
-Clarifying adds detail where the user asked for it; it does not rewrite the story.
-
 ## Teaching well
 
 Teach it the way you would to a colleague who has not seen the change: foundations first, then what builds on them, then proof (tests) and docs. Explain as much as the user asked for: if they want more or less detail, give more or fewer steps and longer or shorter sentences. Do not narrate the code line by line; say what to look at and why it is there.
@@ -97,4 +86,17 @@ Teach it the way you would to a colleague who has not seen the change: foundatio
     }
   ]
 }
+`;
+
+export const FEEDBACK_GUIDE = `# Handling the user's review
+
+The user read the restitution below and pasted their review: a list of steps by label ("3.1"), each with "clarify", a comment in quotes, or both. Labels refer to the restitution as it is below.
+
+- "clarify": the user did not follow that step at its current grain. Replace it with several smaller steps, in the same place in the same goal, split by change: each smaller step shows only the lines of its own change (with a little context), says what that change does and why, and continues the sentence after a connector word. The first of them keeps the original step's connector.
+- A comment: the user's question or request about that step. Answer questions in your reply. If it asks for a change to the code, make the change, then make the step (or new steps) match it.
+
+Then:
+1. Keep every step you did not touch exactly as it was, word for word: unchanged steps stay read for the user, while any step you change or add is shown to them as updated.
+2. Call restitution_submit with the whole restitution and "id" set to the id below, so the same tab is updated instead of a new one appearing.
+3. In your reply, answer the comments that were questions, briefly.
 `;

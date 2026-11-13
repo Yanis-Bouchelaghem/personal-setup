@@ -3,30 +3,19 @@ import { useState } from "react";
 import { changedRanges, type FileDiff, selectLines } from "../core/diff";
 import type { OpenRequest } from "../core/messages";
 import type { Step } from "../core/restitution";
+import type { ReviewRequest } from "../core/review";
 import { DiffView } from "./DiffView";
-import { ChevronIcon, DiffIcon, FileIcon, IconButton } from "./Icons";
+import {
+    ChevronIcon,
+    ClarifyIcon,
+    CommentIcon,
+    DiffIcon,
+    FileIcon,
+    IconButton,
+    TickIcon,
+} from "./Icons";
+import { Note } from "./Note";
 import { useScrollAnchor } from "./useScrollAnchor";
-
-/** Copies a prompt asking the agent to break this step into smaller ones. */
-function ClarifyButton({ onClarify }: { onClarify: () => void }) {
-    const [copied, setCopied] = useState(false);
-    return (
-        <div className="card-foot">
-            <button
-                className="text-btn clarify"
-                type="button"
-                title="Copy a prompt asking your agent to explain this step in smaller steps"
-                onClick={() => {
-                    onClarify();
-                    setCopied(true);
-                    setTimeout(() => setCopied(false), 1600);
-                }}
-            >
-                {copied ? "Copied: paste it to your agent" : "Clarify"}
-            </button>
-        </div>
-    );
-}
 
 /** Folder part fades and truncates first; the file name always stays visible. */
 function FilePath({ path }: { path: string }) {
@@ -39,23 +28,8 @@ function FilePath({ path }: { path: string }) {
     );
 }
 
-export function StepCard({
-    step,
-    label,
-    diffs,
-    viewed,
-    onViewedChange,
-    onOpenRequest,
-    onClarify,
-}: {
-    step: Step;
-    label: string;
-    diffs: Record<string, FileDiff>;
-    viewed: boolean;
-    onViewedChange: (viewed: boolean) => void;
-    onOpenRequest: (request: OpenRequest) => void;
-    onClarify: () => void;
-}) {
+/** What a step shows and where the editor should land when it is opened. */
+function useStepCode(step: Step, diffs: Record<string, FileDiff>) {
     const file = step.file;
     const diff = file ? diffs[file] : undefined;
     // Exactly the lines the step chose, nothing around them.
@@ -66,11 +40,46 @@ export function StepCard({
     const changed = changedRanges(hunks);
     const selection = changed.length > 0 ? changed : ranges;
     const status = diff?.status;
-    // Nothing to compare for a new file; nothing to open for a deleted one.
-    const canDiff =
-        file !== undefined && hunks.length > 0 && status !== "added";
-    const canOpenFile =
-        file !== undefined && hunks.length > 0 && status !== "deleted";
+    return {
+        file,
+        hunks,
+        selection,
+        status,
+        // Nothing to compare for a new file; nothing to open for a deleted one.
+        canDiff: file !== undefined && hunks.length > 0 && status !== "added",
+        canOpenFile:
+            file !== undefined && hunks.length > 0 && status !== "deleted",
+    };
+}
+
+export function StepCard({
+    step,
+    label,
+    diffs,
+    viewed,
+    updated,
+    request,
+    onViewedChange,
+    onOpenRequest,
+    onRequestChange,
+}: {
+    step: Step;
+    label: string;
+    diffs: Record<string, FileDiff>;
+    viewed: boolean;
+    /** New or changed since the reader last looked. */
+    updated: boolean;
+    /** What the reader asks the agent about this step, if anything. */
+    request: ReviewRequest | undefined;
+    onViewedChange: (viewed: boolean) => void;
+    onOpenRequest: (request: OpenRequest) => void;
+    onRequestChange: (clarify: boolean, comment: string | undefined) => void;
+}) {
+    const code = useStepCode(step, diffs);
+    const { file } = code;
+    const clarify = request?.clarify ?? false;
+    const comment = request?.comment ?? "";
+    const [writing, setWriting] = useState(false);
 
     // Viewed is the only state: a viewed step is folded to its header.
     const open = !viewed;
@@ -82,9 +91,15 @@ export function StepCard({
         onViewedChange(!viewed);
     };
 
+    const classes = [
+        "card",
+        "glass",
+        open ? "" : "collapsed viewed-card",
+        updated ? "updated" : "",
+    ];
     return (
         <article
-            className={`card glass${open ? "" : " collapsed viewed-card"}`}
+            className={classes.filter(Boolean).join(" ")}
             data-step={label}
             ref={box}
         >
@@ -105,37 +120,65 @@ export function StepCard({
                     <ChevronIcon />
                 </span>
                 <span className="step-no">{label}</span>
+                {updated && (
+                    <span
+                        className="updated-tag"
+                        title="New or changed since you last looked"
+                    >
+                        <TickIcon />
+                    </span>
+                )}
                 {file && <FilePath path={file} />}
                 <span className="actions">
-                    {open && canDiff && (
+                    {open && code.canDiff && (
                         <IconButton
                             label="Open the diff in the editor"
                             onClick={() =>
                                 onOpenRequest({
                                     type: "openDiff",
-                                    file,
-                                    ranges: selection,
-                                    status,
+                                    file: file ?? "",
+                                    ranges: code.selection,
+                                    status: code.status,
                                 })
                             }
                         >
                             <DiffIcon />
                         </IconButton>
                     )}
-                    {open && canOpenFile && (
+                    {open && code.canOpenFile && (
                         <IconButton
                             label="Open the file, with the changes selected"
                             onClick={() =>
                                 onOpenRequest({
                                     type: "openFile",
-                                    file,
-                                    ranges: selection,
+                                    file: file ?? "",
+                                    ranges: code.selection,
                                 })
                             }
                         >
                             <FileIcon />
                         </IconButton>
                     )}
+                    <IconButton
+                        label={
+                            clarify
+                                ? "Marked for clarification (click to unmark)"
+                                : "Clarify: ask the agent to explain this step in smaller steps"
+                        }
+                        pressed={clarify}
+                        onClick={() =>
+                            onRequestChange(!clarify, comment || undefined)
+                        }
+                    >
+                        <ClarifyIcon />
+                    </IconButton>
+                    <IconButton
+                        label={comment ? "Edit your comment" : "Comment"}
+                        pressed={comment !== ""}
+                        onClick={() => setWriting(true)}
+                    >
+                        <CommentIcon />
+                    </IconButton>
                 </span>
                 <label className="viewed">
                     <input
@@ -149,14 +192,22 @@ export function StepCard({
             {open && (
                 <>
                     <p className="why">{step.why}</p>
-                    {hunks.length > 0 && <DiffView hunks={hunks} />}
-                    {file && hunks.length === 0 && (
+                    {code.hunks.length > 0 && <DiffView hunks={code.hunks} />}
+                    {file && code.hunks.length === 0 && (
                         <p className="no-diff">
                             No uncommitted changes in these lines.
                         </p>
                     )}
-                    <ClarifyButton onClarify={onClarify} />
                 </>
+            )}
+            {/* A comment stays visible even on a folded step, without its code. */}
+            {(writing || comment) && (
+                <Note
+                    comment={comment}
+                    focus={writing}
+                    onSave={(text) => onRequestChange(clarify, text)}
+                    onDone={() => setWriting(false)}
+                />
             )}
         </article>
     );

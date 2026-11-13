@@ -1,14 +1,40 @@
-import { clarifyPrompt } from "../core/clarify";
+import { useEffect } from "react";
+
 import type { FileDiff } from "../core/diff";
+import { feedbackPrompt } from "../core/feedback";
 import { goalFingerprints } from "../core/fingerprint";
 import type { Tab } from "../core/messages";
+import type { Restitution } from "../core/restitution";
+import type { Review } from "../core/review";
 import { ErrorList } from "./ErrorList";
-import { GoalSection } from "./GoalSection";
+import { FeedbackBar } from "./FeedbackBar";
+import { GoalSection, type StepState } from "./GoalSection";
 import type { Host } from "./host";
 import { Notice } from "./Notice";
 import { Overview } from "./Overview";
 import { useGoalFolding } from "./useGoalFolding";
-import { useViewed } from "./useViewed";
+import { useReview } from "./useReview";
+
+/** Where every step stands for the reader, goal by goal. */
+function stepStates(
+    restitution: Restitution,
+    diffs: Record<string, FileDiff>,
+    review: Review,
+): StepState[][] {
+    const viewed = new Set(review.viewed);
+    // Before the first look nothing is "updated": it is all new.
+    const known = review.known && new Set(review.known);
+    return goalFingerprints(restitution, diffs).map((prints) =>
+        prints.map((fingerprint) => ({
+            fingerprint,
+            viewed: viewed.has(fingerprint),
+            updated: known !== undefined && !known.has(fingerprint),
+            request: review.requests.find(
+                (request) => request.step === fingerprint,
+            ),
+        })),
+    );
+}
 
 /** One restitution: the request, an overview of its goals, and the goals. */
 export function TabContent({
@@ -20,8 +46,21 @@ export function TabContent({
     diffs: Record<string, FileDiff>;
     host: Host;
 }) {
-    const { viewed, change: changeViewed } = useViewed(tab, host);
+    const { review, act, copy } = useReview(tab, host);
     const folding = useGoalFolding();
+    const states =
+        tab.kind === "ok" ? stepStates(tab.restitution, diffs, review) : [];
+    const firstLook = tab.kind === "ok" && review.known === undefined;
+
+    // The first look at a tab: everything on it counts as already shown.
+    useEffect(() => {
+        if (firstLook) {
+            act({
+                type: "known",
+                steps: states.flat().map((state) => state.fingerprint),
+            });
+        }
+    }, [firstLook]);
 
     if (tab.kind === "error") {
         return (
@@ -31,10 +70,22 @@ export function TabContent({
         );
     }
     const { restitution } = tab;
-    const fingerprints = goalFingerprints(restitution, diffs);
-    const done = fingerprints.map(
-        (prints) => prints.filter((print) => viewed.has(print)).length,
+    // A request keeps the label it was written with, unless its step moved.
+    const labels = new Map(
+        states.flatMap((goal, goalIndex) =>
+            goal.map(
+                (state, stepIndex) =>
+                    [
+                        state.fingerprint,
+                        `${goalIndex + 1}.${stepIndex + 1}`,
+                    ] as const,
+            ),
+        ),
     );
+    const requests = review.requests.map((request) => ({
+        ...request,
+        label: labels.get(request.step) ?? request.label,
+    }));
 
     return (
         <>
@@ -44,7 +95,7 @@ export function TabContent({
             {restitution.goals.length > 1 && (
                 <Overview
                     goals={restitution.goals}
-                    done={done}
+                    states={states}
                     onGoto={folding.reveal}
                 />
             )}
@@ -53,29 +104,24 @@ export function TabContent({
                     key={`${index}-${goal.title}`}
                     goal={goal}
                     number={index + 1}
-                    fingerprints={fingerprints[index] ?? []}
-                    viewed={viewed}
+                    steps={states[index] ?? []}
                     diffs={diffs}
                     folded={folding.folded.has(index)}
                     onToggleFold={() => folding.toggle(index)}
-                    onViewedChange={changeViewed}
+                    onViewedChange={(step, on) =>
+                        act({ type: "viewed", step, on })
+                    }
+                    onRequestChange={(step, label, clarify, comment) =>
+                        act({ type: "request", step, label, clarify, comment })
+                    }
                     onOpenRequest={(request) => host.send(request)}
-                    onClarify={(stepIndex) => {
-                        const step = goal.steps[stepIndex];
-                        if (step) {
-                            host.send({
-                                type: "copyPrompt",
-                                text: clarifyPrompt({
-                                    tabId: tab.id,
-                                    label: tab.label,
-                                    stepLabel: `${index + 1}.${stepIndex + 1}`,
-                                    step,
-                                }),
-                            });
-                        }
-                    }}
                 />
             ))}
+            <FeedbackBar
+                requests={requests}
+                onCopy={() => copy(feedbackPrompt(tab.id, tab.label, requests))}
+                onReset={() => act({ type: "reset" })}
+            />
         </>
     );
 }

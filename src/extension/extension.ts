@@ -2,9 +2,10 @@ import { homedir } from "node:os";
 
 import * as vscode from "vscode";
 
+import type { ReviewAction } from "../core/review";
 import { findGitRoot } from "../node/gitRoot";
 import { archiveTab } from "../node/store/archive";
-import { setViewed } from "../node/store/review";
+import { updateReview } from "../node/store/review";
 import {
     connectAgents,
     installServer,
@@ -21,7 +22,18 @@ export function activate(context: vscode.ExtensionContext): void {
     // The git root can sit above the workspace folder (a module in a monorepo).
     const root = folder && findGitRoot(folder.uri.fsPath);
 
-    let viewedWrites: Promise<void> = Promise.resolve();
+    // One review write at a time: each one reads the file it then rewrites.
+    let reviewWrites: Promise<void> = Promise.resolve();
+    const review = (tabId: string, action: ReviewAction) => {
+        if (!root) {
+            return;
+        }
+        reviewWrites = reviewWrites
+            .then(() => updateReview(root, tabId, action))
+            .catch((error: unknown) =>
+                log.error(`Could not save the review: ${String(error)}`),
+            );
+    };
     const plan = new PlanViewProvider(context.extensionUri, {
         onOpen: (request) => {
             if (root) {
@@ -39,34 +51,19 @@ export function activate(context: vscode.ExtensionContext): void {
             }
         },
         onReopenTab: () => reopen(),
-        onCopyPrompt: (text) => {
+        onReview: ({ tabId, action }) => review(tabId, action),
+        onCopyFeedback: (tabId, text) => {
             vscode.env.clipboard.writeText(text).then(
-                () =>
+                () => {
+                    review(tabId, { type: "sent", at: Date.now() });
                     vscode.window.setStatusBarMessage(
-                        "$(clippy) Clarify prompt copied: paste it to your agent",
+                        "$(clippy) Review copied: paste it to your agent",
                         4000,
-                    ),
+                    );
+                },
                 (error: unknown) =>
-                    log.error(`Could not copy the prompt: ${String(error)}`),
+                    log.error(`Could not copy the review: ${String(error)}`),
             );
-        },
-        onSetViewed: (message) => {
-            if (!root) {
-                return;
-            }
-            // One write at a time: each one reads the file it then rewrites.
-            viewedWrites = viewedWrites
-                .then(() =>
-                    setViewed(
-                        root,
-                        message.tabId,
-                        message.fingerprint,
-                        message.viewed,
-                    ),
-                )
-                .catch((error: unknown) =>
-                    log.error(`Could not save Viewed: ${String(error)}`),
-                );
         },
     });
     const reopen = () => {

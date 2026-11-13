@@ -1,16 +1,18 @@
 import type { Goal } from "../core/restitution";
+import type { StepState } from "./GoalSection";
 
-/** The goals at a glance, with progress; a click jumps to one. */
+/** The goals at a glance, with progress and what changed; a click jumps to one. */
 export function Overview({
     goals,
-    done,
+    states,
     onGoto,
 }: {
     goals: Goal[];
-    /** Steps viewed, per goal. */
-    done: number[];
+    /** Where every step stands, goal by goal. */
+    states: StepState[][];
     onGoto: (goal: number) => void;
 }) {
+    const done = states.map((goal) => goal.filter((s) => s.viewed).length);
     const total = goals.reduce((sum, goal) => sum + goal.steps.length, 0);
     const viewed = done.reduce((sum, count) => sum + count, 0);
     return (
@@ -29,6 +31,7 @@ export function Overview({
             <ul>
                 {goals.map((goal, index) => {
                     const finished = done[index] === goal.steps.length;
+                    const updated = states[index]?.some((s) => s.updated);
                     return (
                         <li key={`${index}-${goal.title}`}>
                             <button
@@ -40,6 +43,12 @@ export function Overview({
                                 <span className="overview-goal">
                                     {goal.title}
                                 </span>
+                                {updated && (
+                                    <span
+                                        className="updated-dot"
+                                        title="Has new or changed steps"
+                                    />
+                                )}
                                 <span className="goal-progress">
                                     {done[index]}/{goal.steps.length}
                                 </span>

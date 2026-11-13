@@ -39,13 +39,16 @@ export function FileIcon() {
     );
 }
 
+/** A small icon button; `pressed` makes it a toggle that shows when it is on. */
 export function IconButton({
     label,
     onClick,
+    pressed,
     children,
 }: {
     label: string;
     onClick: () => void;
+    pressed?: boolean;
     children: ReactNode;
 }) {
     return (
@@ -54,6 +57,7 @@ export function IconButton({
             type="button"
             title={label}
             aria-label={label}
+            aria-pressed={pressed}
             onClick={onClick}
         >
             {children}
@@ -101,6 +105,43 @@ export function ChevronIcon() {
             aria-hidden="true"
         >
             <path d="M4 6l4 4 4-4" />
+        </svg>
+    );
+}
+
+/** One line splitting into three: break a step into smaller ones. */
+export function ClarifyIcon() {
+    return (
+        <Icon>
+            <path d="M2.5 8h3.5M6 8c2 0 2-4 4-4h3.5M6 8h7.5M6 8c2 0 2 4 4 4h3.5" />
+        </Icon>
+    );
+}
+
+/** A speech bubble: say something about this step. */
+export function CommentIcon() {
+    return (
+        <Icon>
+            <path d="M3 3.5h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H8l-3 2.5v-2.5H3a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1z" />
+        </Icon>
+    );
+}
+
+/** A small tick, for "updated since you last looked". */
+export function TickIcon() {
+    return (
+        <svg
+            width="11"
+            height="11"
+            viewBox="0 0 16 16"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+        >
+            <path d="M3 8.5l3.2 3L13 4.5" />
         </svg>
     );
 }

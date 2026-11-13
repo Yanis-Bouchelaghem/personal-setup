@@ -159,8 +159,28 @@ const diffs = Object.fromEntries(
     parseUnifiedDiff(SAMPLE_DIFFS).map((diff) => [diff.file, diff]),
 );
 
-// Step 1.2 starts out viewed, so the folded look is on screen.
-const VIEWED = [goalFingerprints(many, diffs)[0]?.[1] ?? ""];
+// The review on the main fixture: 1.2 viewed (folded), 3.2 just updated by
+// the agent, 2.1 marked to clarify with a comment, and a question on 3.3.
+const PRINTS = goalFingerprints(many, diffs);
+const print = (goal: number, step: number) => PRINTS[goal]?.[step] ?? "";
+const REVIEW = {
+    viewed: [print(0, 1)],
+    known: PRINTS.flat().filter((fingerprint) => fingerprint !== print(2, 1)),
+    requests: [
+        {
+            step: print(1, 0),
+            label: "2.1",
+            clarify: true,
+            comment: "Why not keep the plain object and lowercase the key?",
+        },
+        {
+            step: print(2, 2),
+            label: "3.3",
+            clarify: false,
+            comment: "Does this cover a plugin with no version at all?",
+        },
+    ],
+};
 
 const ago = (minutes: number) => Date.now() - minutes * 60_000;
 
@@ -174,6 +194,7 @@ const small: Restitution = {
             steps: [
                 {
                     file: "src/gateway/btapGatewayClient.ts",
+                    lines: [[22, 29]],
                     why: "Add a random X-Request-Id, so each call can be traced.",
                 },
             ],
@@ -192,7 +213,7 @@ export const fixtures: Record<string, ViewState> = {
                 label: "Review fixes",
                 updatedAt: ago(1),
                 restitution: { ...many, label: "Review fixes" },
-                viewed: VIEWED,
+                ...REVIEW,
             },
             {
                 kind: "ok",
@@ -201,6 +222,7 @@ export const fixtures: Record<string, ViewState> = {
                 updatedAt: ago(35),
                 restitution: small,
                 viewed: [],
+                requests: [],
             },
             {
                 kind: "error",
@@ -224,7 +246,7 @@ export const fixtures: Record<string, ViewState> = {
                 label: "Review fixes",
                 updatedAt: ago(1),
                 restitution: { ...many, label: "Review fixes" },
-                viewed: VIEWED,
+                ...REVIEW,
             },
         ],
         diffs,
@@ -240,6 +262,7 @@ export const fixtures: Record<string, ViewState> = {
                 updatedAt: ago(2),
                 restitution: long,
                 viewed: [],
+                requests: [],
             },
             {
                 kind: "ok",
@@ -248,6 +271,7 @@ export const fixtures: Record<string, ViewState> = {
                 updatedAt: ago(9),
                 restitution: small,
                 viewed: [],
+                requests: [],
             },
         ],
         diffs: {},

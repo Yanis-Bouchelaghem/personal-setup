@@ -28,13 +28,17 @@ describe("stepFingerprint", () => {
         );
     });
 
-    it("ignores the step's words: rewording is not new code", () => {
-        const reworded = {
-            ...step,
-            why: "Do it differently, so it works.",
-            link: "so" as const,
-        };
-        expect(stepFingerprint(reworded, diff("ctx"))).toBe(
+    it("changes when the agent rewords the step or changes its connector", () => {
+        const reworded = { ...step, why: "Do it differently, so it works." };
+        expect(stepFingerprint(reworded, diff("ctx"))).not.toBe(
+            stepFingerprint(step, diff("ctx")),
+        );
+        const relinked = { ...step, link: "so" as const };
+        expect(stepFingerprint(relinked, diff("ctx"))).not.toBe(
+            stepFingerprint(step, diff("ctx")),
+        );
+        // "then" is the default, so writing it out changes nothing.
+        expect(stepFingerprint({ ...step, link: "then" }, diff("ctx"))).toBe(
             stepFingerprint(step, diff("ctx")),
         );
     });
@@ -86,12 +90,11 @@ describe("goalFingerprints", () => {
         expect(prints.map((goal) => goal.length)).toEqual([2, 1]);
     });
 
-    it("is stable, and tells steps with different code apart", () => {
+    it("is stable, and tells different steps apart", () => {
         expect(goalFingerprints(restitution, diffs)).toEqual(
             goalFingerprints(restitution, diffs),
         );
         const [first, second] = goalFingerprints(restitution, diffs)[0]!;
-        expect(first).toBe(second); // same file, same hunk: the same code
-        expect(goalFingerprints(restitution, {})[1]![0]).not.toBe(first);
+        expect(first).not.toBe(second); // same code, different words
     });
 });

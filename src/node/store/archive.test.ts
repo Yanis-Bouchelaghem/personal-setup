@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { archiveTab, countClosed, readClosedTabs, restoreTab } from "./archive";
 import { restitutionDir } from "./paths";
-import { setViewed } from "./review";
+import { updateReview } from "./review";
 import { readTabs, writeRestitution } from "./tabs";
 import { restitutionFor, testRepo } from "./testRepo";
 import { readViewState } from "./viewState";
@@ -77,7 +77,11 @@ describe("reopening a tab", () => {
     it("takes the Viewed state along, in and out of the archive", async () => {
         const dir = testRepo();
         await writeRestitution(dir, "t1", restitutionFor("a.ts"));
-        await setViewed(dir, "t1", "fp-1", true);
+        await updateReview(dir, "t1", {
+            type: "viewed",
+            step: "fp-1",
+            on: true,
+        });
         await archiveTab(dir, "t1");
         expect(existsSync(join(restitutionDir(dir), "t1.review.json"))).toBe(
             false,

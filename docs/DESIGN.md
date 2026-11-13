@@ -28,7 +28,7 @@ src/webview/    React app; `npm run webview:dev` runs it in a browser with fixtu
 In `<gitRoot>/.restitution/` (the git root can sit above the workspace folder), **one file per restitution**, shown as one tab each:
 
 - `<id>.json`: the agent's content. Each MCP server process (one per agent session) makes its own id on its first submit and replaces that file on later submits, so concurrent agents never overwrite each other. Any `*.json` here is a tab (a hand-written `working.json` works too).
-- `<id>.review.json`: the human's Viewed state (notes later), written only by the extension. Viewed is keyed by a fingerprint of the file and the changed lines (not line numbers, not the step's words), so rewording a step keeps it viewed, while changed code shows up unviewed again. It moves with its tab into the archive and back.
+- `<id>.review.json`: the human's review (Viewed, steps already shown, comments and steps to clarify), written only by the extension. It moves with its tab into the archive and back.
 - `archive/`: closing a tab moves its file here, with no confirmation (a modal is too heavy and not keyboard friendly; the way back is the safety net). The clock button at the end of the tab strip, or "Restitution: Reopen closed tab", lists them (most recently closed first, using the file's ctime) and brings one back, selected. If the agent wrote a new file with the same id in the meantime, the old one comes back under a free id.
 
 The tab name is `label`, else `request`, else the first goal. The extension keeps `.restitution/` out of `git status` through `.git/info/exclude`. A hunk counts as explained when any tab covers it, so coverage warnings don't blame one agent for another's files.
@@ -92,12 +92,22 @@ A step that points at code gives both `file` (relative to the git root) and `lin
 - `scripts/make-sandbox.sh <dir> [clean]` builds a scratch repo from the files in `sandbox/` (`base/` as committed, `changes/` as changed, `deleted.txt`, and `restitutions/`, one file per tab). With `clean` it stops after the first commit, for an agent to change.
 - `npm run dump:state -- <repo>` writes the panel's state for a repo, and `npm run webview:dev` then shows it in a browser at `/?state=/state.json`.
 
-## Clarify
+## Reviewing: comments, clarify, and what changed
 
-Each step has a **Clarify** button. It copies a prompt for the user to paste to their agent: it names the step, the restitution's file and its id, quotes the step, and asks for that one step to be replaced by smaller steps, one per change, then resubmitted with that id. MCP has no way for a server or the panel to make an agent act, so pasting is the trigger.
+Each step header has, next to the diff and file buttons, two toggles: **Clarify** (ask the agent to explain this step in smaller steps) and **Comment** (a question or change request, typed in a box under the step). While anything is asked, a bar pinned to the bottom sums it up ("1 step to clarify · 2 comments") with **Copy for agent** and **Reset**. The copied text is short, only what is asked:
 
-- `restitution_submit` takes an optional `id`. Without it, a session writes its own tab (remembered by its server process). With it, the session updates that tab, so a session other than the one that wrote it (new window, restarted, another agent) doesn't create a duplicate.
-- The prompt is self-sufficient; the guide's "Clarifying a step" section holds the full rules, and the server instructions point to it.
+```
+My review of the restitution "Review fixes" (id: review-fixes):
+- 2.1: "Why not keep the plain object and lowercase the key instead?"
+- 3.1: clarify
+```
+
+How to handle it lives with the agent, not in the prompt: the `restitution_feedback` tool ("call this first when the user pastes their review") returns the rules and the restitution. The agent answers questions in its reply, makes requested code changes, splits steps to clarify, keeps every other step word for word, and resubmits with `"id"` so the same tab updates. MCP gives no way for the panel to make an agent act, so pasting is the trigger.
+
+All of it lives in `<id>.review.json`, written only by the extension: `viewed`, `known` (steps the reader was already shown) and `requests`.
+
+- **Updated steps.** A step's fingerprint covers its words, connector, file and changed lines. On the first look at a tab every step becomes known; later, any step whose fingerprint isn't known (new, or changed by the agent) gets a yellow tick and border, a yellow dot on its goal and in the overview, and comes back unfolded even if it was viewed. Viewing it makes it known.
+- **Requests close themselves.** Copying marks the requests sent; once the agent rewrites the tab after that, they are hidden as answered. Editing a request un-sends it.
 
 ## Panel layout
 

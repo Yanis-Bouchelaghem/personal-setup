@@ -72,3 +72,17 @@
     --vscode-diffEditor-insertedLineBackground: #9bb95555;
     --vscode-diffEditor-removedLineBackground: #ff00001a;
 }
+
+:root[data-theme="dark"] {
+    --vscode-gitDecoration-modifiedResourceForeground: #e2c08d;
+    --vscode-button-background: #0078d4;
+    --vscode-button-foreground: #ffffff;
+    --vscode-button-hoverBackground: #026ec1;
+}
+
+:root[data-theme="light"] {
+    --vscode-gitDecoration-modifiedResourceForeground: #895503;
+    --vscode-button-background: #005fb8;
+    --vscode-button-foreground: #ffffff;
+    --vscode-button-hoverBackground: #0258a8;
+}

@@ -5,7 +5,7 @@ import * as vscode from "vscode";
 import type {
     FromWebview,
     OpenRequest,
-    SetViewed,
+    ReviewMessage,
     ToWebview,
     ViewState,
 } from "../core/messages";
@@ -23,8 +23,8 @@ export class PlanViewProvider implements vscode.WebviewViewProvider {
             onOpen: (request: OpenRequest) => void;
             onCloseTab: (id: string) => void;
             onReopenTab: () => void;
-            onSetViewed: (message: SetViewed) => void;
-            onCopyPrompt: (text: string) => void;
+            onReview: (message: ReviewMessage) => void;
+            onCopyFeedback: (tabId: string, text: string) => void;
         },
     ) {}
 
@@ -47,10 +47,10 @@ export class PlanViewProvider implements vscode.WebviewViewProvider {
                 this.handlers.onCloseTab(message.id);
             } else if (message.type === "reopenTab") {
                 this.handlers.onReopenTab();
-            } else if (message.type === "setViewed") {
-                this.handlers.onSetViewed(message);
-            } else if (message.type === "copyPrompt") {
-                this.handlers.onCopyPrompt(message.text);
+            } else if (message.type === "review") {
+                this.handlers.onReview(message);
+            } else if (message.type === "copyFeedback") {
+                this.handlers.onCopyFeedback(message.tabId, message.text);
             } else {
                 this.handlers.onOpen(message);
             }
