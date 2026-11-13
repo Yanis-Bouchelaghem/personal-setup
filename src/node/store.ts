@@ -1,10 +1,10 @@
 import { execFile } from "node:child_process";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 
 import type { ViewState } from "../core/messages";
-import { parseRestitution } from "../core/restitution";
+import { parseRestitution, type Restitution } from "../core/restitution";
 import { readDiffs } from "./git";
 
 const run = promisify(execFile);
@@ -66,4 +66,16 @@ export async function ensureRestitutionDir(gitRoot: string): Promise<void> {
     await mkdir(dirname(excludeFile), { recursive: true });
     const separator = current === "" || current.endsWith("\n") ? "" : "\n";
     await writeFile(excludeFile, `${current}${separator}${entry}\n`);
+}
+
+/** Write working.json atomically, so a watcher never reads half a file. */
+export async function writeRestitution(
+    gitRoot: string,
+    restitution: Restitution,
+): Promise<void> {
+    await ensureRestitutionDir(gitRoot);
+    const target = join(restitutionDir(gitRoot), "working.json");
+    const temporary = `${target}.${process.pid}.tmp`;
+    await writeFile(temporary, `${JSON.stringify(restitution, null, 4)}\n`);
+    await rename(temporary, target);
 }

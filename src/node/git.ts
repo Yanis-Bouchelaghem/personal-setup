@@ -94,3 +94,22 @@ export async function readDiffs(
         [...tracked, ...untracked.flat()].map((diff) => [diff.file, diff]),
     );
 }
+
+/** Every uncommitted file: changed against HEAD, staged, or untracked. */
+export async function listChangedFiles(root: string): Promise<string[]> {
+    const base = await baseRevision(root);
+    const [changed, untracked] = await Promise.all([
+        git(root, ["diff", "--name-only", "-z", base]),
+        git(root, ["ls-files", "--others", "--exclude-standard", "-z"]),
+    ]);
+    return [...changed.split("\0"), ...untracked.split("\0")].filter(
+        (name) => name !== "" && !name.startsWith(".restitution/"),
+    );
+}
+
+/** Working-tree diffs of everything uncommitted. */
+export async function readAllDiffs(
+    root: string,
+): Promise<Record<string, FileDiff>> {
+    return readDiffs(root, await listChangedFiles(root));
+}

@@ -2,5 +2,6 @@
 !package.json
 !media/**
 !dist/extension.js
+!dist/mcp-server.js
 !dist/webview/main.js
 !dist/webview/main.css

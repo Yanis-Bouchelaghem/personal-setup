@@ -1,7 +1,10 @@
 import { context, build } from "esbuild";
 
 const options = {
-    entryPoints: { extension: "src/extension/extension.ts" },
+    entryPoints: {
+        extension: "src/extension/extension.ts",
+        "mcp-server": "src/mcp/server.ts",
+    },
     outdir: "dist",
     bundle: true,
     platform: "node",
