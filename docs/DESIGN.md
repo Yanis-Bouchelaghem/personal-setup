@@ -73,7 +73,7 @@ The rules agents follow live in `src/core/guide.ts`: it is both what the MCP ser
 
 ### Exact lines
 
-A step that points at code gives both `file` (relative to the git root) and `lines`, a list of `[from, to]` ranges. `lines` is required with `file`, and is **exactly what the card shows**: the panel cuts the step's diff down to those lines and nothing around them, so the model chooses what the reader sees. When the reader opens the step in the editor, exactly those lines are selected (one selection per range, on the file side of the diff).
+A step that points at code gives both `file` (relative to the git root) and `lines`, a list of `[from, to]` ranges. `lines` is required with `file`, and is **exactly what the card shows**: the panel cuts the step's diff down to those lines and nothing around them, so the model chooses what the reader sees. The editor, on the other hand, selects only what changed: the added or changed lines inside the shown ranges, one selection per contiguous run, so unchanged code between two changes stays unselected. A step that only removes code has nothing to select on the new side, so it selects its range.
 
 - Ranges are on the new side of the file; for a deleted file, on the old side, the only one that exists.
 - A removed line has no new-side number, so it sits with the line just before it (or at the start of its hunk). A range that includes that line shows the removal.

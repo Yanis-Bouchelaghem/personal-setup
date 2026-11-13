@@ -1,4 +1,4 @@
-import { type FileDiff, selectLines } from "../core/diff";
+import { changedRanges, type FileDiff, selectLines } from "../core/diff";
 import type { OpenRequest } from "../core/messages";
 import type { Step } from "../core/restitution";
 import { DiffView } from "./DiffView";
@@ -36,6 +36,10 @@ export function StepCard({
     // Exactly the lines the step chose, nothing around them.
     const ranges = step.lines ?? [];
     const hunks = selectLines(diff, ranges);
+    // The editor selects only what changed, not the context shown around it;
+    // a step that only removes code has no new-side lines, so it selects its range.
+    const changed = changedRanges(hunks);
+    const selection = changed.length > 0 ? changed : ranges;
     const status = diff?.status;
     // Nothing to compare for a new file; nothing to open for a deleted one.
     const canDiff =
@@ -85,7 +89,7 @@ export function StepCard({
                                 onOpenRequest({
                                     type: "openDiff",
                                     file,
-                                    ranges,
+                                    ranges: selection,
                                     status,
                                 })
                             }
@@ -95,12 +99,12 @@ export function StepCard({
                     )}
                     {open && canOpenFile && (
                         <IconButton
-                            label="Open the file, with these lines selected"
+                            label="Open the file, with the changes selected"
                             onClick={() =>
                                 onOpenRequest({
                                     type: "openFile",
                                     file,
-                                    ranges,
+                                    ranges: selection,
                                 })
                             }
                         >

@@ -194,6 +194,27 @@ function toHunk(lines: DiffLine[]): Hunk {
     };
 }
 
+/**
+ * The lines a step actually changed, as ranges on the new side: each run of
+ * consecutive added lines, with unchanged code between runs left out. Removed
+ * lines have no new-side number, so a step that only removes code gives none.
+ */
+export function changedRanges(hunks: Hunk[]): LineRange[] {
+    const runs: [number, number][] = [];
+    for (const line of hunks.flatMap((hunk) => hunk.lines)) {
+        if (line.kind !== "add" || line.newNo === undefined) {
+            continue;
+        }
+        const last = runs.at(-1);
+        if (last && line.newNo === last[1] + 1) {
+            last[1] = line.newNo;
+        } else {
+            runs.push([line.newNo, line.newNo]);
+        }
+    }
+    return runs;
+}
+
 /** The first `max` lines across hunks, keeping hunk boundaries. */
 export function takeLines(hunks: Hunk[], max: number): Hunk[] {
     const out: Hunk[] = [];

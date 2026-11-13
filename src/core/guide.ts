@@ -20,10 +20,10 @@ Call restitution_submit with:
 - A step that points at code gives BOTH "file" and "lines" (a step that only explains something gives neither).
   - "file" is the path relative to the git root.
   - "lines" is a list of [from, to] ranges: EXACTLY the lines of that file the step shows the reader, nothing more. Use the line numbers of the file as it is now, after your edits.
-  - Choose what the reader needs to follow the step: the changed lines and the few lines around them that make them readable. Use several ranges when a step touches separate places, and keep each range as small as it can be.
+  - Choose what the reader needs to follow the step: the changed lines and the few lines of unchanged code around them that make them readable. Use several ranges when a step touches separate places, and keep each range as small as it can be.
   - A removed line has no number any more: it sits with the line just before it, so include that line. For a deleted file, use the line numbers it had before.
 - Every changed line must be shown by some step. The tool saves your restitution, then lists the changed lines no step shows and the steps whose lines hold no change. Treat that as a hint, not a verdict: fix what is really wrong and submit again.
-- When the reader opens a step in their editor, exactly those lines are selected, so a tight range is also a good pointer.
+- The card shows exactly those lines. When the reader opens the step in their editor, the changed lines among them are selected (the unchanged context around them is not), so show enough context to be readable and let the selection point at what changed.
 - Your restitution is one tab in the user's panel (label names it, otherwise the request does). Submitting again in this session replaces your tab; other agents' tabs are never touched.
 - Submit when the change is complete, and again when the code changes after feedback. Rewrite the story so it matches the current code instead of appending "then I fixed ...".
 

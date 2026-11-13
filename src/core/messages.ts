@@ -40,7 +40,7 @@ export type ToWebview =
     /** Switch to this tab (after reopening it). */
     | { type: "select"; id: string };
 
-/** Open a step's change as a diff, selecting the step's lines. */
+/** Open a step's change as a diff, selecting `ranges` on the file side. */
 export type OpenDiff = {
     type: "openDiff";
     file: string;
@@ -48,7 +48,7 @@ export type OpenDiff = {
     status?: FileDiff["status"];
 };
 
-/** Open the file itself, selecting the step's lines. */
+/** Open the file itself, selecting `ranges`. */
 export type OpenFile = {
     type: "openFile";
     file: string;

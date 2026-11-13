@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vitest";
 
-import { countLines, parseUnifiedDiff, selectLines, takeLines } from "./diff";
+import {
+    changedRanges,
+    countLines,
+    parseUnifiedDiff,
+    selectLines,
+    takeLines,
+} from "./diff";
 
 const DIFF = `diff --git a/src/config.ts b/src/config.ts
 index 111..222 100644
@@ -143,5 +149,40 @@ describe("takeLines / countLines", () => {
         const limited = takeLines(hunks, 6);
         expect(countLines(limited)).toBe(6);
         expect(limited).toHaveLength(2);
+    });
+});
+
+describe("changedRanges", () => {
+    it("is only the added lines among the lines shown, not the context", () => {
+        const shown = selectLines(config, [[10, 13]]);
+        expect(changedRanges(shown)).toEqual([[11, 12]]);
+    });
+
+    it("keeps changes separated by unchanged code apart", () => {
+        expect(changedRanges(selectLines(config, [[1, 100]]))).toEqual([
+            [11, 12],
+            [41, 41],
+        ]);
+        const gap = parseUnifiedDiff(
+            "diff --git a/g.ts b/g.ts\n--- a/g.ts\n+++ b/g.ts\n@@ -1,3 +1,5 @@\n+first\n keep\n+second\n+third\n tail\n",
+        )[0];
+        expect(changedRanges(selectLines(gap, [[1, 10]]))).toEqual([
+            [1, 1],
+            [3, 4],
+        ]);
+    });
+
+    it("treats a replaced line as one change", () => {
+        const [hunk] = selectLines(config, [[10, 11]]);
+        expect(hunk?.lines.map((l) => l.kind)).toEqual(["ctx", "del", "add"]);
+        expect(changedRanges([hunk!])).toEqual([[11, 11]]);
+    });
+
+    it("covers a whole new file", () => {
+        expect(changedRanges(selectLines(added, [[1, 2]]))).toEqual([[1, 2]]);
+    });
+
+    it("has nothing for a step that only removes code", () => {
+        expect(changedRanges(selectLines(deleted, [[1, 2]]))).toEqual([]);
     });
 });
