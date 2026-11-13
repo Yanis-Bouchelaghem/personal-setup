@@ -39,6 +39,17 @@ export function activate(context: vscode.ExtensionContext): void {
             }
         },
         onReopenTab: () => reopen(),
+        onCopyPrompt: (text) => {
+            vscode.env.clipboard.writeText(text).then(
+                () =>
+                    vscode.window.setStatusBarMessage(
+                        "$(clippy) Clarify prompt copied: paste it to your agent",
+                        4000,
+                    ),
+                (error: unknown) =>
+                    log.error(`Could not copy the prompt: ${String(error)}`),
+            );
+        },
         onSetViewed: (message) => {
             if (!root) {
                 return;

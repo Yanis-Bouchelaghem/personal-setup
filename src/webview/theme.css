@@ -898,3 +898,16 @@ body {
         transition: none;
     }
 }
+
+/* Under the explanation and its code: ask the agent for smaller steps. */
+.card-foot {
+    display: flex;
+    justify-content: flex-end;
+    margin: 8px -4px -4px 0;
+}
+
+.clarify {
+    margin: 0;
+    padding: 3px 10px;
+    font-size: 12px;
+}

@@ -1,5 +1,6 @@
 import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import * as z from "zod";
 
 import { GUIDE, SERVER_INSTRUCTIONS } from "../core/guide";
 import { RestitutionSchema } from "../core/restitution";
@@ -38,10 +39,19 @@ server.registerTool(
     {
         description:
             "Show the user a short, ordered reading guide to the code changes you just made. Saves it for their editor and reports changed code that no step explains.",
-        // The file version is ours to set, not the agent's.
-        inputSchema: RestitutionSchema.omit({ version: true }).shape,
+        inputSchema: {
+            // The file version is ours to set, not the agent's.
+            ...RestitutionSchema.omit({ version: true }).shape,
+            id: z
+                .string()
+                .regex(/^[a-z0-9][a-z0-9-]{0,63}$/i)
+                .optional()
+                .describe(
+                    "Only when updating an existing restitution, e.g. after a Clarify request: its id. Leave it out otherwise.",
+                ),
+        },
     },
-    async (input) => {
+    async ({ id, ...input }) => {
         const root = process.env.RESTITUTION_ROOT ?? findGitRoot(process.cwd());
         if (!root) {
             return text(
@@ -49,7 +59,8 @@ server.registerTool(
                 true,
             );
         }
-        tabId ??= newTabId();
+        // A given id is the tab to update; it stays this session's tab after.
+        tabId = id ?? tabId ?? newTabId();
         return text(
             await submitRestitution(root, tabId, { version: 1, ...input }),
         );

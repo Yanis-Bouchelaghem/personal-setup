@@ -69,9 +69,13 @@ export type SetViewed = {
     viewed: boolean;
 };
 
+/** Put text on the clipboard: the Clarify prompt, to paste to an agent. */
+export type CopyPrompt = { type: "copyPrompt"; text: string };
+
 export type FromWebview =
     | { type: "ready" }
     | OpenRequest
     | CloseTab
     | ReopenTab
-    | SetViewed;
+    | SetViewed
+    | CopyPrompt;

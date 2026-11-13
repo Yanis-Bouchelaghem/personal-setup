@@ -18,6 +18,7 @@ export function GoalSection({
     onToggleFold,
     onViewedChange,
     onOpenRequest,
+    onClarify,
 }: {
     goal: Goal;
     number: number;
@@ -29,6 +30,7 @@ export function GoalSection({
     onToggleFold: () => void;
     onViewedChange: (fingerprint: string, viewed: boolean) => void;
     onOpenRequest: (request: OpenRequest) => void;
+    onClarify: (stepIndex: number) => void;
 }) {
     const { box, head, remember } = useScrollAnchor<
         HTMLElement,
@@ -103,6 +105,7 @@ export function GoalSection({
                                         onViewedChange(fingerprint, on)
                                     }
                                     onOpenRequest={onOpenRequest}
+                                    onClarify={() => onClarify(index)}
                                 />
                             </Fragment>
                         );

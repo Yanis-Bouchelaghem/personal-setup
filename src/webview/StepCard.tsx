@@ -1,9 +1,32 @@
+import { useState } from "react";
+
 import { changedRanges, type FileDiff, selectLines } from "../core/diff";
 import type { OpenRequest } from "../core/messages";
 import type { Step } from "../core/restitution";
 import { DiffView } from "./DiffView";
 import { ChevronIcon, DiffIcon, FileIcon, IconButton } from "./Icons";
 import { useScrollAnchor } from "./useScrollAnchor";
+
+/** Copies a prompt asking the agent to break this step into smaller ones. */
+function ClarifyButton({ onClarify }: { onClarify: () => void }) {
+    const [copied, setCopied] = useState(false);
+    return (
+        <div className="card-foot">
+            <button
+                className="text-btn clarify"
+                type="button"
+                title="Copy a prompt asking your agent to explain this step in smaller steps"
+                onClick={() => {
+                    onClarify();
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 1600);
+                }}
+            >
+                {copied ? "Copied: paste it to your agent" : "Clarify"}
+            </button>
+        </div>
+    );
+}
 
 /** Folder part fades and truncates first; the file name always stays visible. */
 function FilePath({ path }: { path: string }) {
@@ -23,6 +46,7 @@ export function StepCard({
     viewed,
     onViewedChange,
     onOpenRequest,
+    onClarify,
 }: {
     step: Step;
     label: string;
@@ -30,6 +54,7 @@ export function StepCard({
     viewed: boolean;
     onViewedChange: (viewed: boolean) => void;
     onOpenRequest: (request: OpenRequest) => void;
+    onClarify: () => void;
 }) {
     const file = step.file;
     const diff = file ? diffs[file] : undefined;
@@ -130,6 +155,7 @@ export function StepCard({
                             No uncommitted changes in these lines.
                         </p>
                     )}
+                    <ClarifyButton onClarify={onClarify} />
                 </>
             )}
         </article>

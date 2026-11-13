@@ -1,3 +1,4 @@
+import { clarifyPrompt } from "../core/clarify";
 import type { FileDiff } from "../core/diff";
 import { goalFingerprints } from "../core/fingerprint";
 import type { Tab } from "../core/messages";
@@ -59,6 +60,20 @@ export function TabContent({
                     onToggleFold={() => folding.toggle(index)}
                     onViewedChange={changeViewed}
                     onOpenRequest={(request) => host.send(request)}
+                    onClarify={(stepIndex) => {
+                        const step = goal.steps[stepIndex];
+                        if (step) {
+                            host.send({
+                                type: "copyPrompt",
+                                text: clarifyPrompt({
+                                    tabId: tab.id,
+                                    label: tab.label,
+                                    stepLabel: `${index + 1}.${stepIndex + 1}`,
+                                    step,
+                                }),
+                            });
+                        }
+                    }}
                 />
             ))}
         </>

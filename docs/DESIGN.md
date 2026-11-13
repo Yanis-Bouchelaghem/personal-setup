@@ -92,6 +92,13 @@ A step that points at code gives both `file` (relative to the git root) and `lin
 - `scripts/make-sandbox.sh <dir> [clean]` builds a scratch repo from the files in `sandbox/` (`base/` as committed, `changes/` as changed, `deleted.txt`, and `restitutions/`, one file per tab). With `clean` it stops after the first commit, for an agent to change.
 - `npm run dump:state -- <repo>` writes the panel's state for a repo, and `npm run webview:dev` then shows it in a browser at `/?state=/state.json`.
 
+## Clarify
+
+Each step has a **Clarify** button. It copies a prompt for the user to paste to their agent: it names the step, the restitution's file and its id, quotes the step, and asks for that one step to be replaced by smaller steps, one per change, then resubmitted with that id. MCP has no way for a server or the panel to make an agent act, so pasting is the trigger.
+
+- `restitution_submit` takes an optional `id`. Without it, a session writes its own tab (remembered by its server process). With it, the session updates that tab, so a session other than the one that wrote it (new window, restarted, another agent) doesn't create a duplicate.
+- The prompt is self-sufficient; the guide's "Clarifying a step" section holds the full rules, and the server instructions point to it.
+
 ## Panel layout
 
 - **Tabs** along the top, one per restitution file.

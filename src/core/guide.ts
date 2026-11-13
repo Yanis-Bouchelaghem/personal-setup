@@ -6,6 +6,7 @@
 
 export const SERVER_INSTRUCTIONS = `Restitution gives the human a short reading guide to the code changes you just made, shown in their editor.
 After you finish a code change the user asked for, call restitution_guide once, then restitution_submit with your steps. Skip it for answers that changed no code.
+If the user pastes a request to clarify a step of a restitution, follow "Clarifying a step" in restitution_guide.
 It is optional for the user and must never block your work.`;
 
 export const GUIDE = `# Writing a restitution
@@ -15,7 +16,9 @@ A restitution is a reading guide for the human who asked for the change. They re
 ## How to submit
 
 Call restitution_submit with:
-{ label?, request?, goals: [ { title, ref?, steps: [ { file?, lines?, why, link? } ] } ] }
+{ id?, label?, request?, goals: [ { title, ref?, steps: [ { file?, lines?, why, link? } ] } ] }
+
+Leave "id" out, except when the user asks you to update an existing restitution (see "Clarifying a step").
 
 - A step that points at code gives BOTH "file" and "lines" (a step that only explains something gives neither).
   - "file" is the path relative to the git root.
@@ -61,6 +64,17 @@ Each step is a card. Between two cards of the same goal sits one connector word,
   Reads as: "In parallel / update the README row for the new setting."
 
 Goals have no connectors between them: they are independent.
+
+## Clarifying a step
+
+The user can press Clarify on a step they did not follow, and paste you a prompt naming the step (for example "3.1"), the restitution's file (.restitution/<id>.json) and its id. Then:
+
+1. Read that file: it is the whole restitution as the user sees it.
+2. Replace that one step with several smaller steps, in the same place in the same goal. Split it by change: each smaller step shows only the lines of its own change (with a little context), says what that change does and why, and continues the sentence after a connector word. The first of them keeps the original step's connector.
+3. Keep every other step and goal exactly as it was.
+4. Call restitution_submit with the whole restitution and "id" set to the id from the prompt, so the same tab is updated instead of a new one appearing.
+
+Clarifying adds detail where the user asked for it; it does not rewrite the story.
 
 ## Teaching well
 

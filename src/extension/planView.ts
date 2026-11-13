@@ -24,6 +24,7 @@ export class PlanViewProvider implements vscode.WebviewViewProvider {
             onCloseTab: (id: string) => void;
             onReopenTab: () => void;
             onSetViewed: (message: SetViewed) => void;
+            onCopyPrompt: (text: string) => void;
         },
     ) {}
 
@@ -48,6 +49,8 @@ export class PlanViewProvider implements vscode.WebviewViewProvider {
                 this.handlers.onReopenTab();
             } else if (message.type === "setViewed") {
                 this.handlers.onSetViewed(message);
+            } else if (message.type === "copyPrompt") {
+                this.handlers.onCopyPrompt(message.text);
             } else {
                 this.handlers.onOpen(message);
             }
