@@ -5,6 +5,7 @@ import { promisify } from "node:util";
 
 import type { ViewState } from "../core/messages";
 import { parseRestitution } from "../core/restitution";
+import { readDiffs } from "./git";
 
 const run = promisify(execFile);
 const DIR = ".restitution";
@@ -32,9 +33,15 @@ export async function readViewState(gitRoot: string): Promise<ViewState> {
         throw error;
     }
     const parsed = parseRestitution(text);
-    return parsed.ok
-        ? { status: "ok", restitution: parsed.value }
-        : { status: "error", errors: parsed.errors };
+    if (!parsed.ok) {
+        return { status: "error", errors: parsed.errors };
+    }
+    const files = parsed.value.goals.flatMap((goal) =>
+        goal.steps.flatMap((step) => (step.file ? [step.file] : [])),
+    );
+    // A git hiccup must not hide the explanations: show them without hunks.
+    const diffs = await readDiffs(gitRoot, files).catch(() => ({}));
+    return { status: "ok", restitution: parsed.value, diffs };
 }
 
 /**

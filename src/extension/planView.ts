@@ -2,7 +2,12 @@ import { randomBytes } from "node:crypto";
 
 import * as vscode from "vscode";
 
-import type { FromWebview, ToWebview, ViewState } from "../core/messages";
+import type {
+    FromWebview,
+    OpenDiff,
+    ToWebview,
+    ViewState,
+} from "../core/messages";
 
 /** The side-panel webview. It only forwards the current ViewState. */
 export class PlanViewProvider implements vscode.WebviewViewProvider {
@@ -11,7 +16,10 @@ export class PlanViewProvider implements vscode.WebviewViewProvider {
     private view: vscode.WebviewView | undefined;
     private state: ViewState = { status: "empty" };
 
-    constructor(private readonly extensionUri: vscode.Uri) {}
+    constructor(
+        private readonly extensionUri: vscode.Uri,
+        private readonly onOpenDiff: (request: OpenDiff) => void,
+    ) {}
 
     resolveWebviewView(view: vscode.WebviewView): void {
         this.view = view;
@@ -28,6 +36,8 @@ export class PlanViewProvider implements vscode.WebviewViewProvider {
         view.webview.onDidReceiveMessage((message: FromWebview) => {
             if (message.type === "ready") {
                 this.post();
+            } else if (message.type === "openDiff") {
+                this.onOpenDiff(message);
             }
         });
         view.onDidDispose(() => {

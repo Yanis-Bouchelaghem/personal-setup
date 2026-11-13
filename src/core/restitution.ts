@@ -4,9 +4,16 @@ import * as z from "zod";
  * The restitution file: what the agent writes and the panel renders.
  * Goals come from the request; steps tell the reader what to read and why.
  */
+const LineRange = z
+    .tuple([z.number().int().positive(), z.number().int().positive()])
+    .refine(([from, to]) => from <= to, "lines must be [from, to]");
+
 export const StepSchema = z.object({
     why: z.string().min(1),
+    /** Path relative to the git root. */
     file: z.string().min(1).optional(),
+    /** New-side line range; without it the step covers the whole file's diff. */
+    lines: LineRange.optional(),
     because: z.string().min(1).optional(),
 });
 

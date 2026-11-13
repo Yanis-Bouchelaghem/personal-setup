@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
 
-import { findGitRoot } from "../node/gitRoot";
 import {
     ensureRestitutionDir,
     readViewState,
@@ -11,22 +10,14 @@ import type { PlanViewProvider } from "./planView";
 const DEBOUNCE_MS = 80;
 
 /**
- * Keep the panel in sync with `<gitRoot>/.restitution/working.json`.
- * The git root can sit above the workspace folder (a module inside a monorepo).
+ * Keep the panel in sync with `<gitRoot>/.restitution/working.json` and with
+ * the working tree, since the hunks shown come from `git diff`.
  */
 export function watchRestitution(
+    root: string,
     view: PlanViewProvider,
     log: vscode.LogOutputChannel,
 ): vscode.Disposable {
-    const folder = vscode.workspace.workspaceFolders?.[0];
-    const root = folder && findGitRoot(folder.uri.fsPath);
-    if (!root) {
-        log.info(
-            `No git repository for ${folder?.uri.fsPath ?? "(no folder)"}`,
-        );
-        view.setState({ status: "no-repo" });
-        return new vscode.Disposable(() => undefined);
-    }
     log.info(`Watching ${restitutionDir(root)}`);
 
     const disposables: vscode.Disposable[] = [];
@@ -58,6 +49,14 @@ export function watchRestitution(
             watcher.onDidCreate(refresh),
             watcher.onDidChange(refresh),
             watcher.onDidDelete(refresh),
+            // Hunks change when code is saved, or edited elsewhere (an agent's
+            // shell commands) and we come back to the window.
+            vscode.workspace.onDidSaveTextDocument(refresh),
+            vscode.window.onDidChangeWindowState((window) => {
+                if (window.focused) {
+                    refresh();
+                }
+            }),
         );
         refresh();
     };

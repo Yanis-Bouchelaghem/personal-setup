@@ -1,3 +1,4 @@
+import { parseUnifiedDiff } from "../../core/diff";
 import type { ViewState } from "../../core/messages";
 import type { Restitution } from "../../core/restitution";
 
@@ -43,6 +44,7 @@ const many: Restitution = {
                 },
                 {
                     file: "src/marketplace/marketplaceRewriter.ts",
+                    lines: [10, 24],
                     why: "Check each plugin on its own, to drop only the bad ones.",
                     because:
                         "Needs the looser schema first, otherwise every plugin is still rejected up front.",
@@ -57,7 +59,7 @@ const many: Restitution = {
             title: "Keep the swagger file in sync",
             steps: [
                 {
-                    file: "../src/swagger.js",
+                    file: "src/swagger.js",
                     why: "Describe the https-only setting, so the docs match the new behaviour.",
                 },
             ],
@@ -82,9 +84,73 @@ const long: Restitution = {
     ],
 };
 
+const SAMPLE_DIFFS = `diff --git a/src/config.ts b/src/config.ts
+--- a/src/config.ts
++++ b/src/config.ts
+@@ -41,7 +41,12 @@ function readApigeeUrl() {
+   const raw = process.env.ADAPTER_APIGEE_URL;
+   if (!raw) {
+     throw new Error("ADAPTER_APIGEE_URL is required");
+   }
+-  return new URL(raw);
++  const url = new URL(raw);
++  if (url.protocol !== "https:") {
++    throw new Error("ADAPTER_APIGEE_URL must use https");
++  }
++  return url;
+ }
+diff --git a/test/config.test.ts b/test/config.test.ts
+new file mode 100644
+--- /dev/null
++++ b/test/config.test.ts
+@@ -0,0 +1,9 @@
++import assert from "node:assert/strict";
++import test from "node:test";
++
++import { readApigeeUrl } from "../src/config.js";
++
++test("rejects a plain-http Apigee URL", () => {
++  process.env.ADAPTER_APIGEE_URL = "http://apigee.example.com";
++  assert.throws(() => readApigeeUrl(), /must use https/);
++});
+diff --git a/src/gateway/btapGatewayClient.ts b/src/gateway/btapGatewayClient.ts
+--- a/src/gateway/btapGatewayClient.ts
++++ b/src/gateway/btapGatewayClient.ts
+@@ -22,9 +22,8 @@ export class BtapGatewayClient {
+   async request(path: string, init: RequestInit = {}) {
+-    const headers = {
+-      ...init.headers,
+-      Authorization: \`Bearer \${await this.token()}\`,
+-    };
++    const headers = new Headers(init.headers);
++    headers.set("Authorization", \`Bearer \${await this.token()}\`);
+     return fetch(this.url(path), { ...init, headers });
+   }
+diff --git a/src/marketplace/marketplaceRewriter.ts b/src/marketplace/marketplaceRewriter.ts
+--- a/src/marketplace/marketplaceRewriter.ts
++++ b/src/marketplace/marketplaceRewriter.ts
+@@ -9,8 +9,16 @@ export class MarketplaceRewriter {
+   rewrite(catalog: Catalog): Catalog {
+-    return catalog.plugins.map((plugin) => this.withApigeeArchiveUrl(plugin));
++    const plugins = [];
++    for (const plugin of catalog.plugins) {
++      const parsed = PluginSchema.safeParse(plugin);
++      if (!parsed.success) {
++        continue;
++      }
++      plugins.push(this.withApigeeArchiveUrl(parsed.data));
++    }
++    return { ...catalog, plugins };
+   }
+`;
+
+const diffs = Object.fromEntries(
+    parseUnifiedDiff(SAMPLE_DIFFS).map((diff) => [diff.file, diff]),
+);
+
 export const fixtures: Record<string, ViewState> = {
-    many: { status: "ok", restitution: many },
-    long: { status: "ok", restitution: long },
+    many: { status: "ok", restitution: many, diffs },
+    long: { status: "ok", restitution: long, diffs: {} },
     empty: { status: "empty" },
     norepo: { status: "no-repo" },
     error: {

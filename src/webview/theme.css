@@ -245,3 +245,123 @@ body {
         transition: none;
     }
 }
+
+/* Diff in a step card */
+.chip .name {
+    color: var(--fg);
+}
+
+.open {
+    margin-left: auto;
+    flex: none;
+    padding: 2px 8px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--vscode-textLink-foreground, var(--accent));
+    font: inherit;
+    font-size: 11.5px;
+    cursor: pointer;
+}
+
+.open:hover,
+.more:hover {
+    background: color-mix(in srgb, var(--accent) 16%, transparent);
+    border-color: color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.open:focus-visible,
+.more:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.diff {
+    margin-top: 10px;
+    overflow: hidden;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    background: color-mix(
+        in srgb,
+        var(--vscode-editor-background, var(--bg)) 85%,
+        transparent
+    );
+    font-family: var(--vscode-editor-font-family, monospace);
+    font-size: 11.5px;
+    line-height: 1.5;
+}
+
+.hunk + .hunk {
+    border-top: 1px solid var(--glass-border);
+}
+
+.hunk-head {
+    padding: 2px 10px;
+    color: var(--muted);
+    background: color-mix(in srgb, var(--fg) 6%, transparent);
+    font-size: 11px;
+}
+
+.ln {
+    display: flex;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.ln-add {
+    background: var(
+        --vscode-diffEditor-insertedLineBackground,
+        rgb(46 160 67 / 0.2)
+    );
+}
+
+.ln-del {
+    background: var(
+        --vscode-diffEditor-removedLineBackground,
+        rgb(248 81 73 / 0.2)
+    );
+}
+
+.ln .no {
+    flex: none;
+    width: 3.4em;
+    padding-right: 8px;
+    text-align: right;
+    color: var(--muted);
+    user-select: none;
+}
+
+.ln .sign {
+    flex: none;
+    width: 1.3em;
+    color: var(--muted);
+    user-select: none;
+}
+
+.ln .txt {
+    flex: 1;
+    min-width: 0;
+    padding-right: 8px;
+}
+
+.more {
+    display: block;
+    width: 100%;
+    padding: 5px 10px;
+    border: 0;
+    border-top: 1px solid var(--glass-border);
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-family: var(--vscode-font-family, system-ui, sans-serif);
+    font-size: 11.5px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.no-diff {
+    margin: 8px 0 0;
+    color: var(--muted);
+    font-size: 0.93em;
+    font-style: italic;
+}

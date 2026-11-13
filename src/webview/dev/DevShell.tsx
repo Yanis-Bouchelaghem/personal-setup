@@ -13,7 +13,7 @@ function fixtureHost(state: ViewState): Host {
             listener(state);
             return () => undefined;
         },
-        send: () => undefined,
+        send: (message) => console.info("to host:", message),
     };
 }
 

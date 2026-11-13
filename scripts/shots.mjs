@@ -13,11 +13,11 @@ const PORT = 5199;
 const shots = [
     { fixture: "many", theme: "dark" },
     { fixture: "many", theme: "light" },
-    { fixture: "many", theme: "dark", scroll: 300, name: "many-scrolled-dark" },
+    { fixture: "many", theme: "dark", scroll: 600, name: "many-scrolled-dark" },
     {
         fixture: "many",
         theme: "light",
-        scroll: 300,
+        scroll: 600,
         name: "many-scrolled-light",
     },
     { fixture: "long", theme: "dark" },

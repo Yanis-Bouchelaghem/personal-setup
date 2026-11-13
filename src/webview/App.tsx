@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import type { ViewState } from "../core/messages";
+import type { OpenDiff, ViewState } from "../core/messages";
 import { GoalSection } from "./GoalSection";
 import type { Host } from "./host";
 import { Notice } from "./Notice";
@@ -16,12 +16,18 @@ export function App({ host }: { host: Host }) {
 
     return (
         <main className="app">
-            <Body state={state} />
+            <Body state={state} onOpenDiff={(request) => host.send(request)} />
         </main>
     );
 }
 
-function Body({ state }: { state: ViewState }) {
+function Body({
+    state,
+    onOpenDiff,
+}: {
+    state: ViewState;
+    onOpenDiff: (request: OpenDiff) => void;
+}) {
     if (state.status === "no-repo") {
         return (
             <Notice title="No git repository">
@@ -60,6 +66,8 @@ function Body({ state }: { state: ViewState }) {
                     key={`${index}-${goal.title}`}
                     goal={goal}
                     number={index + 1}
+                    diffs={state.diffs}
+                    onOpenDiff={onOpenDiff}
                 />
             ))}
         </>
