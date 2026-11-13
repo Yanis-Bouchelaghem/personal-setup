@@ -39,14 +39,20 @@ export function FileIcon() {
     );
 }
 
-/** A small icon button; `pressed` makes it a toggle that shows when it is on. */
+/**
+ * A small icon button. `text` is a one-word label shown beside the icon when
+ * there is room (the CSS decides); `pressed` makes it a toggle that shows
+ * when it is on.
+ */
 export function IconButton({
     label,
+    text,
     onClick,
     pressed,
     children,
 }: {
     label: string;
+    text?: string;
     onClick: () => void;
     pressed?: boolean;
     children: ReactNode;
@@ -61,6 +67,7 @@ export function IconButton({
             onClick={onClick}
         >
             {children}
+            {text && <span className="btn-text">{text}</span>}
         </button>
     );
 }

@@ -1,3 +1,5 @@
+import { useEffect, useState } from "react";
+
 import type { ReviewRequest } from "../core/review";
 
 function plural(count: number, word: string): string {
@@ -17,12 +19,20 @@ export function FeedbackBar({
     onCopy: () => void;
     onReset: () => void;
 }) {
+    const [copied, setCopied] = useState(false);
+    useEffect(() => {
+        if (!copied) {
+            return undefined;
+        }
+        const timer = setTimeout(() => setCopied(false), 1500);
+        return () => clearTimeout(timer);
+    }, [copied]);
+
     if (requests.length === 0) {
         return null;
     }
     const clarify = requests.filter((request) => request.clarify).length;
     const comments = requests.filter((request) => request.comment).length;
-    const sent = requests.every((request) => request.sentAt !== undefined);
     const summary = [
         ...(clarify ? [plural(clarify, "step") + " to clarify"] : []),
         ...(comments ? [plural(comments, "comment")] : []),
@@ -36,19 +46,19 @@ export function FeedbackBar({
                 role="region"
                 aria-label="Review"
             >
-                <span className="feedback-summary">
-                    <span>{summary}</span>
-                    {sent && (
-                        <span className="feedback-sent">
-                            Sent, waiting for the agent
-                        </span>
-                    )}
-                </span>
+                <span className="feedback-summary">{summary}</span>
                 <button className="text-btn" type="button" onClick={onReset}>
                     Reset
                 </button>
-                <button className="primary-btn" type="button" onClick={onCopy}>
-                    {sent ? "Copy again" : "Copy for agent"}
+                <button
+                    className={`primary-btn${copied ? " copied" : ""}`}
+                    type="button"
+                    onClick={() => {
+                        onCopy();
+                        setCopied(true);
+                    }}
+                >
+                    {copied ? "Copied!" : "Copy for agent"}
                 </button>
             </div>
         </>

@@ -113,6 +113,7 @@ All of it lives in `<id>.review.json`, written only by the extension: `viewed`, 
 
 - **Tabs** along the top, one per restitution file.
 - **Overview** (from two goals up): the goals with their progress, and a click jumps to one, unfolding it first.
-- **Goals** are foldable: the whole header is the control. Folding keeps the header where it was, so nothing jumps.
+- **Goals** are foldable: the whole header is the control. Folding keeps the header where it was, so nothing jumps. A goal whose steps are all viewed folds itself (and starts folded); it unfolds again if the agent changes one of its steps. Folding or unfolding by hand wins until then.
 - **Steps** hang on a rail inside their goal. Between two cards sits one prominent connector word, so the goal reads as a sentence.
 - **Viewed** folds a step to its header; the whole step header toggles it.
+- **Header buttons** (Diff, File, Clarify, Comment) show a one-word label next to their icon when the card is wide enough (a container query on the card), and only the icon otherwise.

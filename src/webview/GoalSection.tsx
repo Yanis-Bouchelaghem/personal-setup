@@ -122,9 +122,17 @@ export function GoalSection({
                                     viewed={state?.viewed ?? false}
                                     updated={state?.updated ?? false}
                                     request={state?.request}
-                                    onViewedChange={(on) =>
-                                        onViewedChange(fingerprint, on)
-                                    }
+                                    onViewedChange={(on) => {
+                                        // The last step viewed folds the goal: keep its header where it is.
+                                        const others = steps.every(
+                                            (other, at) =>
+                                                at === index || other.viewed,
+                                        );
+                                        if (on && others) {
+                                            remember();
+                                        }
+                                        onViewedChange(fingerprint, on);
+                                    }}
                                     onRequestChange={(clarify, comment) =>
                                         onRequestChange(
                                             fingerprint,

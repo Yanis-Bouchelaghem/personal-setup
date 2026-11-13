@@ -47,9 +47,11 @@ export function TabContent({
     host: Host;
 }) {
     const { review, act, copy } = useReview(tab, host);
-    const folding = useGoalFolding();
     const states =
         tab.kind === "ok" ? stepStates(tab.restitution, diffs, review) : [];
+    const folding = useGoalFolding(
+        states.map((goal) => goal.every((state) => state.viewed)),
+    );
     const firstLook = tab.kind === "ok" && review.known === undefined;
 
     // The first look at a tab: everything on it counts as already shown.
@@ -106,7 +108,7 @@ export function TabContent({
                     number={index + 1}
                     steps={states[index] ?? []}
                     diffs={diffs}
-                    folded={folding.folded.has(index)}
+                    folded={folding.isFolded(index)}
                     onToggleFold={() => folding.toggle(index)}
                     onViewedChange={(step, on) =>
                         act({ type: "viewed", step, on })

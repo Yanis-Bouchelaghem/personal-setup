@@ -141,6 +141,7 @@ export function StepCard({
                                     status: code.status,
                                 })
                             }
+                            text="Diff"
                         >
                             <DiffIcon />
                         </IconButton>
@@ -155,6 +156,7 @@ export function StepCard({
                                     ranges: code.selection,
                                 })
                             }
+                            text="File"
                         >
                             <FileIcon />
                         </IconButton>
@@ -169,6 +171,7 @@ export function StepCard({
                         onClick={() =>
                             onRequestChange(!clarify, comment || undefined)
                         }
+                        text="Clarify"
                     >
                         <ClarifyIcon />
                     </IconButton>
@@ -176,6 +179,7 @@ export function StepCard({
                         label={comment ? "Edit your comment" : "Comment"}
                         pressed={comment !== ""}
                         onClick={() => setWriting(true)}
+                        text="Comment"
                     >
                         <CommentIcon />
                     </IconButton>
