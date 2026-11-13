@@ -421,7 +421,7 @@ body {
     min-width: 0;
     align-items: stretch;
     height: 100%;
-    padding: 0 8px;
+    padding: 4px 8px 0;
     overflow-x: auto;
     scrollbar-width: none;
 }
@@ -434,6 +434,7 @@ body {
     align-items: center;
     min-width: 76px;
     max-width: 200px;
+    border-radius: 7px 7px 0 0;
     color: var(--vscode-tab-inactiveForeground, var(--muted));
     /* The bar under the tab: invisible, previewed on hover, solid when active. */
     box-shadow: inset 0 -2px 0 transparent;
@@ -448,6 +449,7 @@ body {
     position: absolute;
     inset: 0;
     z-index: -1;
+    border-radius: inherit;
     opacity: 0;
     background: linear-gradient(
         to bottom,
