@@ -1,0 +1,56 @@
+/*
+ * Dev harness only: stand-ins for the VS Code variables, taken from the
+ * default Dark Modern and Light Modern themes.
+ */
+:root[data-theme="dark"] {
+    color-scheme: dark;
+    --vscode-foreground: #cccccc;
+    --vscode-descriptionForeground: #9d9d9d;
+    --vscode-focusBorder: #0078d4;
+    --vscode-textLink-foreground: #4daafc;
+    --vscode-sideBar-background: #181818;
+    --vscode-editor-background: #1f1f1f;
+    --vscode-errorForeground: #f85149;
+    --vscode-font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    --vscode-font-size: 13px;
+    --vscode-editor-font-family: "SF Mono", Menlo, Consolas, monospace;
+}
+
+:root[data-theme="light"] {
+    color-scheme: light;
+    --vscode-foreground: #3b3b3b;
+    --vscode-descriptionForeground: #717171;
+    --vscode-focusBorder: #005fb8;
+    --vscode-textLink-foreground: #005fb8;
+    --vscode-sideBar-background: #f8f8f8;
+    --vscode-editor-background: #ffffff;
+    --vscode-errorForeground: #f85149;
+    --vscode-font-family:
+        -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    --vscode-font-size: 13px;
+    --vscode-editor-font-family: "SF Mono", Menlo, Consolas, monospace;
+}
+
+/* Narrow like a side bar, with a small toolbar on top. */
+:root.dev #root {
+    max-width: 380px;
+    margin: 0 auto;
+}
+
+.dev-toolbar {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    padding: 8px;
+    font-size: 12px;
+}
+
+.dev-toolbar select {
+    font: inherit;
+    color: var(--vscode-foreground);
+    background: var(--vscode-editor-background);
+    border: 1px solid var(--glass-border);
+    border-radius: 6px;
+    padding: 2px 6px;
+}
