@@ -20,7 +20,7 @@ describe("submitRestitution", () => {
             "mine",
             restitutionFor("a.ts"),
         );
-        expect(text).toMatch(/Every uncommitted change is explained/);
+        expect(text).toMatch(/Every changed line is shown by a step/);
     });
 
     it("resubmitting the same id replaces the tab", async () => {

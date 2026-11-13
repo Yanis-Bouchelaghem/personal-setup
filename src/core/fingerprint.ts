@@ -1,4 +1,4 @@
-import { type FileDiff, type Hunk, hunksForRange } from "./diff";
+import { type FileDiff, type Hunk, selectLines } from "./diff";
 import type { Restitution, Step } from "./restitution";
 
 /** FNV-1a, 32 bit: plenty to tell "same content" from "changed". */
@@ -35,9 +35,9 @@ export function goalFingerprints(
         goal.steps.map((step) =>
             stepFingerprint(
                 step,
-                hunksForRange(
+                selectLines(
                     step.file ? diffs[step.file] : undefined,
-                    step.lines,
+                    step.lines ?? [],
                 ),
             ),
         ),

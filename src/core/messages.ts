@@ -1,4 +1,4 @@
-import type { FileDiff } from "./diff";
+import type { FileDiff, LineRange } from "./diff";
 import type { Restitution } from "./restitution";
 
 /** One restitution file, shown as a tab. A broken file only breaks its own tab. */
@@ -40,14 +40,20 @@ export type ToWebview =
     /** Switch to this tab (after reopening it). */
     | { type: "select"; id: string };
 
+/** Open a step's change as a diff, selecting the step's lines. */
 export type OpenDiff = {
     type: "openDiff";
     file: string;
-    line?: number;
+    ranges: LineRange[];
     status?: FileDiff["status"];
 };
 
-export type OpenFile = { type: "openFile"; file: string; line?: number };
+/** Open the file itself, selecting the step's lines. */
+export type OpenFile = {
+    type: "openFile";
+    file: string;
+    ranges: LineRange[];
+};
 
 /** Both buttons on a card: the change as a diff, or the file at its line. */
 export type OpenRequest = OpenDiff | OpenFile;

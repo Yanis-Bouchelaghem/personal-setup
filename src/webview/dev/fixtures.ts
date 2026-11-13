@@ -1,5 +1,5 @@
-import { hunksForRange, parseUnifiedDiff } from "../../core/diff";
-import { stepFingerprint } from "../../core/fingerprint";
+import { parseUnifiedDiff } from "../../core/diff";
+import { goalFingerprints } from "../../core/fingerprint";
 import type { ViewState } from "../../core/messages";
 import type { Restitution } from "../../core/restitution";
 
@@ -13,15 +13,18 @@ const many: Restitution = {
             steps: [
                 {
                     file: "src/config.ts",
+                    lines: [[41, 52]],
                     why: "Require https for ADAPTER_APIGEE_URL, so bearer tokens never leave in clear text.",
                 },
                 {
                     file: "test/config.test.ts",
+                    lines: [[1, 9]],
                     link: "then",
                     why: "write the test that rejects an http URL, to catch a regression early.",
                 },
                 {
                     file: "src/swagger.js",
+                    lines: [[1, 6]],
                     link: "then",
                     why: "say in the API description that the URL must be https, so the docs match.",
                 },
@@ -33,10 +36,12 @@ const many: Restitution = {
             steps: [
                 {
                     file: "src/gateway/btapGatewayClient.ts",
+                    lines: [[22, 29]],
                     why: "Set Authorization through Headers, because a plain object kept both casings.",
                 },
                 {
                     file: "test/gateway/btapGatewayClient.test.ts",
+                    lines: [[1, 12]],
                     link: "then",
                     why: "assert that a single header goes out, to prove the casing clash is gone.",
                 },
@@ -48,16 +53,18 @@ const many: Restitution = {
             steps: [
                 {
                     file: "src/marketplace/marketplaceSchema.ts",
+                    lines: [[1, 20]],
                     why: "Parse each plugin on its own, so one bad entry can't fail the catalog.",
                 },
                 {
                     file: "src/marketplace/marketplaceRewriter.ts",
-                    lines: [10, 24],
+                    lines: [[10, 24]],
                     link: "so",
                     why: "rewrite only the plugins that parsed, and keep the skipped count.",
                 },
                 {
                     file: "test/marketplace/marketplace.test.ts",
+                    lines: [[1, 12]],
                     link: "then",
                     why: "write the unit tests to cover what was added, with one broken plugin among good ones.",
                 },
@@ -74,10 +81,12 @@ const long: Restitution = {
             steps: [
                 {
                     file: "src/some/deeply/nested/folder/structure/that/keeps/going/andGoing.ts",
+                    lines: [[1, 3]],
                     why: "Rename the helper everywhere, so the intent reads the same in every call site and in every test that exercises it afterwards.",
                 },
                 {
                     file: "src/some/other/deeply/nested/folder/structure/that/keeps/going/andGoingToo.ts",
+                    lines: [[1, 3]],
                     link: "in parallel",
                     why: "update the second module the same way, which does not depend on the first.",
                 },
@@ -151,12 +160,7 @@ const diffs = Object.fromEntries(
 );
 
 // Step 1.2 starts out viewed, so the folded look is on screen.
-const VIEWED = [
-    stepFingerprint(
-        many.goals[0]!.steps[1]!,
-        hunksForRange(diffs["test/config.test.ts"]),
-    ),
-];
+const VIEWED = [goalFingerprints(many, diffs)[0]?.[1] ?? ""];
 
 const ago = (minutes: number) => Date.now() - minutes * 60_000;
 

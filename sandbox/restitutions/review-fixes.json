@@ -10,16 +10,20 @@
                 {
                     "file": "src/config.ts",
                     "lines": [
-                        7,
-                        17
+                        [
+                            7,
+                            17
+                        ]
                     ],
                     "why": "Require https for ADAPTER_APIGEE_URL, so bearer tokens never leave in clear text."
                 },
                 {
                     "file": "test/config.test.ts",
                     "lines": [
-                        1,
-                        18
+                        [
+                            1,
+                            18
+                        ]
                     ],
                     "link": "then",
                     "why": "write the test that rejects an http URL, to catch a regression early."
@@ -27,8 +31,10 @@
                 {
                     "file": "README.md",
                     "lines": [
-                        7,
-                        13
+                        [
+                            7,
+                            13
+                        ]
                     ],
                     "link": "then",
                     "why": "note in the README that the URL must be https, so operators know before deploying."
@@ -42,13 +48,21 @@
                 {
                     "file": "src/gateway/client.ts",
                     "lines": [
-                        15,
-                        38
+                        [
+                            15,
+                            38
+                        ]
                     ],
                     "why": "Set Authorization through Headers, because a plain object kept both casings."
                 },
                 {
                     "file": "test/gateway.test.ts",
+                    "lines": [
+                        [
+                            24,
+                            41
+                        ]
+                    ],
                     "link": "then",
                     "why": "assert that a single header goes out, to prove the casing clash is gone."
                 }
@@ -60,15 +74,41 @@
             "steps": [
                 {
                     "file": "src/marketplace/schema.ts",
+                    "lines": [
+                        [
+                            2,
+                            19
+                        ],
+                        [
+                            21,
+                            43
+                        ]
+                    ],
                     "why": "Parse each plugin on its own, so one bad entry can't fail the catalog."
                 },
                 {
                     "file": "src/marketplace/rewriter.ts",
+                    "lines": [
+                        [
+                            1,
+                            4
+                        ],
+                        [
+                            8,
+                            20
+                        ]
+                    ],
                     "link": "so",
                     "why": "rewrite only the plugins that parsed, and keep the skipped count."
                 },
                 {
                     "file": "test/marketplace.test.ts",
+                    "lines": [
+                        [
+                            13,
+                            32
+                        ]
+                    ],
                     "link": "then",
                     "why": "write the unit tests to cover what was added, with one broken plugin among good ones."
                 }

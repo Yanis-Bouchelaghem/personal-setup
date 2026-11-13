@@ -8,10 +8,26 @@
             "steps": [
                 {
                     "file": "src/legacy/oldRouter.ts",
+                    "lines": [
+                        [
+                            1,
+                            18
+                        ]
+                    ],
                     "why": "Delete the v1 redirect router, because every client moved to /v1/inference."
                 },
                 {
                     "file": "src/index.ts",
+                    "lines": [
+                        [
+                            2,
+                            14
+                        ],
+                        [
+                            17,
+                            24
+                        ]
+                    ],
                     "link": "so",
                     "why": "stop wiring it in and answer 404 for unknown paths, since nothing falls through to the deleted router."
                 }

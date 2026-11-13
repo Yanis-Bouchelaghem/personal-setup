@@ -44,12 +44,17 @@ The tab name is `label`, else `request`, else the first goal. The extension keep
             "steps": [
                 {
                     "file": "src/config.ts",
+                    "lines": [[7, 17]],
                     "why": "Require https for ADAPTER_APIGEE_URL, so bearer tokens never leave in clear text."
                 },
                 {
                     "file": "src/marketplace/marketplaceRewriter.ts",
-                    "why": "Check each plugin on its own, to drop only the bad ones.",
-                    "link": "so"
+                    "lines": [
+                        [1, 4],
+                        [8, 20]
+                    ],
+                    "link": "so",
+                    "why": "rewrite only the plugins that parsed, and keep the skipped count."
                 }
             ]
         }
@@ -66,7 +71,13 @@ The rules agents follow live in `src/core/guide.ts`: it is both what the MCP ser
 - Connector words, with the definition each agent is given: **then** (the default: comes after and builds on the previous step), **so** (the previous step forces this one), **in parallel** (independent of the previous step, readable in either order). There are no connectors between goals.
 - No background and no "what to check".
 
-`file` is relative to the git root. `lines` is an optional `[from, to]` on the new side, to pick one hunk of a big file.
+### Exact lines
+
+A step that points at code gives both `file` (relative to the git root) and `lines`, a list of `[from, to]` ranges. `lines` is required with `file`, and is **exactly what the card shows**: the panel cuts the step's diff down to those lines and nothing around them, so the model chooses what the reader sees. When the reader opens the step in the editor, exactly those lines are selected (one selection per range, on the file side of the diff).
+
+- Ranges are on the new side of the file; for a deleted file, on the old side, the only one that exists.
+- A removed line has no new-side number, so it sits with the line just before it (or at the start of its hunk). A range that includes that line shows the removal.
+- Coverage is per changed line: `restitution_submit` lists the changed lines no step shows (any tab counts) and the steps whose lines hold no change. It's a hint, never a block.
 
 ## MCP
 

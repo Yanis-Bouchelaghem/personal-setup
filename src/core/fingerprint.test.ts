@@ -9,7 +9,11 @@ const diff = (body: string, start = 10) =>
         `diff --git a/a.ts b/a.ts\n--- a/a.ts\n+++ b/a.ts\n@@ -${start},3 +${start},3 @@\n ${body}\n-old\n+new\n tail\n`,
     )[0]!.hunks;
 
-const step: Step = { file: "a.ts", why: "Do it, so it works." };
+const step: Step = {
+    file: "a.ts",
+    lines: [[1, 3]],
+    why: "Do it, so it works.",
+};
 
 describe("stepFingerprint", () => {
     it("is stable for the same step and the same changes", () => {
@@ -63,7 +67,10 @@ describe("goalFingerprints", () => {
         goals: [
             {
                 title: "One",
-                steps: [step, { file: "a.ts", why: "Then more." }],
+                steps: [
+                    step,
+                    { file: "a.ts", lines: [[1, 3]], why: "Then more." },
+                ],
             },
             { title: "Two", steps: [{ why: "No code here." }] },
         ],

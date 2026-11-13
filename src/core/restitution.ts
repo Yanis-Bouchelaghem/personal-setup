@@ -4,9 +4,9 @@ import * as z from "zod";
  * The restitution file: what the agent writes and the panel renders.
  * Goals come from the request; steps tell the reader what to read and why.
  */
-const LineRange = z
+const LineRangeSchema = z
     .tuple([z.number().int().positive(), z.number().int().positive()])
-    .refine(([from, to]) => from <= to, "lines must be [from, to]");
+    .refine(([from, to]) => from <= to, "a range must be [from, to]");
 
 /**
  * How a step follows the previous one in its goal. The page reads as one
@@ -15,15 +15,26 @@ const LineRange = z
 export const LINKS = ["then", "so", "in parallel"] as const;
 export type Link = (typeof LINKS)[number];
 
-export const StepSchema = z.object({
-    why: z.string().min(1),
-    /** Path relative to the git root. */
-    file: z.string().min(1).optional(),
-    /** New-side line range; without it the step covers the whole file's diff. */
-    lines: LineRange.optional(),
-    /** Leave out on the first step of a goal; no word means "then". */
-    link: z.enum(LINKS).optional(),
-});
+export const StepSchema = z
+    .object({
+        why: z.string().min(1),
+        /** Path relative to the git root. */
+        file: z.string().min(1).optional(),
+        /**
+         * Exactly the lines of `file` this step shows, as ranges: the new side,
+         * or the old side for a deleted file. Required with `file`.
+         */
+        lines: z.array(LineRangeSchema).min(1).optional(),
+        /** Leave out on the first step of a goal; no word means "then". */
+        link: z.enum(LINKS).optional(),
+    })
+    .refine(
+        (step) => (step.file === undefined) === (step.lines === undefined),
+        {
+            message: "file and lines go together: give both, or neither",
+            path: ["lines"],
+        },
+    );
 
 export const GoalSchema = z.object({
     title: z.string().min(1),

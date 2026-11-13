@@ -17,8 +17,13 @@ A restitution is a reading guide for the human who asked for the change. They re
 Call restitution_submit with:
 { label?, request?, goals: [ { title, ref?, steps: [ { file?, lines?, why, link? } ] } ] }
 
-- file: path relative to the git root. lines: [from, to] on the new side, only to pick one part of a big file.
-- The tool saves it, then tells you which changed code no step explains and which steps point at unchanged code. Treat that as a hint, not a verdict: fix what is really wrong and submit again.
+- A step that points at code gives BOTH "file" and "lines" (a step that only explains something gives neither).
+  - "file" is the path relative to the git root.
+  - "lines" is a list of [from, to] ranges: EXACTLY the lines of that file the step shows the reader, nothing more. Use the line numbers of the file as it is now, after your edits.
+  - Choose what the reader needs to follow the step: the changed lines and the few lines around them that make them readable. Use several ranges when a step touches separate places, and keep each range as small as it can be.
+  - A removed line has no number any more: it sits with the line just before it, so include that line. For a deleted file, use the line numbers it had before.
+- Every changed line must be shown by some step. The tool saves your restitution, then lists the changed lines no step shows and the steps whose lines hold no change. Treat that as a hint, not a verdict: fix what is really wrong and submit again.
+- When the reader opens a step in their editor, exactly those lines are selected, so a tight range is also a good pointer.
 - Your restitution is one tab in the user's panel (label names it, otherwise the request does). Submitting again in this session replaces your tab; other agents' tabs are never touched.
 - Submit when the change is complete, and again when the code changes after feedback. Rewrite the story so it matches the current code instead of appending "then I fixed ...".
 
@@ -69,11 +74,11 @@ Teach it the way you would to a colleague who has not seen the change: foundatio
     {
       "title": "Retry transient gateway failures",
       "steps": [
-        { "file": "src/errors.ts", "why": "Add a GatewayError that carries the upstream status, so callers can tell a 5xx from a 4xx." },
-        { "file": "src/gateway/retry.ts", "link": "so", "why": "build withRetry on top of it, retrying only 5xx responses with exponential backoff." },
-        { "file": "src/gateway/client.ts", "link": "then", "why": "run json() through withRetry, so every JSON call benefits." },
-        { "file": "test/retry.test.ts", "link": "then", "why": "write the unit tests to cover what was added." },
-        { "file": "README.md", "link": "then", "why": "describe the retry behaviour, so operators know what to expect." }
+        { "file": "src/errors.ts", "lines": [[11, 23]], "why": "Add a GatewayError that carries the upstream status, so callers can tell a 5xx from a 4xx." },
+        { "file": "src/gateway/retry.ts", "lines": [[1, 35]], "link": "so", "why": "build withRetry on top of it, retrying only 5xx responses with exponential backoff." },
+        { "file": "src/gateway/client.ts", "lines": [[1, 10], [15, 38]], "link": "then", "why": "run json() through withRetry, so every JSON call benefits." },
+        { "file": "test/retry.test.ts", "lines": [[1, 57]], "link": "then", "why": "write the unit tests to cover what was added." },
+        { "file": "README.md", "lines": [[15, 26]], "link": "then", "why": "describe the retry behaviour, so operators know what to expect." }
       ]
     }
   ]

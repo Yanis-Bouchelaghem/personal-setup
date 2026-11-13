@@ -2,6 +2,7 @@ import { basename, join } from "node:path";
 
 import * as vscode from "vscode";
 
+import type { LineRange } from "../core/diff";
 import type { OpenDiff, OpenRequest } from "../core/messages";
 import { isRepoRelative } from "../node/git";
 
@@ -14,7 +15,26 @@ async function gitApi(): Promise<GitApi | undefined> {
     return (await extension?.activate())?.getAPI(1);
 }
 
-/** Open a card's change in the editor: as a diff, or as the file at its line. */
+/** Whole lines, from the start of the first to the start of the one after. */
+function wholeLines(ranges: readonly LineRange[]): vscode.Selection[] {
+    return ranges.map(([from, to]) => new vscode.Selection(from - 1, 0, to, 0));
+}
+
+/** Select exactly the step's lines (one selection per range) and show them. */
+function select(editor: vscode.TextEditor, ranges: readonly LineRange[]): void {
+    const selections = wholeLines(ranges);
+    const [first] = selections;
+    if (!first) {
+        return;
+    }
+    editor.selections = selections;
+    editor.revealRange(
+        first,
+        vscode.TextEditorRevealType.InCenterIfOutsideViewport,
+    );
+}
+
+/** Open a card's change in the editor: as a diff, or as the file itself. */
 export async function openInEditor(
     root: string,
     request: OpenRequest,
@@ -23,32 +43,35 @@ export async function openInEditor(
         return;
     }
     const uri = vscode.Uri.file(join(root, request.file));
-    const line = request.line ? request.line - 1 : undefined;
-    const selection =
-        line === undefined ? undefined : new vscode.Range(line, 0, line, 0);
 
     // An added file has no previous version to compare with.
     const asFile = request.type === "openFile" || request.status === "added";
     if (asFile) {
-        await vscode.window.showTextDocument(uri, { selection, preview: true });
+        const editor = await vscode.window.showTextDocument(uri, {
+            preview: true,
+        });
+        select(editor, request.ranges);
     } else {
-        await openDiff(uri, request, selection);
+        await openDiff(uri, request);
     }
 }
 
-async function openDiff(
-    uri: vscode.Uri,
-    request: OpenDiff,
-    selection: vscode.Range | undefined,
-): Promise<void> {
+async function openDiff(uri: vscode.Uri, request: OpenDiff): Promise<void> {
     const api = await gitApi();
     if (!api) {
-        await vscode.window.showTextDocument(uri, { selection, preview: true });
+        const editor = await vscode.window.showTextDocument(uri, {
+            preview: true,
+        });
+        select(editor, request.ranges);
         return;
     }
     const head = api.toGitUri(uri, "HEAD");
     if (request.status === "deleted") {
-        await vscode.window.showTextDocument(head, { preview: true });
+        // A deleted file only exists at HEAD, and its ranges are old-side.
+        const editor = await vscode.window.showTextDocument(head, {
+            preview: true,
+        });
+        select(editor, request.ranges);
         return;
     }
     await vscode.commands.executeCommand(
@@ -56,6 +79,13 @@ async function openDiff(
         head,
         uri,
         `${basename(request.file)} (HEAD ↔ working tree)`,
-        { selection, preview: true },
+        { selection: wholeLines(request.ranges)[0], preview: true },
     );
+    // The diff opens on the first range; select all of them on the file side.
+    const modified = vscode.window.visibleTextEditors.find(
+        (editor) => editor.document.uri.toString() === uri.toString(),
+    );
+    if (modified) {
+        select(modified, request.ranges);
+    }
 }

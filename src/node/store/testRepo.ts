@@ -27,7 +27,7 @@ export const restitutionFor = (file: string, label?: string): Restitution => ({
     goals: [
         {
             title: `Change ${file}`,
-            steps: [{ file, why: "Do it, so it works." }],
+            steps: [{ file, lines: [[1, 2]], why: "Do it, so it works." }],
         },
     ],
 });

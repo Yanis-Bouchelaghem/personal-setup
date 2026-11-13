@@ -1,4 +1,4 @@
-import { type FileDiff, firstChangedLine, hunksForRange } from "../core/diff";
+import { type FileDiff, selectLines } from "../core/diff";
 import type { OpenRequest } from "../core/messages";
 import type { Step } from "../core/restitution";
 import { DiffView } from "./DiffView";
@@ -33,8 +33,9 @@ export function StepCard({
 }) {
     const file = step.file;
     const diff = file ? diffs[file] : undefined;
-    const hunks = hunksForRange(diff, step.lines);
-    const line = firstChangedLine(hunks);
+    // Exactly the lines the step chose, nothing around them.
+    const ranges = step.lines ?? [];
+    const hunks = selectLines(diff, ranges);
     const status = diff?.status;
     // Nothing to compare for a new file; nothing to open for a deleted one.
     const canDiff =
@@ -84,7 +85,7 @@ export function StepCard({
                                 onOpenRequest({
                                     type: "openDiff",
                                     file,
-                                    line,
+                                    ranges,
                                     status,
                                 })
                             }
@@ -94,9 +95,13 @@ export function StepCard({
                     )}
                     {open && canOpenFile && (
                         <IconButton
-                            label={`Open the file${line ? ` at line ${line}` : ""}`}
+                            label="Open the file, with these lines selected"
                             onClick={() =>
-                                onOpenRequest({ type: "openFile", file, line })
+                                onOpenRequest({
+                                    type: "openFile",
+                                    file,
+                                    ranges,
+                                })
                             }
                         >
                             <FileIcon />
@@ -118,8 +123,7 @@ export function StepCard({
                     {hunks.length > 0 && <DiffView hunks={hunks} />}
                     {file && hunks.length === 0 && (
                         <p className="no-diff">
-                            No uncommitted changes in this file
-                            {step.lines ? " range" : ""}.
+                            No uncommitted changes in these lines.
                         </p>
                     )}
                 </>

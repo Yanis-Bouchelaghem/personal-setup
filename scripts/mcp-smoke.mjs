@@ -46,10 +46,12 @@ show(
                 steps: [
                     {
                         file: "src/config.ts",
+                        lines: [[1, 12]],
                         why: "Require https, so tokens never leave in clear text.",
                     },
                     {
                         file: "src/nope.ts",
+                        lines: [[1, 3]],
                         why: "Point at a file that did not change, to see the warning.",
                     },
                 ],
@@ -72,6 +74,7 @@ show(
                 steps: [
                     {
                         file: "src/config.ts",
+                        lines: [[1, 12]],
                         why: "Require https, so tokens never leave in clear text.",
                     },
                 ],
