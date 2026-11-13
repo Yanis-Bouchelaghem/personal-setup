@@ -12,9 +12,10 @@ function fnv1a(text: string): string {
 }
 
 /**
- * Identity of what a reader looked at: the step's words and the lines it
- * changed. Line numbers and context are left out, so edits elsewhere in the
- * file don't make a viewed step look new; any change to the step itself does.
+ * Identity of what a reader looked at: the file and the lines that changed.
+ * The words are only display, so an agent rewording a step doesn't send the
+ * reader back to code they already read; line numbers and context are left
+ * out too. A step with no code behind it falls back to its text.
  */
 export function stepFingerprint(step: Step, hunks: Hunk[]): string {
     const changes = hunks
@@ -22,7 +23,5 @@ export function stepFingerprint(step: Step, hunks: Hunk[]): string {
         .filter((line) => line.kind !== "ctx")
         .map((line) => `${line.kind}${line.text}`)
         .join("\n");
-    return fnv1a(
-        [step.file ?? "", step.why, step.because ?? "", changes].join("\0"),
-    );
+    return fnv1a([step.file ?? "", changes || step.why].join("\0"));
 }

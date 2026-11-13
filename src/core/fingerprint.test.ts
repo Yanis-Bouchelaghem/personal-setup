@@ -24,15 +24,27 @@ describe("stepFingerprint", () => {
         );
     });
 
-    it("changes when the step's words change", () => {
-        const reworded = { ...step, why: "Do it differently, so it works." };
-        expect(stepFingerprint(reworded, diff("ctx"))).not.toBe(
+    it("ignores the step's words: rewording is not new code", () => {
+        const reworded = {
+            ...step,
+            why: "Do it differently, so it works.",
+            link: "so" as const,
+        };
+        expect(stepFingerprint(reworded, diff("ctx"))).toBe(
             stepFingerprint(step, diff("ctx")),
         );
-        const because = { ...step, because: "Needs step 1." };
-        expect(stepFingerprint(because, diff("ctx"))).not.toBe(
-            stepFingerprint(step, diff("ctx")),
-        );
+    });
+
+    it("tells steps without code apart by their text", () => {
+        const a = { why: "Explain the setup." };
+        const b = { why: "Explain the teardown." };
+        expect(stepFingerprint(a, [])).not.toBe(stepFingerprint(b, []));
+    });
+
+    it("changes when the file changes", () => {
+        expect(
+            stepFingerprint({ ...step, file: "b.ts" }, diff("ctx")),
+        ).not.toBe(stepFingerprint(step, diff("ctx")));
     });
 
     it("changes when the changed code changes", () => {

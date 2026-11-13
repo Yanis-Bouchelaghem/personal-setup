@@ -104,22 +104,3 @@ export function ChevronIcon() {
         </svg>
     );
 }
-
-/** An elbow arrow: "because of that, this". */
-export function BecauseIcon() {
-    return (
-        <svg
-            width="12"
-            height="12"
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="1.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-        >
-            <path d="M4 2v6a3 3 0 0 0 3 3h6M10 8l3 3-3 3" />
-        </svg>
-    );
-}

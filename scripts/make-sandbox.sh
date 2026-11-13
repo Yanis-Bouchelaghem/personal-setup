@@ -2,7 +2,7 @@
 # Build a scratch git repo for trying the panel on.
 #
 #   scripts/make-sandbox.sh <dir>          a small service with a rich set of
-#                                          uncommitted changes and four tabs
+#                                          uncommitted changes and three tabs
 #   scripts/make-sandbox.sh <dir> clean    stop after the first commit: a blank
 #                                          slate for an agent to change
 #
@@ -399,18 +399,16 @@ fi
 
 cat > src/errors.ts <<'TS'
 export class AdapterError extends Error {
-    constructor(
-        message: string,
-        readonly status = 500,
-    ) {
+    constructor(message: string) {
         super(message);
-        this.name = new.target.name;
+        this.name = "AdapterError";
     }
 }
 
 export class ConfigError extends AdapterError {
     constructor(message: string) {
-        super(message, 500);
+        super(message);
+        this.name = "ConfigError";
     }
 }
 
@@ -419,13 +417,8 @@ export class GatewayError extends AdapterError {
         message: string,
         readonly upstreamStatus: number,
     ) {
-        super(message, upstreamStatus >= 500 ? 502 : upstreamStatus);
-    }
-}
-
-export class GatewayTimeoutError extends AdapterError {
-    constructor(path: string) {
-        super(`Gateway timed out on ${path}`, 504);
+        super(message);
+        this.name = "GatewayError";
     }
 }
 TS
@@ -663,7 +656,6 @@ TS
 cat > src/routes/inference.ts <<'TS'
 import type { IncomingMessage, ServerResponse } from "node:http";
 
-import { AdapterError } from "../errors.js";
 import { GatewayClient } from "../gateway/client.js";
 import { logError } from "../middleware/logging.js";
 
@@ -675,14 +667,9 @@ export function inferenceRoute(client: GatewayClient) {
             response.writeHead(200, { "content-type": "application/json" });
             response.end(JSON.stringify(result));
         } catch (error) {
-            const known = error instanceof AdapterError;
             logError(error);
-            response.writeHead(known ? error.status : 500, {
-                "content-type": "application/json",
-            });
-            response.end(
-                JSON.stringify({ error: known ? error.message : "inference failed" }),
-            );
+            response.writeHead(500, { "content-type": "application/json" });
+            response.end(JSON.stringify({ error: "inference failed" }));
         }
     };
 }
@@ -724,17 +711,6 @@ const server = createServer((request, response) => {
 
 server.listen(config.port);
 TS
-
-cat > src/swagger.js <<'JS'
-module.exports = {
-    info: {
-        title: "Gateway adapter",
-        version: "1.1.0",
-        description:
-            "Proxies inference and marketplace calls to the gateway over https, retrying transient failures.",
-    },
-};
-JS
 
 cat > test/config.test.ts <<'TS'
 import assert from "node:assert/strict";
@@ -945,7 +921,6 @@ Proxies inference and marketplace calls to the gateway through Apigee.
 | `PORT` | HTTP port, 8080 by default |
 | `ADAPTER_APIGEE_URL` | Base URL of the Apigee proxy, https only |
 | `ADAPTER_TOKEN` | Bearer token for the gateway |
-| `ADAPTER_MAX_RETRIES` | Extra attempts after a transient gateway failure, 2 by default |
 
 ## Routes
 
@@ -954,8 +929,9 @@ Proxies inference and marketplace calls to the gateway through Apigee.
 
 ## Retries
 
-Gateway responses with a 5xx status are retried with exponential backoff,
-starting at 200 ms. 4xx responses are returned to the caller at once.
+The adapter retries gateway responses with a 5xx status, with exponential
+backoff starting at 200 ms, for up to `ADAPTER_MAX_RETRIES` extra attempts
+(2 by default). 4xx responses are returned to the caller at once.
 
 ## Running
 
@@ -964,7 +940,7 @@ npm run build && node dist/index.js
 ```
 MD
 
-# ------------------------------------------------------ four restitutions (tabs)
+# ---------------------------------------------------- three restitutions (tabs)
 
 mkdir -p .restitution
 
@@ -980,13 +956,29 @@ cat > .restitution/review-fixes.json <<'JSON'
             "steps": [
                 {
                     "file": "src/config.ts",
-                    "lines": [7, 17],
+                    "lines": [
+                        7,
+                        17
+                    ],
                     "why": "Require https for ADAPTER_APIGEE_URL, so bearer tokens never leave in clear text."
                 },
                 {
                     "file": "test/config.test.ts",
-                    "lines": [1, 18],
-                    "why": "Pin the startup failure for http URLs, to catch a regression early."
+                    "lines": [
+                        1,
+                        18
+                    ],
+                    "link": "then",
+                    "why": "write the test that rejects an http URL, to catch a regression early."
+                },
+                {
+                    "file": "README.md",
+                    "lines": [
+                        7,
+                        13
+                    ],
+                    "link": "finally",
+                    "why": "note in the README that the URL must be https, so operators know before deploying."
                 }
             ]
         },
@@ -996,12 +988,16 @@ cat > .restitution/review-fixes.json <<'JSON'
             "steps": [
                 {
                     "file": "src/gateway/client.ts",
-                    "lines": [15, 38],
+                    "lines": [
+                        15,
+                        38
+                    ],
                     "why": "Set Authorization through Headers, because a plain object kept both casings."
                 },
                 {
                     "file": "test/gateway.test.ts",
-                    "why": "Assert a single header goes out, to prove the casing clash is gone."
+                    "link": "then",
+                    "why": "assert that a single header goes out, to prove the casing clash is gone."
                 }
             ]
         },
@@ -1015,25 +1011,13 @@ cat > .restitution/review-fixes.json <<'JSON'
                 },
                 {
                     "file": "src/marketplace/rewriter.ts",
-                    "why": "Rewrite only the plugins that parsed, to keep the skipped count.",
-                    "because": "Needs the new catalog shape from 3.1 first."
+                    "link": "so",
+                    "why": "rewrite only the plugins that parsed, and keep the skipped count."
                 },
                 {
                     "file": "test/marketplace.test.ts",
-                    "why": "Serve a catalog with one broken plugin, to prove the rest survives."
-                }
-            ]
-        },
-        {
-            "title": "Keep the docs in sync",
-            "steps": [
-                {
-                    "file": "README.md",
-                    "why": "Document https-only URLs and the retry setting, so the README matches the code."
-                },
-                {
-                    "file": "src/swagger.js",
-                    "why": "Bump the API version and description, so clients see the new behaviour."
+                    "link": "then",
+                    "why": "write the unit tests to cover what was added, with one broken plugin among good ones."
                 }
             ]
         }
@@ -1044,82 +1028,89 @@ JSON
 cat > .restitution/retries.json <<'JSON'
 {
     "version": 1,
-    "label": "Retries",
-    "request": "Retry transient gateway failures, and let operators tune it",
+    "label": "Retries and logging",
+    "request": "Retry transient gateway failures, and log failures as JSON",
     "goals": [
         {
             "title": "Retry transient gateway failures",
             "steps": [
                 {
-                    "file": "src/gateway/retry.ts",
-                    "why": "Retry 5xx responses with exponential backoff, because the gateway often recovers within a second."
-                },
-                {
-                    "file": "src/gateway/client.ts",
-                    "why": "Run json() through withRetry, so every JSON call benefits.",
-                    "because": "Needs retry.ts from 1.1 first."
+                    "file": "src/errors.ts",
+                    "lines": [
+                        11,
+                        23
+                    ],
+                    "why": "Add a GatewayError that carries the upstream status, so callers can tell a 5xx from a 4xx."
                 },
                 {
                     "file": "src/telemetry/metrics.ts",
-                    "why": "Count every retry, so flaky gateway periods show up."
+                    "link": "in parallel",
+                    "why": "count every retry, so flaky gateway periods show up."
+                },
+                {
+                    "file": "src/gateway/retry.ts",
+                    "link": "so",
+                    "why": "build withRetry on top of both, retrying only 5xx responses with exponential backoff."
+                },
+                {
+                    "file": "src/gateway/client.ts",
+                    "link": "then",
+                    "why": "throw GatewayError and run json() through withRetry, so every JSON call benefits."
+                },
+                {
+                    "file": "src/config.ts",
+                    "lines": [
+                        23,
+                        41
+                    ],
+                    "link": "then",
+                    "why": "read ADAPTER_MAX_RETRIES with a safe default, so operators can tune the retries."
+                },
+                {
+                    "file": "src/index.ts",
+                    "lines": [
+                        2,
+                        14
+                    ],
+                    "link": "then",
+                    "why": "pass the configured count into the client at startup, so the setting takes effect."
                 },
                 {
                     "file": "test/retry.test.ts",
-                    "why": "Cover success, 5xx recovery, 4xx and exhaustion, to pin the retry rules."
+                    "link": "then",
+                    "why": "write the unit tests for the retry rules: success, 5xx recovery, 4xx and exhaustion."
+                },
+                {
+                    "file": "test/config.test.ts",
+                    "lines": [
+                        32,
+                        44
+                    ],
+                    "link": "in parallel",
+                    "why": "test the new setting's default and its invalid value."
+                },
+                {
+                    "file": "README.md",
+                    "lines": [
+                        15,
+                        26
+                    ],
+                    "link": "finally",
+                    "why": "describe the retry behaviour and the setting, so operators know what to expect."
                 }
             ]
         },
         {
-            "title": "Make the retry count configurable",
+            "title": "Log failures as JSON",
             "steps": [
                 {
-                    "file": "src/config.ts",
-                    "lines": [23, 41],
-                    "why": "Read ADAPTER_MAX_RETRIES with a safe default, so operators can tune retries.",
-                    "because": "Needs the retry wiring from 1.2 to have any effect."
-                },
-                {
-                    "file": "src/index.ts",
-                    "lines": [2, 14],
-                    "why": "Pass the configured retry count into the client, so the setting takes effect."
-                },
-                {
-                    "file": "test/config.test.ts",
-                    "lines": [32, 44],
-                    "why": "Check the default and the invalid value, to guard the new setting."
-                }
-            ]
-        }
-    ]
-}
-JSON
-
-cat > .restitution/typed-errors.json <<'JSON'
-{
-    "version": 1,
-    "label": "Typed errors",
-    "request": "Return the right HTTP status for gateway failures",
-    "goals": [
-        {
-            "title": "Return the right status for gateway failures",
-            "steps": [
-                {
-                    "file": "src/errors.ts",
-                    "why": "Give errors an HTTP status and add gateway error types, so routes can map them."
-                },
-                {
-                    "file": "src/gateway/client.ts",
-                    "lines": [15, 38],
-                    "why": "Throw GatewayError with the upstream status, so callers know whether a retry can help.",
-                    "because": "Needs the new error types from 1.1."
+                    "file": "src/middleware/logging.ts",
+                    "why": "Add logError, printing the error's name and message as JSON, so failures are searchable."
                 },
                 {
                     "file": "src/routes/inference.ts",
-                    "why": "Answer with the error's own status and log it, instead of always sending 500."
-                },
-                {
-                    "file": "src/middleware/logging.ts",
-                    "why": "Log the error class and message as JSON, so failures are searchable."
+                    "link": "then",
+                    "why": "call it where inference fails, instead of swallowing the error."
                 }
             ]
         }
@@ -1142,7 +1133,8 @@ cat > .restitution/legacy-router.json <<'JSON'
                 },
                 {
                     "file": "src/index.ts",
-                    "why": "Stop importing the router and answer 404 for unknown paths, so nothing falls through."
+                    "link": "so",
+                    "why": "stop wiring it in and answer 404 for unknown paths, since nothing falls through to the deleted router."
                 }
             ]
         }
@@ -1154,8 +1146,7 @@ JSON
 age() { touch -t "$(date -v-"$1" +%Y%m%d%H%M.%S)" ".restitution/$2.json" 2>/dev/null || true; }
 age 2M review-fixes
 age 25M retries
-age 3H typed-errors
-age 1d legacy-router
+age 3H legacy-router
 
 # Leave everything unstaged, like an agent working in the tree would.
 git reset -q

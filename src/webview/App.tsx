@@ -206,13 +206,6 @@ function TabContent({
         );
     }
     const { restitution } = tab;
-    const labels = new Set(
-        restitution.goals.flatMap((goal, goalIndex) =>
-            goal.steps.map(
-                (_, stepIndex) => `${goalIndex + 1}.${stepIndex + 1}`,
-            ),
-        ),
-    );
     const fingerprints = restitution.goals.map((goal) =>
         goal.steps.map((step) =>
             stepFingerprint(
@@ -271,8 +264,6 @@ function TabContent({
     };
     const gotoGoal = (goal: number) =>
         reveal(goal, `[data-goal="${goal + 1}"]`);
-    const gotoStep = (label: string) =>
-        reveal(Number(label.split(".")[0]) - 1, `[data-step="${label}"]`);
 
     return (
         <>
@@ -295,11 +286,9 @@ function TabContent({
                     viewed={viewed}
                     diffs={diffs}
                     folded={folded.has(index)}
-                    labels={labels}
                     onToggleFold={() => toggleFold(index)}
                     onViewedChange={changeViewed}
                     onOpenRequest={(request) => host.send(request)}
-                    onGoto={gotoStep}
                 />
             ))}
         </>

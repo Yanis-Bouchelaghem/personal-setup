@@ -8,13 +8,21 @@ const LineRange = z
     .tuple([z.number().int().positive(), z.number().int().positive()])
     .refine(([from, to]) => from <= to, "lines must be [from, to]");
 
+/**
+ * How a step follows the previous one in its goal. The page reads as one
+ * sentence: the step's text continues after the connector word.
+ */
+export const LINKS = ["then", "so", "in parallel", "finally"] as const;
+export type Link = (typeof LINKS)[number];
+
 export const StepSchema = z.object({
     why: z.string().min(1),
     /** Path relative to the git root. */
     file: z.string().min(1).optional(),
     /** New-side line range; without it the step covers the whole file's diff. */
     lines: LineRange.optional(),
-    because: z.string().min(1).optional(),
+    /** Leave out on the first step of a goal; no word means "then". */
+    link: z.enum(LINKS).optional(),
 });
 
 export const GoalSchema = z.object({

@@ -3,7 +3,7 @@ import { Fragment, useLayoutEffect } from "react";
 import type { FileDiff } from "../core/diff";
 import type { OpenRequest } from "../core/messages";
 import type { Goal } from "../core/restitution";
-import { Because } from "./Because";
+import { Connector } from "./Connector";
 import { ChevronIcon } from "./Icons";
 import { StepCard } from "./StepCard";
 import { useScrollAnchor } from "./useScrollAnchor";
@@ -15,11 +15,9 @@ export function GoalSection({
     viewed,
     diffs,
     folded,
-    labels,
     onToggleFold,
     onViewedChange,
     onOpenRequest,
-    onGoto,
 }: {
     goal: Goal;
     number: number;
@@ -28,12 +26,9 @@ export function GoalSection({
     viewed: ReadonlySet<string>;
     diffs: Record<string, FileDiff>;
     folded: boolean;
-    /** Every step label in the restitution, for `because` references. */
-    labels: ReadonlySet<string>;
     onToggleFold: () => void;
     onViewedChange: (fingerprint: string, viewed: boolean) => void;
     onOpenRequest: (request: OpenRequest) => void;
-    onGoto: (label: string) => void;
 }) {
     const { box, head, remember } = useScrollAnchor<
         HTMLElement,
@@ -96,12 +91,8 @@ export function GoalSection({
                         const fingerprint = fingerprints[index] ?? "";
                         return (
                             <Fragment key={`${index}-${step.why}`}>
-                                {step.because && (
-                                    <Because
-                                        text={step.because}
-                                        labels={labels}
-                                        onGoto={onGoto}
-                                    />
+                                {index > 0 && (
+                                    <Connector link={step.link ?? "then"} />
                                 )}
                                 <StepCard
                                     step={step}

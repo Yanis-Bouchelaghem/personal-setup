@@ -8,7 +8,7 @@ Plan and milestones: `~/.claude/plans/eager-sauteeing-treehouse.md` (scroll mode
 
 - A JSON file is the contract between agent and viewer. The agent writes it through an MCP tool; writing the file by hand also works.
 - Explanations live only in the side panel. "Open in editor" opens the native `vscode.diff` on demand.
-- Causality ("because of the previous step") is an optional field the model writes when it helps the reader. Nothing derives it.
+- Each step after the first in a goal carries a connector word (`link`: then, so, in parallel, finally; default then). The page reads as one sentence: the next card's text continues after the word. The model chooses the word; nothing checks it, because this is only a guide.
 - The explanation is optional. Nothing blocks a commit or a turn.
 - MCP transport is **stdio** with the official SDK: the agent spawns it in the project folder, so it finds the repo for free, with no port, token or stale URL.
 - Colours come only from VS Code theme variables. "Glass" is a light touch on cards and sticky headers.
@@ -28,7 +28,7 @@ src/webview/    React app; `npm run webview:dev` runs it in a browser with fixtu
 In `<gitRoot>/.restitution/` (the git root can sit above the workspace folder), **one file per restitution**, shown as one tab each:
 
 - `<id>.json`: the agent's content. Each MCP server process (one per agent session) makes its own id on its first submit and replaces that file on later submits, so concurrent agents never overwrite each other. Any `*.json` here is a tab (a hand-written `working.json` works too).
-- `<id>.review.json`: the human's Viewed state (notes later), written only by the extension. Viewed is keyed by a fingerprint of the step's words and changed lines (not line numbers), so a step the agent rewrites, or whose code changes, shows up unviewed again. It moves with its tab into the archive and back.
+- `<id>.review.json`: the human's Viewed state (notes later), written only by the extension. Viewed is keyed by a fingerprint of the file and the changed lines (not line numbers, not the step's words), so rewording a step keeps it viewed, while changed code shows up unviewed again. It moves with its tab into the archive and back.
 - `archive/`: closing a tab moves its file here, with no confirmation (a modal is too heavy and not keyboard friendly; the way back is the safety net). The clock button at the end of the tab strip, or "Restitution: Reopen closed tab", lists them (most recently closed first, using the file's ctime) and brings one back, selected. If the agent wrote a new file with the same id in the meantime, the old one comes back under a free id.
 
 The tab name is `label`, else `request`, else the first goal. The extension keeps `.restitution/` out of `git status` through `.git/info/exclude`. A hunk counts as explained when any tab covers it, so coverage warnings don't blame one agent for another's files.
@@ -49,7 +49,7 @@ The tab name is `label`, else `request`, else the first goal. The extension keep
                 {
                     "file": "src/marketplace/marketplaceRewriter.ts",
                     "why": "Check each plugin on its own, to drop only the bad ones.",
-                    "because": "Needs the looser schema first, otherwise every plugin is still rejected."
+                    "link": "so"
                 }
             ]
         }
@@ -59,7 +59,12 @@ The tab name is `label`, else `request`, else the first goal. The extension keep
 
 ## Writing rules (for the agent)
 
-The rules agents follow live in `src/core/guide.ts`: it is both what the MCP server sends as `instructions` and what `restitution_guide` returns, so there is one source of truth. In short: goals come from the request and are independent changesets; one short action-then-reason sentence per step; a test goes in the same step as its code; `because` only when it helps the reader; no background, no "what to check".
+The rules agents follow live in `src/core/guide.ts`: it is both what the MCP server sends as `instructions` and what `restitution_guide` returns, so there is one source of truth. In short:
+
+- Goals come from the request. **A goal stands on its own and could be reverted without touching another goal**; parts that only make sense together (a feature with its config, tests and docs) are one goal with several steps. There is no limit on steps: the model should teach well, and the user can ask for more or less detail.
+- A step's `why` is one short sentence, action then reason. The first step of a goal starts the sentence; every other step continues after its connector word, so the goal reads aloud as one sentence.
+- Connector words, with the definition each agent is given: **then** (the default: comes after and builds on the previous step), **so** (the previous step forces this one), **in parallel** (independent of the previous step, readable in either order), **finally** (the last step, wrapping up: docs, cleanup). There are no connectors between goals.
+- No background and no "what to check".
 
 `file` is relative to the git root. `lines` is an optional `[from, to]` on the new side, to pick one hunk of a big file.
 
@@ -77,5 +82,5 @@ The rules agents follow live in `src/core/guide.ts`: it is both what the MCP ser
 - **Tabs** along the top, one per restitution file.
 - **Overview** (from two goals up): the goals with their progress, and a click jumps to one, unfolding it first.
 - **Goals** are foldable: the whole header is the control. Folding keeps the header where it was, so nothing jumps.
-- **Steps** hang on a rail inside their goal. A step's `because` is drawn as a connector between it and the previous card, and any step label in it ("1.2") is a button that scrolls there.
+- **Steps** hang on a rail inside their goal. Between two cards sits one prominent connector word, so the goal reads as a sentence.
 - **Viewed** folds a step to its header; the whole step header toggles it.

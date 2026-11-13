@@ -17,7 +17,13 @@ const many: Restitution = {
                 },
                 {
                     file: "test/config.test.ts",
-                    why: "Pin the startup failure for http URLs, to catch a regression early.",
+                    link: "then",
+                    why: "write the test that rejects an http URL, to catch a regression early.",
+                },
+                {
+                    file: "src/swagger.js",
+                    link: "finally",
+                    why: "say in the API description that the URL must be https, so the docs match.",
                 },
             ],
         },
@@ -31,7 +37,8 @@ const many: Restitution = {
                 },
                 {
                     file: "test/gateway/btapGatewayClient.test.ts",
-                    why: "Assert a single header goes out, to prove the casing clash is gone.",
+                    link: "then",
+                    why: "assert that a single header goes out, to prove the casing clash is gone.",
                 },
             ],
         },
@@ -41,27 +48,18 @@ const many: Restitution = {
             steps: [
                 {
                     file: "src/marketplace/marketplaceSchema.ts",
-                    why: "Loosen the plugin schema, so one malformed entry no longer fails the parse.",
+                    why: "Parse each plugin on its own, so one bad entry can't fail the catalog.",
                 },
                 {
                     file: "src/marketplace/marketplaceRewriter.ts",
                     lines: [10, 24],
-                    why: "Check each plugin on its own, to drop only the bad ones.",
-                    because:
-                        "Needs the looser schema first, otherwise every plugin is still rejected up front.",
+                    link: "so",
+                    why: "rewrite only the plugins that parsed, and keep the skipped count.",
                 },
                 {
                     file: "test/marketplace/marketplace.test.ts",
-                    why: "Serve a catalog with one broken plugin, to prove the rest survives.",
-                },
-            ],
-        },
-        {
-            title: "Keep the swagger file in sync",
-            steps: [
-                {
-                    file: "src/swagger.js",
-                    why: "Describe the https-only setting, so the docs match the new behaviour.",
+                    link: "then",
+                    why: "write the unit tests to cover what was added, with one broken plugin among good ones.",
                 },
             ],
         },
@@ -77,8 +75,11 @@ const long: Restitution = {
                 {
                     file: "src/some/deeply/nested/folder/structure/that/keeps/going/andGoing.ts",
                     why: "Rename the helper everywhere, so the intent reads the same in every call site and in every test that exercises it afterwards.",
-                    because:
-                        "The earlier step moved the logic here, which is why this one has to follow it directly.",
+                },
+                {
+                    file: "src/some/other/deeply/nested/folder/structure/that/keeps/going/andGoingToo.ts",
+                    link: "in parallel",
+                    why: "update the second module the same way, which does not depend on the first.",
                 },
             ],
         },
