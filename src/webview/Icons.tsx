@@ -77,3 +77,12 @@ export function CloseIcon() {
         </svg>
     );
 }
+
+/** A clock with a counter-clockwise arrow: bring something back. */
+export function HistoryIcon() {
+    return (
+        <Icon>
+            <path d="M2.5 8a5.5 5.5 0 1 0 1.7-4M2.5 2.5v3h3M8 5v3.2l2 1.3" />
+        </Icon>
+    );
+}

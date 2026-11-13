@@ -16,11 +16,14 @@ import { describe, expect, it } from "vitest";
 import type { Restitution } from "../core/restitution";
 import {
     archiveTab,
+    countClosed,
     isTabId,
     newTabId,
+    readClosedTabs,
     readTabs,
     readViewState,
     restitutionDir,
+    restoreTab,
     writeRestitution,
 } from "./store";
 import { submitRestitution } from "./submit";
@@ -108,7 +111,10 @@ describe("tabs", () => {
     });
 
     it("reports an empty folder as empty", async () => {
-        expect(await readViewState(repo())).toEqual({ status: "empty" });
+        expect(await readViewState(repo())).toEqual({
+            status: "empty",
+            closed: 0,
+        });
     });
 
     it("loads the diffs every tab points at, once", async () => {
@@ -149,5 +155,53 @@ describe("submitRestitution", () => {
         expect(
             readFileSync(join(restitutionDir(dir), "mine.json"), "utf8"),
         ).toMatch(/v2/);
+    });
+});
+
+describe("closed tabs", () => {
+    it("lists closed tabs, most recently closed first, and counts them", async () => {
+        const dir = repo();
+        await writeRestitution(dir, "one", restitution("a.ts", "First"));
+        await writeRestitution(dir, "two", restitution("b.ts", "Second"));
+        await archiveTab(dir, "one");
+        await new Promise((resolve) => setTimeout(resolve, 20));
+        await archiveTab(dir, "two");
+
+        expect((await readClosedTabs(dir)).map((tab) => tab.label)).toEqual([
+            "Second",
+            "First",
+        ]);
+        expect(await countClosed(dir)).toBe(2);
+        expect(await readViewState(dir)).toEqual({
+            status: "empty",
+            closed: 2,
+        });
+    });
+
+    it("restores a tab under its own id", async () => {
+        const dir = repo();
+        await writeRestitution(dir, "back", restitution("a.ts"));
+        await archiveTab(dir, "back");
+
+        expect(await restoreTab(dir, "back")).toBe("back");
+        expect((await readTabs(dir)).map((tab) => tab.id)).toEqual(["back"]);
+        expect(await countClosed(dir)).toBe(0);
+    });
+
+    it("does not overwrite a tab the agent wrote after the close", async () => {
+        const dir = repo();
+        await writeRestitution(dir, "same", restitution("a.ts", "Old"));
+        await archiveTab(dir, "same");
+        await writeRestitution(dir, "same", restitution("b.ts", "New"));
+
+        expect(await restoreTab(dir, "same")).toBe("same-2");
+        const labels = (await readTabs(dir)).map((tab) => tab.label).toSorted();
+        expect(labels).toEqual(["New", "Old"]);
+    });
+
+    it("has nothing to list before anything was closed", async () => {
+        const dir = repo();
+        expect(await readClosedTabs(dir)).toEqual([]);
+        expect(await countClosed(dir)).toBe(0);
     });
 });

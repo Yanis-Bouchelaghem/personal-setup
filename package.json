@@ -69,6 +69,10 @@
       {
         "command": "restitution.connectAgents",
         "title": "Restitution: Connect agents"
+      },
+      {
+        "command": "restitution.reopenTab",
+        "title": "Restitution: Reopen closed tab"
       }
     ],
     "mcpServerDefinitionProviders": [

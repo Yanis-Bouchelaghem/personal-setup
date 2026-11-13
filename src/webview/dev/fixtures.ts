@@ -170,6 +170,7 @@ const small: Restitution = {
 export const fixtures: Record<string, ViewState> = {
     many: {
         status: "ok",
+        closed: 2,
         tabs: [
             {
                 kind: "ok",
@@ -199,6 +200,7 @@ export const fixtures: Record<string, ViewState> = {
     },
     one: {
         status: "ok",
+        closed: 0,
         tabs: [
             {
                 kind: "ok",
@@ -212,6 +214,7 @@ export const fixtures: Record<string, ViewState> = {
     },
     long: {
         status: "ok",
+        closed: 0,
         tabs: [
             {
                 kind: "ok",
@@ -230,7 +233,8 @@ export const fixtures: Record<string, ViewState> = {
         ],
         diffs: {},
     },
-    empty: { status: "empty" },
+    empty: { status: "empty", closed: 0 },
+    emptyClosed: { status: "empty", closed: 2 },
     norepo: { status: "no-repo" },
     error: {
         status: "error",

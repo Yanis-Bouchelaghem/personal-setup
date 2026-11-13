@@ -102,9 +102,12 @@ export async function readTabs(gitRoot: string): Promise<Tab[]> {
 
 /** What the panel shows: every tab, plus the diffs their steps point at. */
 export async function readViewState(gitRoot: string): Promise<ViewState> {
-    const tabs = await readTabs(gitRoot);
+    const [tabs, closed] = await Promise.all([
+        readTabs(gitRoot),
+        countClosed(gitRoot),
+    ]);
     if (tabs.length === 0) {
-        return { status: "empty" };
+        return { status: "empty", closed };
     }
     const files = tabs.flatMap((tab) =>
         tab.kind === "ok"
@@ -115,7 +118,7 @@ export async function readViewState(gitRoot: string): Promise<ViewState> {
     );
     // A git hiccup must not hide the explanations: show them without hunks.
     const diffs = await readDiffs(gitRoot, files).catch(() => ({}));
-    return { status: "ok", tabs, diffs };
+    return { status: "ok", tabs, closed, diffs };
 }
 
 /**
@@ -169,4 +172,70 @@ export async function archiveTab(gitRoot: string, id: string): Promise<void> {
         join(restitutionDir(gitRoot), `${id}.json`),
         join(archive, `${id}.json`),
     );
+}
+
+async function closedNames(gitRoot: string): Promise<string[]> {
+    return readdir(join(restitutionDir(gitRoot), ARCHIVE)).catch((error) => {
+        if (isNotFound(error)) {
+            return [];
+        }
+        throw error;
+    });
+}
+
+export async function countClosed(gitRoot: string): Promise<number> {
+    return tabIds(await closedNames(gitRoot)).length;
+}
+
+export type ClosedTab = { id: string; label: string; closedAt: number };
+
+/**
+ * Closed tabs, most recently closed first. Moving a file changes its ctime
+ * but not its mtime, so ctime is when it was closed.
+ */
+export async function readClosedTabs(gitRoot: string): Promise<ClosedTab[]> {
+    const folder = join(restitutionDir(gitRoot), ARCHIVE);
+    const tabs = await Promise.all(
+        tabIds(await closedNames(gitRoot)).map(async (id) => {
+            const file = join(folder, `${id}.json`);
+            try {
+                const [text, info] = await Promise.all([
+                    readFile(file, "utf8"),
+                    stat(file),
+                ]);
+                const parsed = parseRestitution(text);
+                const label = parsed.ok ? tabLabel(parsed.value) : id;
+                return { id, label, closedAt: info.ctimeMs };
+            } catch (error) {
+                if (isNotFound(error)) {
+                    return undefined;
+                }
+                throw error;
+            }
+        }),
+    );
+    return tabs
+        .filter((tab) => tab !== undefined)
+        .toSorted((a, b) => b.closedAt - a.closedAt);
+}
+
+/**
+ * Bring a closed tab back. If the agent has since written a new file with the
+ * same id, the old one comes back under a free id instead of replacing it.
+ */
+export async function restoreTab(gitRoot: string, id: string): Promise<string> {
+    if (!isTabId(id)) {
+        throw new Error(`Invalid restitution id: ${id}`);
+    }
+    const folder = restitutionDir(gitRoot);
+    const taken = new Set(tabIds(await readdir(folder)));
+    let target = id;
+    for (let n = 2; taken.has(target); n++) {
+        target = `${id}-${n}`;
+    }
+    await rename(
+        join(folder, ARCHIVE, `${id}.json`),
+        join(folder, `${target}.json`),
+    );
+    return target;
 }

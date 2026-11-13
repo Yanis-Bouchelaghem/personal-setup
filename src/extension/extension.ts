@@ -11,6 +11,7 @@ import {
 } from "./connectAgents";
 import { openInEditor } from "./openInEditor";
 import { PlanViewProvider } from "./planView";
+import { confirmClose, reopenTab } from "./reopenTab";
 import { watchRestitution } from "./watchRestitution";
 
 export function activate(context: vscode.ExtensionContext): void {
@@ -28,16 +29,32 @@ export function activate(context: vscode.ExtensionContext): void {
             }
         },
         // The watcher sees the file leave `.restitution/` and refreshes the panel.
-        onCloseTab: (id) => {
-            if (root) {
-                archiveTab(root, id).catch((error: unknown) =>
+        onCloseTab: (id, label) => {
+            if (!root) {
+                return;
+            }
+            confirmClose(label)
+                .then(async (confirmed) => {
+                    if (confirmed) {
+                        await archiveTab(root, id);
+                    }
+                })
+                .catch((error: unknown) =>
                     log.error(`Could not close tab ${id}: ${String(error)}`),
                 );
-            }
         },
+        onReopenTab: () => reopen(),
     });
+    const reopen = () => {
+        if (root) {
+            reopenTab(root, plan).catch((error: unknown) =>
+                log.error(`Could not reopen a tab: ${String(error)}`),
+            );
+        }
+    };
     context.subscriptions.push(
         log,
+        vscode.commands.registerCommand("restitution.reopenTab", reopen),
         vscode.window.registerWebviewViewProvider(
             PlanViewProvider.viewType,
             plan,

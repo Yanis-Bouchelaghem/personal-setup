@@ -1,8 +1,8 @@
-import type { FromWebview, ToWebview, ViewState } from "../core/messages";
+import type { FromWebview, ToWebview } from "../core/messages";
 
 /** How the app talks to its surroundings: VS Code, or fixtures in a browser. */
 export interface Host {
-    subscribe(listener: (state: ViewState) => void): () => void;
+    subscribe(listener: (message: ToWebview) => void): () => void;
     send(message: FromWebview): void;
 }
 
@@ -14,11 +14,8 @@ export function vscodeHost(): Host {
     const api = acquireVsCodeApi();
     return {
         subscribe(listener) {
-            const onMessage = (event: MessageEvent<ToWebview>) => {
-                if (event.data.type === "state") {
-                    listener(event.data.state);
-                }
-            };
+            const onMessage = (event: MessageEvent<ToWebview>) =>
+                listener(event.data);
             window.addEventListener("message", onMessage);
             return () => window.removeEventListener("message", onMessage);
         },

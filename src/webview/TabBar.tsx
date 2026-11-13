@@ -1,19 +1,26 @@
 import type { Tab } from "../core/messages";
-import { CloseIcon } from "./Icons";
+import { CloseIcon, HistoryIcon } from "./Icons";
 
-/** One pill per restitution. A dot marks a tab that changed while you were elsewhere. */
+/**
+ * One tab per restitution. A dot marks a tab that changed while you were
+ * elsewhere; the clock button at the end brings back a closed one.
+ */
 export function TabBar({
     tabs,
     activeId,
     unread,
+    closed,
     onSelect,
     onClose,
+    onReopen,
 }: {
     tabs: Tab[];
     activeId: string;
     unread: ReadonlySet<string>;
+    closed: number;
     onSelect: (id: string) => void;
-    onClose: (id: string) => void;
+    onClose: (tab: Tab) => void;
+    onReopen: () => void;
 }) {
     return (
         <div className="tabbar">
@@ -40,14 +47,25 @@ export function TabBar({
                             className="tab-close"
                             type="button"
                             aria-label={`Close ${tab.label}`}
-                            title="Close (kept in .restitution/archive)"
-                            onClick={() => onClose(tab.id)}
+                            title="Close"
+                            onClick={() => onClose(tab)}
                         >
                             <CloseIcon />
                         </button>
                     </div>
                 ))}
             </div>
+            {closed > 0 && (
+                <button
+                    className="icon-btn tabbar-action"
+                    type="button"
+                    aria-label="Reopen a closed tab"
+                    title={`Reopen a closed tab (${closed})`}
+                    onClick={onReopen}
+                >
+                    <HistoryIcon />
+                </button>
+            )}
         </div>
     );
 }

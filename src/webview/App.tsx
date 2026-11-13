@@ -8,22 +8,41 @@ import { Notice } from "./Notice";
 import { TabBar } from "./TabBar";
 
 export function App({ host }: { host: Host }) {
-    const [state, setState] = useState<ViewState>({ status: "empty" });
+    const [state, setState] = useState<ViewState>({
+        status: "empty",
+        closed: 0,
+    });
+    // A new object on every request, so selecting the same tab twice still works.
+    const [focus, setFocus] = useState<{ id: string }>();
 
     useEffect(() => {
-        const unsubscribe = host.subscribe(setState);
+        const unsubscribe = host.subscribe((message) => {
+            if (message.type === "state") {
+                setState(message.state);
+            } else {
+                setFocus({ id: message.id });
+            }
+        });
         host.send({ type: "ready" });
         return unsubscribe;
     }, [host]);
 
     return (
         <main className="app">
-            <Body state={state} host={host} />
+            <Body state={state} focus={focus} host={host} />
         </main>
     );
 }
 
-function Body({ state, host }: { state: ViewState; host: Host }) {
+function Body({
+    state,
+    focus,
+    host,
+}: {
+    state: ViewState;
+    focus: { id: string } | undefined;
+    host: Host;
+}) {
     if (state.status === "no-repo") {
         return (
             <Notice title="No git repository">
@@ -36,6 +55,15 @@ function Body({ state, host }: { state: ViewState; host: Host }) {
             <Notice title="Nothing to read yet">
                 Ask your agent to explain the change it just made. It will
                 appear here.
+                {state.closed > 0 && (
+                    <button
+                        className="text-btn"
+                        type="button"
+                        onClick={() => host.send({ type: "reopenTab" })}
+                    >
+                        Reopen a closed tab ({state.closed})
+                    </button>
+                )}
             </Notice>
         );
     }
@@ -46,7 +74,15 @@ function Body({ state, host }: { state: ViewState; host: Host }) {
             </Notice>
         );
     }
-    return <Tabs tabs={state.tabs} diffs={state.diffs} host={host} />;
+    return (
+        <Tabs
+            tabs={state.tabs}
+            diffs={state.diffs}
+            closed={state.closed}
+            focus={focus}
+            host={host}
+        />
+    );
 }
 
 function ErrorList({ errors }: { errors: string[] }) {
@@ -68,13 +104,24 @@ function ErrorList({ errors }: { errors: string[] }) {
 function Tabs({
     tabs,
     diffs,
+    closed,
+    focus,
     host,
 }: {
     tabs: Tab[];
     diffs: Record<string, FileDiff>;
+    closed: number;
+    focus: { id: string } | undefined;
     host: Host;
 }) {
-    const [selected, setSelected] = useState<string>();
+    const [selected, setSelected] = useState<string | undefined>(focus?.id);
+
+    useEffect(() => {
+        if (focus) {
+            setSelected(focus.id);
+        }
+    }, [focus]);
+
     const [seen, setSeen] = useState<Record<string, number>>({});
     const initialized = useRef(false);
 
@@ -116,8 +163,16 @@ function Tabs({
                 tabs={tabs}
                 activeId={active.id}
                 unread={unread}
+                closed={closed}
                 onSelect={setSelected}
-                onClose={(id) => host.send({ type: "closeTab", id })}
+                onClose={(tab) =>
+                    host.send({
+                        type: "closeTab",
+                        id: tab.id,
+                        label: tab.label,
+                    })
+                }
+                onReopen={() => host.send({ type: "reopenTab" })}
             />
             <TabContent
                 key={active.id}

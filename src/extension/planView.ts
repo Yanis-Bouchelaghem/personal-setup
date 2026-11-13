@@ -14,13 +14,14 @@ export class PlanViewProvider implements vscode.WebviewViewProvider {
     static readonly viewType = "restitution.plan";
 
     private view: vscode.WebviewView | undefined;
-    private state: ViewState = { status: "empty" };
+    private state: ViewState = { status: "empty", closed: 0 };
 
     constructor(
         private readonly extensionUri: vscode.Uri,
         private readonly handlers: {
             onOpen: (request: OpenRequest) => void;
-            onCloseTab: (id: string) => void;
+            onCloseTab: (id: string, label: string) => void;
+            onReopenTab: () => void;
         },
     ) {}
 
@@ -40,7 +41,9 @@ export class PlanViewProvider implements vscode.WebviewViewProvider {
             if (message.type === "ready") {
                 this.post();
             } else if (message.type === "closeTab") {
-                this.handlers.onCloseTab(message.id);
+                this.handlers.onCloseTab(message.id, message.label);
+            } else if (message.type === "reopenTab") {
+                this.handlers.onReopenTab();
             } else {
                 this.handlers.onOpen(message);
             }
@@ -48,6 +51,12 @@ export class PlanViewProvider implements vscode.WebviewViewProvider {
         view.onDidDispose(() => {
             this.view = undefined;
         });
+    }
+
+    /** Switch the panel to a tab, for instance one that was just reopened. */
+    select(id: string): void {
+        const message: ToWebview = { type: "select", id };
+        void this.view?.webview.postMessage(message);
     }
 
     setState(state: ViewState): void {

@@ -10,7 +10,7 @@ const params = new URLSearchParams(location.search);
 function fixtureHost(state: ViewState): Host {
     return {
         subscribe(listener) {
-            listener(state);
+            listener({ type: "state", state });
             return () => undefined;
         },
         send: (message) => console.info("to host:", message),
@@ -29,7 +29,7 @@ export function DevShell() {
     }, [theme]);
 
     const host = useMemo(
-        () => fixtureHost(fixtures[fixture] ?? { status: "empty" }),
+        () => fixtureHost(fixtures[fixture] ?? { status: "empty", closed: 0 }),
         [fixture],
     );
 

@@ -21,17 +21,22 @@ export type Tab =
 /** What the panel shows. The extension computes it, the webview renders it. */
 export type ViewState =
     | { status: "no-repo" }
-    | { status: "empty" }
+    | { status: "empty"; closed: number }
     | { status: "error"; errors: string[] }
     | {
           status: "ok";
           /** Newest first. */
           tabs: Tab[];
+          /** How many closed tabs could be reopened. */
+          closed: number;
           /** Working-tree diffs for the files any step points at, by path. */
           diffs: Record<string, FileDiff>;
       };
 
-export type ToWebview = { type: "state"; state: ViewState };
+export type ToWebview =
+    | { type: "state"; state: ViewState }
+    /** Switch to this tab (after reopening it). */
+    | { type: "select"; id: string };
 
 export type OpenDiff = {
     type: "openDiff";
@@ -45,6 +50,12 @@ export type OpenFile = { type: "openFile"; file: string; line?: number };
 /** Both buttons on a card: the change as a diff, or the file at its line. */
 export type OpenRequest = OpenDiff | OpenFile;
 
-export type CloseTab = { type: "closeTab"; id: string };
+export type CloseTab = { type: "closeTab"; id: string; label: string };
 
-export type FromWebview = { type: "ready" } | OpenRequest | CloseTab;
+export type ReopenTab = { type: "reopenTab" };
+
+export type FromWebview =
+    | { type: "ready" }
+    | OpenRequest
+    | CloseTab
+    | ReopenTab;
