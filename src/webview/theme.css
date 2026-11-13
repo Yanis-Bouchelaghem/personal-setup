@@ -13,6 +13,7 @@
     --radius-lg: 14px;
     --radius-md: 10px;
     --radius-sm: 8px;
+    --tabs-h: 40px;
 
     /* The editor background sits a touch above the side bar in most themes. */
     --glass-fill: color-mix(
@@ -84,7 +85,7 @@ body {
 
 .goal-head {
     position: sticky;
-    top: 8px;
+    top: calc(var(--tabs-h) + 16px);
     z-index: 2;
     display: flex;
     align-items: center;
@@ -378,4 +379,102 @@ body {
 
 .icon-btn:hover {
     color: var(--fg);
+}
+
+/* Tabs */
+.tabs {
+    position: sticky;
+    top: 8px;
+    z-index: 3;
+    display: flex;
+    gap: 4px;
+    height: var(--tabs-h);
+    margin: 0 0 10px;
+    padding: 5px;
+    overflow-x: auto;
+    border-radius: var(--radius-lg);
+    background: var(--glass-fill-strong);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    backdrop-filter: blur(16px) saturate(150%);
+    scrollbar-width: none;
+}
+
+.tab {
+    display: flex;
+    flex: none;
+    align-items: center;
+    max-width: 190px;
+    border: 1px solid transparent;
+    border-radius: var(--radius-md);
+    color: var(--muted);
+    transition:
+        color 0.15s ease,
+        background-color 0.15s ease;
+}
+
+.tab:hover {
+    color: var(--fg);
+    background: color-mix(in srgb, var(--fg) 7%, transparent);
+}
+
+.tab.active {
+    color: var(--fg);
+    background: color-mix(in srgb, var(--accent) 20%, transparent);
+    border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+}
+
+.tab-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    padding: 3px 2px 3px 10px;
+    border: 0;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.tab-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.dot {
+    flex: none;
+    width: 6px;
+    height: 6px;
+    border-radius: 999px;
+    background: var(--accent);
+}
+
+.tab-close {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    margin-right: 4px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: inherit;
+    opacity: 0.55;
+    cursor: pointer;
+}
+
+.tab-close:hover {
+    opacity: 1;
+    background: color-mix(in srgb, var(--fg) 12%, transparent);
+}
+
+.tab-label:focus-visible,
+.tab-close:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: 1px;
 }

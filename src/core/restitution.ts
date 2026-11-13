@@ -25,6 +25,8 @@ export const GoalSchema = z.object({
 
 export const RestitutionSchema = z.object({
     version: z.literal(1),
+    /** Short tab name; defaults to the request, then the first goal. */
+    label: z.string().min(1).optional(),
     request: z.string().min(1).optional(),
     goals: z.array(GoalSchema).min(1),
 });
@@ -56,4 +58,14 @@ export function parseRestitution(text: string): ParseResult {
             (issue) => `${issue.path.join(".") || "(root)"}: ${issue.message}`,
         ),
     };
+}
+
+/** The name shown on the restitution's tab. */
+export function tabLabel(restitution: Restitution): string {
+    return (
+        restitution.label ??
+        restitution.request ??
+        restitution.goals[0]?.title ??
+        "Restitution"
+    );
 }

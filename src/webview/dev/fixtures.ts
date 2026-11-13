@@ -148,9 +148,88 @@ const diffs = Object.fromEntries(
     parseUnifiedDiff(SAMPLE_DIFFS).map((diff) => [diff.file, diff]),
 );
 
+const ago = (minutes: number) => Date.now() - minutes * 60_000;
+
+const small: Restitution = {
+    version: 1,
+    label: "Request id header",
+    request: "Add an X-Request-Id header",
+    goals: [
+        {
+            title: "Send X-Request-Id with every gateway call",
+            steps: [
+                {
+                    file: "src/gateway/btapGatewayClient.ts",
+                    why: "Add a random X-Request-Id, so each call can be traced.",
+                },
+            ],
+        },
+    ],
+};
+
 export const fixtures: Record<string, ViewState> = {
-    many: { status: "ok", restitution: many, diffs },
-    long: { status: "ok", restitution: long, diffs: {} },
+    many: {
+        status: "ok",
+        tabs: [
+            {
+                kind: "ok",
+                id: "a1",
+                label: "Review fixes",
+                updatedAt: ago(1),
+                restitution: { ...many, label: "Review fixes" },
+            },
+            {
+                kind: "ok",
+                id: "b2",
+                label: "Request id header",
+                updatedAt: ago(35),
+                restitution: small,
+            },
+            {
+                kind: "error",
+                id: "c3",
+                label: "c3",
+                updatedAt: ago(300),
+                errors: [
+                    "goals.0.steps: Too small: expected array to have >=1 items",
+                ],
+            },
+        ],
+        diffs,
+    },
+    one: {
+        status: "ok",
+        tabs: [
+            {
+                kind: "ok",
+                id: "a1",
+                label: "Review fixes",
+                updatedAt: ago(1),
+                restitution: { ...many, label: "Review fixes" },
+            },
+        ],
+        diffs,
+    },
+    long: {
+        status: "ok",
+        tabs: [
+            {
+                kind: "ok",
+                id: "l1",
+                label: "A tab label that is much too long to fit in the strip",
+                updatedAt: ago(2),
+                restitution: long,
+            },
+            {
+                kind: "ok",
+                id: "l2",
+                label: "Second",
+                updatedAt: ago(9),
+                restitution: small,
+            },
+        ],
+        diffs: {},
+    },
     empty: { status: "empty" },
     norepo: { status: "no-repo" },
     error: {

@@ -25,12 +25,13 @@ src/webview/    React app; `npm run webview:dev` runs it in a browser with fixtu
 
 ## Files
 
-In `<gitRoot>/.restitution/` (the git root can sit above the workspace folder):
+In `<gitRoot>/.restitution/` (the git root can sit above the workspace folder), **one file per restitution**, shown as one tab each:
 
-- `working.json`: the agent's content (this file).
-- `working.review.json`: the human's Viewed state and notes (later). Separate, so an agent rewriting its restitution never wipes review state.
+- `<id>.json`: the agent's content. Each MCP server process (one per agent session) makes its own id on its first submit and replaces that file on later submits, so concurrent agents never overwrite each other. Any `*.json` here is a tab (a hand-written `working.json` works too).
+- `<id>.review.json`: the human's Viewed state and notes (later). Separate, so an agent rewriting its restitution never wipes review state.
+- `archive/`: closed tabs move here, so closing is reversible.
 
-The extension keeps `.restitution/` out of `git status` through `.git/info/exclude`.
+The tab name is `label`, else `request`, else the first goal. The extension keeps `.restitution/` out of `git status` through `.git/info/exclude`. A hunk counts as explained when any tab covers it, so coverage warnings don't blame one agent for another's files.
 
 ```json
 {

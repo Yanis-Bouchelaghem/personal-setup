@@ -3,6 +3,7 @@ import { homedir } from "node:os";
 import * as vscode from "vscode";
 
 import { findGitRoot } from "../node/gitRoot";
+import { archiveTab } from "../node/store";
 import {
     connectAgents,
     installServer,
@@ -18,12 +19,22 @@ export function activate(context: vscode.ExtensionContext): void {
     // The git root can sit above the workspace folder (a module in a monorepo).
     const root = folder && findGitRoot(folder.uri.fsPath);
 
-    const plan = new PlanViewProvider(context.extensionUri, (request) => {
-        if (root) {
-            openInEditor(root, request).catch((error: unknown) =>
-                log.error(`Could not open in editor: ${String(error)}`),
-            );
-        }
+    const plan = new PlanViewProvider(context.extensionUri, {
+        onOpen: (request) => {
+            if (root) {
+                openInEditor(root, request).catch((error: unknown) =>
+                    log.error(`Could not open in editor: ${String(error)}`),
+                );
+            }
+        },
+        // The watcher sees the file leave `.restitution/` and refreshes the panel.
+        onCloseTab: (id) => {
+            if (root) {
+                archiveTab(root, id).catch((error: unknown) =>
+                    log.error(`Could not close tab ${id}: ${String(error)}`),
+                );
+            }
+        },
     });
     context.subscriptions.push(
         log,

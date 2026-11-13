@@ -10,7 +10,7 @@ import type { PlanViewProvider } from "./planView";
 const DEBOUNCE_MS = 80;
 
 /**
- * Keep the panel in sync with `<gitRoot>/.restitution/working.json` and with
+ * Keep the panel in sync with `<gitRoot>/.restitution/*.json` and with
  * the working tree, since the hunks shown come from `git diff`.
  */
 export function watchRestitution(
@@ -41,7 +41,7 @@ export function watchRestitution(
     const start = () => {
         const pattern = new vscode.RelativePattern(
             vscode.Uri.file(restitutionDir(root)),
-            "working.json",
+            "*.json",
         );
         const watcher = vscode.workspace.createFileSystemWatcher(pattern);
         disposables.push(

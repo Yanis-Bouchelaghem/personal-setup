@@ -69,6 +69,16 @@ describe("checkCoverage", () => {
         expect(result.missing).toEqual(["src/gone.ts", "src/a.ts:100-110"]);
     });
 
+    it("counts hunks other tabs explain and flags only the current tab's steps", () => {
+        const current = restitution([{ file: "src/a.ts" }]);
+        const other = restitution([
+            { file: "src/b.ts" },
+            { file: "src/ghost.ts" },
+        ]);
+        const result = checkCoverage(current, diffs, [other]);
+        expect(result).toEqual({ missing: [], unexplained: [] });
+    });
+
     it("ignores steps without a file", () => {
         const result = checkCoverage(restitution([{}]), {});
         expect(result).toEqual({ missing: [], unexplained: [] });

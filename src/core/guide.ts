@@ -13,9 +13,9 @@ A restitution is a reading guide for the human who asked for the change. They re
 
 ## How to submit
 
-Call restitution_submit with: { request?, goals: [{ title, ref?, steps: [{ file?, lines?, why, because? }] }] }.
+Call restitution_submit with: { label?, request?, goals: [{ title, ref?, steps: [{ file?, lines?, why, because? }] }] }.
 - file: path relative to the git root. lines: [from, to] on the new side, only to pick one hunk of a big file.
-- The tool saves it, then tells you which changed code no step explains, and which steps point at unchanged code. Fix those and submit again. Submitting again replaces the previous restitution.
+- The tool saves it, then tells you which changed code no step explains, and which steps point at unchanged code. Fix those and submit again. Your restitution is one tab in the user's panel (label names it, otherwise the request does). Submitting again in this session replaces your tab; other agents' tabs are never touched.
 - Submit after the change is complete, and again whenever the code changes after feedback. Rewrite the story so it matches the current code instead of appending "then I fixed ...".
 
 ## Rules

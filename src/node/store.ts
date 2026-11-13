@@ -1,14 +1,27 @@
 import { execFile } from "node:child_process";
-import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
+import { randomBytes } from "node:crypto";
+import {
+    mkdir,
+    readdir,
+    readFile,
+    rename,
+    stat,
+    writeFile,
+} from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { promisify } from "node:util";
 
-import type { ViewState } from "../core/messages";
-import { parseRestitution, type Restitution } from "../core/restitution";
+import type { Tab, ViewState } from "../core/messages";
+import {
+    parseRestitution,
+    type Restitution,
+    tabLabel,
+} from "../core/restitution";
 import { readDiffs } from "./git";
 
 const run = promisify(execFile);
 const DIR = ".restitution";
+const ARCHIVE = "archive";
 
 export function restitutionDir(gitRoot: string): string {
     return join(gitRoot, DIR);
@@ -18,30 +31,91 @@ function isNotFound(error: unknown): boolean {
     return error instanceof Error && "code" in error && error.code === "ENOENT";
 }
 
-/** Read the agent's file and turn it into what the panel shows. */
-export async function readViewState(gitRoot: string): Promise<ViewState> {
-    let text: string;
+/** Ids become file names, so keep them plain. */
+export function isTabId(id: string): boolean {
+    return /^[a-z0-9][a-z0-9-]{0,63}$/i.test(id);
+}
+
+/** Unique, readable, and roughly sortable by creation time. */
+export function newTabId(): string {
+    return `${Date.now().toString(36)}-${randomBytes(2).toString("hex")}`;
+}
+
+/** `<id>.json` files; dotfiles, temporary files and review sidecars are not tabs. */
+function tabIds(fileNames: string[]): string[] {
+    return fileNames
+        .filter((name) => name.endsWith(".json") && !name.startsWith("."))
+        .filter((name) => !name.endsWith(".review.json"))
+        .map((name) => name.slice(0, -".json".length))
+        .filter(isTabId);
+}
+
+async function readTab(gitRoot: string, id: string): Promise<Tab | undefined> {
+    const file = join(restitutionDir(gitRoot), `${id}.json`);
     try {
-        text = await readFile(
-            join(restitutionDir(gitRoot), "working.json"),
-            "utf8",
-        );
+        const [text, info] = await Promise.all([
+            readFile(file, "utf8"),
+            stat(file),
+        ]);
+        const updatedAt = info.mtimeMs;
+        const parsed = parseRestitution(text);
+        return parsed.ok
+            ? {
+                  kind: "ok",
+                  id,
+                  label: tabLabel(parsed.value),
+                  updatedAt,
+                  restitution: parsed.value,
+              }
+            : {
+                  kind: "error",
+                  id,
+                  label: id,
+                  updatedAt,
+                  errors: parsed.errors,
+              };
     } catch (error) {
         if (isNotFound(error)) {
-            return { status: "empty" };
+            return undefined; // archived or replaced while we were reading
         }
         throw error;
     }
-    const parsed = parseRestitution(text);
-    if (!parsed.ok) {
-        return { status: "error", errors: parsed.errors };
+}
+
+/** Every restitution in the repo, newest first. */
+export async function readTabs(gitRoot: string): Promise<Tab[]> {
+    const names = await readdir(restitutionDir(gitRoot)).catch((error) => {
+        if (isNotFound(error)) {
+            return [];
+        }
+        throw error;
+    });
+    const tabs = await Promise.all(
+        tabIds(names).map((id) => readTab(gitRoot, id)),
+    );
+    return tabs
+        .filter((tab) => tab !== undefined)
+        .toSorted(
+            (a, b) => b.updatedAt - a.updatedAt || a.id.localeCompare(b.id),
+        );
+}
+
+/** What the panel shows: every tab, plus the diffs their steps point at. */
+export async function readViewState(gitRoot: string): Promise<ViewState> {
+    const tabs = await readTabs(gitRoot);
+    if (tabs.length === 0) {
+        return { status: "empty" };
     }
-    const files = parsed.value.goals.flatMap((goal) =>
-        goal.steps.flatMap((step) => (step.file ? [step.file] : [])),
+    const files = tabs.flatMap((tab) =>
+        tab.kind === "ok"
+            ? tab.restitution.goals.flatMap((goal) =>
+                  goal.steps.flatMap((step) => (step.file ? [step.file] : [])),
+              )
+            : [],
     );
     // A git hiccup must not hide the explanations: show them without hunks.
     const diffs = await readDiffs(gitRoot, files).catch(() => ({}));
-    return { status: "ok", restitution: parsed.value, diffs };
+    return { status: "ok", tabs, diffs };
 }
 
 /**
@@ -68,14 +142,31 @@ export async function ensureRestitutionDir(gitRoot: string): Promise<void> {
     await writeFile(excludeFile, `${current}${separator}${entry}\n`);
 }
 
-/** Write working.json atomically, so a watcher never reads half a file. */
+/** Write one restitution atomically, so a watcher never reads half a file. */
 export async function writeRestitution(
     gitRoot: string,
+    id: string,
     restitution: Restitution,
 ): Promise<void> {
+    if (!isTabId(id)) {
+        throw new Error(`Invalid restitution id: ${id}`);
+    }
     await ensureRestitutionDir(gitRoot);
-    const target = join(restitutionDir(gitRoot), "working.json");
+    const target = join(restitutionDir(gitRoot), `${id}.json`);
     const temporary = `${target}.${process.pid}.tmp`;
     await writeFile(temporary, `${JSON.stringify(restitution, null, 4)}\n`);
     await rename(temporary, target);
+}
+
+/** Close a tab: move its file to `.restitution/archive/`, so it can come back. */
+export async function archiveTab(gitRoot: string, id: string): Promise<void> {
+    if (!isTabId(id)) {
+        throw new Error(`Invalid restitution id: ${id}`);
+    }
+    const archive = join(restitutionDir(gitRoot), ARCHIVE);
+    await mkdir(archive, { recursive: true });
+    await rename(
+        join(restitutionDir(gitRoot), `${id}.json`),
+        join(archive, `${id}.json`),
+    );
 }

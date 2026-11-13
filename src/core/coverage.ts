@@ -1,5 +1,5 @@
 import { type FileDiff, hunksForRange } from "./diff";
-import type { Restitution } from "./restitution";
+import { type Restitution, tabLabel } from "./restitution";
 
 export type Coverage = {
     /** Steps that point at code with no uncommitted change. */
@@ -12,22 +12,27 @@ function describeAnchor(file: string, lines?: readonly [number, number]) {
     return lines ? `${file}:${lines[0]}-${lines[1]}` : file;
 }
 
-/** Compare the steps with the working-tree diffs they should explain. */
+/**
+ * Compare a restitution's steps with the working-tree diffs. A hunk counts as
+ * explained when any restitution covers it (`others` are the other tabs);
+ * steps pointing at unchanged code are only reported for `restitution`.
+ */
 export function checkCoverage(
     restitution: Restitution,
     diffs: Record<string, FileDiff>,
+    others: Restitution[] = [],
 ): Coverage {
     const covered = new Set<unknown>();
     const missing: string[] = [];
 
-    for (const goal of restitution.goals) {
-        for (const step of goal.steps) {
+    for (const candidate of [restitution, ...others]) {
+        for (const step of candidate.goals.flatMap((goal) => goal.steps)) {
             if (!step.file) {
                 continue;
             }
             const hunks = hunksForRange(diffs[step.file], step.lines);
             hunks.forEach((hunk) => covered.add(hunk));
-            if (hunks.length === 0) {
+            if (candidate === restitution && hunks.length === 0) {
                 missing.push(describeAnchor(step.file, step.lines));
             }
         }
@@ -48,7 +53,7 @@ export function describeSubmit(
 ): string {
     const steps = restitution.goals.reduce((n, g) => n + g.steps.length, 0);
     const lines = [
-        `Saved: ${restitution.goals.length} goals, ${steps} steps. The user reads it in the Restitution panel.`,
+        `Saved: ${restitution.goals.length} goals, ${steps} steps, as the tab "${tabLabel(restitution)}" in the user's Restitution panel.`,
     ];
     if (!coverage) {
         lines.push("Could not read the git diff, so coverage was not checked.");

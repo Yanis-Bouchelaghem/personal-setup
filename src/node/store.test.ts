@@ -1,0 +1,153 @@
+import { execFileSync } from "node:child_process";
+import {
+    existsSync,
+    mkdirSync,
+    mkdtempSync,
+    readFileSync,
+    realpathSync,
+    utimesSync,
+    writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
+import { describe, expect, it } from "vitest";
+
+import type { Restitution } from "../core/restitution";
+import {
+    archiveTab,
+    isTabId,
+    newTabId,
+    readTabs,
+    readViewState,
+    restitutionDir,
+    writeRestitution,
+} from "./store";
+import { submitRestitution } from "./submit";
+
+function repo(): string {
+    const dir = realpathSync(mkdtempSync(join(tmpdir(), "restitution-store-")));
+    const sh = (...args: string[]) =>
+        execFileSync("git", args, { cwd: dir, stdio: "ignore" });
+    sh("init", "-q", "-b", "main");
+    sh("config", "user.email", "t@t");
+    sh("config", "user.name", "t");
+    writeFileSync(join(dir, "a.ts"), "one\ntwo\n");
+    writeFileSync(join(dir, "b.ts"), "x\ny\n");
+    sh("add", ".");
+    sh("commit", "-q", "-m", "init");
+    return dir;
+}
+
+const restitution = (file: string, label?: string): Restitution => ({
+    version: 1,
+    label,
+    goals: [
+        {
+            title: `Change ${file}`,
+            steps: [{ file, why: "Do it, so it works." }],
+        },
+    ],
+});
+
+describe("tabs", () => {
+    it("writes one file per restitution and lists them newest first", async () => {
+        const dir = repo();
+        await writeRestitution(dir, "first", restitution("a.ts", "First"));
+        await writeRestitution(dir, "second", restitution("b.ts"));
+        utimesSync(join(restitutionDir(dir), "first.json"), 1000, 1000);
+
+        const tabs = await readTabs(dir);
+        expect(tabs.map((tab) => tab.id)).toEqual(["second", "first"]);
+        expect(tabs.map((tab) => tab.label)).toEqual(["Change b.ts", "First"]);
+    });
+
+    it("ignores review sidecars, temporary files, dotfiles and the archive", async () => {
+        const dir = repo();
+        await writeRestitution(dir, "real", restitution("a.ts"));
+        const folder = restitutionDir(dir);
+        writeFileSync(join(folder, "real.review.json"), "{}");
+        writeFileSync(join(folder, "real.json.123.tmp"), "{");
+        writeFileSync(join(folder, ".hidden.json"), "{}");
+        mkdirSync(join(folder, "archive"));
+        writeFileSync(join(folder, "archive", "old.json"), "{}");
+
+        expect((await readTabs(dir)).map((tab) => tab.id)).toEqual(["real"]);
+    });
+
+    it("keeps a broken file as its own error tab", async () => {
+        const dir = repo();
+        await writeRestitution(dir, "good", restitution("a.ts"));
+        writeFileSync(join(restitutionDir(dir), "bad.json"), "{ nope");
+
+        const tabs = await readTabs(dir);
+        expect(tabs.find((tab) => tab.id === "bad")?.kind).toBe("error");
+        expect(tabs.find((tab) => tab.id === "good")?.kind).toBe("ok");
+    });
+
+    it("closing a tab archives its file", async () => {
+        const dir = repo();
+        await writeRestitution(dir, "gone", restitution("a.ts"));
+        await archiveTab(dir, "gone");
+
+        expect(await readTabs(dir)).toEqual([]);
+        expect(
+            existsSync(join(restitutionDir(dir), "archive", "gone.json")),
+        ).toBe(true);
+    });
+
+    it("rejects ids that could escape the folder", async () => {
+        const dir = repo();
+        await expect(
+            writeRestitution(dir, "../evil", restitution("a.ts")),
+        ).rejects.toThrow();
+        await expect(archiveTab(dir, "a/b")).rejects.toThrow();
+        expect(isTabId("ok-id-1")).toBe(true);
+        expect(isTabId(".hidden")).toBe(false);
+        expect(isTabId(newTabId())).toBe(true);
+    });
+
+    it("reports an empty folder as empty", async () => {
+        expect(await readViewState(repo())).toEqual({ status: "empty" });
+    });
+
+    it("loads the diffs every tab points at, once", async () => {
+        const dir = repo();
+        writeFileSync(join(dir, "a.ts"), "ONE\ntwo\n");
+        writeFileSync(join(dir, "b.ts"), "x\nY\n");
+        await writeRestitution(dir, "t1", restitution("a.ts"));
+        await writeRestitution(dir, "t2", restitution("b.ts"));
+
+        const state = await readViewState(dir);
+        expect(state.status).toBe("ok");
+        expect(
+            state.status === "ok" && Object.keys(state.diffs).toSorted(),
+        ).toEqual(["a.ts", "b.ts"]);
+    });
+});
+
+describe("submitRestitution", () => {
+    it("counts another tab's steps as explaining a hunk", async () => {
+        const dir = repo();
+        writeFileSync(join(dir, "a.ts"), "ONE\ntwo\n");
+        writeFileSync(join(dir, "b.ts"), "x\nY\n");
+        await writeRestitution(dir, "other", restitution("b.ts"));
+
+        const text = await submitRestitution(dir, "mine", restitution("a.ts"));
+        expect(text).toMatch(/Every uncommitted change is explained/);
+    });
+
+    it("resubmitting the same id replaces the tab", async () => {
+        const dir = repo();
+        writeFileSync(join(dir, "a.ts"), "ONE\ntwo\n");
+        await submitRestitution(dir, "mine", restitution("a.ts", "v1"));
+        await submitRestitution(dir, "mine", restitution("a.ts", "v2"));
+
+        const tabs = await readTabs(dir);
+        expect(tabs).toHaveLength(1);
+        expect(tabs[0]?.label).toBe("v2");
+        expect(
+            readFileSync(join(restitutionDir(dir), "mine.json"), "utf8"),
+        ).toMatch(/v2/);
+    });
+});

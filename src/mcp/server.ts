@@ -4,6 +4,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { GUIDE, SERVER_INSTRUCTIONS } from "../core/guide";
 import { RestitutionSchema } from "../core/restitution";
 import { findGitRoot } from "../node/gitRoot";
+import { newTabId } from "../node/store";
 import { submitRestitution } from "../node/submit";
 
 /**
@@ -14,6 +15,9 @@ const server = new McpServer(
     { name: "restitution", version: "0.0.1" },
     { instructions: SERVER_INSTRUCTIONS },
 );
+
+// One agent session = one tab: the first submit creates it, later ones replace it.
+let tabId: string | undefined;
 
 const text = (message: string, isError = false) => ({
     content: [{ type: "text" as const, text: message }],
@@ -45,7 +49,10 @@ server.registerTool(
                 true,
             );
         }
-        return text(await submitRestitution(root, { version: 1, ...input }));
+        tabId ??= newTabId();
+        return text(
+            await submitRestitution(root, tabId, { version: 1, ...input }),
+        );
     },
 );
 
