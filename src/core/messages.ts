@@ -50,7 +50,7 @@ export type OpenFile = { type: "openFile"; file: string; line?: number };
 /** Both buttons on a card: the change as a diff, or the file at its line. */
 export type OpenRequest = OpenDiff | OpenFile;
 
-export type CloseTab = { type: "closeTab"; id: string; label: string };
+export type CloseTab = { type: "closeTab"; id: string };
 
 export type ReopenTab = { type: "reopenTab" };
 

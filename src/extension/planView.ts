@@ -20,7 +20,7 @@ export class PlanViewProvider implements vscode.WebviewViewProvider {
         private readonly extensionUri: vscode.Uri,
         private readonly handlers: {
             onOpen: (request: OpenRequest) => void;
-            onCloseTab: (id: string, label: string) => void;
+            onCloseTab: (id: string) => void;
             onReopenTab: () => void;
         },
     ) {}
@@ -41,7 +41,7 @@ export class PlanViewProvider implements vscode.WebviewViewProvider {
             if (message.type === "ready") {
                 this.post();
             } else if (message.type === "closeTab") {
-                this.handlers.onCloseTab(message.id, message.label);
+                this.handlers.onCloseTab(message.id);
             } else if (message.type === "reopenTab") {
                 this.handlers.onReopenTab();
             } else {

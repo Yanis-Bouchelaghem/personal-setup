@@ -19,7 +19,7 @@ export function TabBar({
     unread: ReadonlySet<string>;
     closed: number;
     onSelect: (id: string) => void;
-    onClose: (tab: Tab) => void;
+    onClose: (id: string) => void;
     onReopen: () => void;
 }) {
     return (
@@ -47,8 +47,8 @@ export function TabBar({
                             className="tab-close"
                             type="button"
                             aria-label={`Close ${tab.label}`}
-                            title="Close"
-                            onClick={() => onClose(tab)}
+                            title="Close (the clock button brings it back)"
+                            onClick={() => onClose(tab.id)}
                         >
                             <CloseIcon />
                         </button>

@@ -32,17 +32,3 @@ export async function reopenTab(
         plan.select(await restoreTab(root, picked.id));
     }
 }
-
-/** Closing moves the file to an archive, so ask first; the answer is "Close". */
-export async function confirmClose(label: string): Promise<boolean> {
-    const close = "Close tab";
-    const answer = await vscode.window.showWarningMessage(
-        `Close “${label}”?`,
-        {
-            modal: true,
-            detail: "It is kept in .restitution/archive. Bring it back from the ↺ button in the tab strip, or with “Restitution: Reopen closed tab”.",
-        },
-        close,
-    );
-    return answer === close;
-}

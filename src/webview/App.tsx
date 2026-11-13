@@ -165,13 +165,7 @@ function Tabs({
                 unread={unread}
                 closed={closed}
                 onSelect={setSelected}
-                onClose={(tab) =>
-                    host.send({
-                        type: "closeTab",
-                        id: tab.id,
-                        label: tab.label,
-                    })
-                }
+                onClose={(id) => host.send({ type: "closeTab", id })}
                 onReopen={() => host.send({ type: "reopenTab" })}
             />
             <TabContent
