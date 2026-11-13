@@ -322,10 +322,12 @@ body {
     white-space: nowrap;
 }
 
+/* The explanation is what you read: larger and heavier than the rest. */
 .why {
     margin: 0;
-    font-size: 1em;
-    line-height: 1.5;
+    font-size: 1.15em;
+    font-weight: 600;
+    line-height: 1.45;
 }
 
 /* A step's node on the rail; filled once it is viewed. */
@@ -349,10 +351,15 @@ body {
 
 /* One word between two cards: with the card text it reads as a sentence. */
 .connector {
+    width: fit-content;
     margin: -2px 0;
+    padding: 5px 16px;
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 24%, transparent);
     color: var(--fg);
-    font-size: 14px;
-    font-weight: 600;
+    font-size: 15.5px;
+    font-weight: 700;
     letter-spacing: 0.01em;
     line-height: 1.2;
 }
