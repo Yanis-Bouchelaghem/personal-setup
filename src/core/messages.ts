@@ -9,6 +9,8 @@ export type Tab =
           label: string;
           updatedAt: number;
           restitution: Restitution;
+          /** Fingerprints of the steps the human marked Viewed. */
+          viewed: string[];
       }
     | {
           kind: "error";
@@ -54,8 +56,16 @@ export type CloseTab = { type: "closeTab"; id: string };
 
 export type ReopenTab = { type: "reopenTab" };
 
+export type SetViewed = {
+    type: "setViewed";
+    tabId: string;
+    fingerprint: string;
+    viewed: boolean;
+};
+
 export type FromWebview =
     | { type: "ready" }
     | OpenRequest
     | CloseTab
-    | ReopenTab;
+    | ReopenTab
+    | SetViewed;

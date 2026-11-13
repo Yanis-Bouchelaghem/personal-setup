@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
-import type { FileDiff } from "../core/diff";
+import { type FileDiff, hunksForRange } from "../core/diff";
+import { stepFingerprint } from "../core/fingerprint";
 import type { Tab, ViewState } from "../core/messages";
 import { GoalSection } from "./GoalSection";
 import type { Host } from "./host";
@@ -187,6 +188,14 @@ function TabContent({
     diffs: Record<string, FileDiff>;
     host: Host;
 }) {
+    // Marking Viewed answers at once; the saved state follows and agrees.
+    const saved = tab.kind === "ok" ? tab.viewed : [];
+    const [viewed, setViewed] = useState<ReadonlySet<string>>(
+        () => new Set(saved),
+    );
+    const savedKey = saved.join(",");
+    useEffect(() => setViewed(new Set(saved)), [savedKey]);
+
     if (tab.kind === "error") {
         return (
             <Notice title="This restitution can't be shown" tone="error">
@@ -195,6 +204,23 @@ function TabContent({
         );
     }
     const { restitution } = tab;
+    const changeViewed = (fingerprint: string, on: boolean) => {
+        setViewed((previous) => {
+            const next = new Set(previous);
+            if (on) {
+                next.add(fingerprint);
+            } else {
+                next.delete(fingerprint);
+            }
+            return next;
+        });
+        host.send({
+            type: "setViewed",
+            tabId: tab.id,
+            fingerprint,
+            viewed: on,
+        });
+    };
     return (
         <>
             {restitution.request && (
@@ -205,7 +231,18 @@ function TabContent({
                     key={`${index}-${goal.title}`}
                     goal={goal}
                     number={index + 1}
+                    fingerprints={goal.steps.map((step) =>
+                        stepFingerprint(
+                            step,
+                            hunksForRange(
+                                step.file ? diffs[step.file] : undefined,
+                                step.lines,
+                            ),
+                        ),
+                    )}
+                    viewed={viewed}
                     diffs={diffs}
+                    onViewedChange={changeViewed}
                     onOpenRequest={(request) => host.send(request)}
                 />
             ))}

@@ -17,6 +17,7 @@ import {
     type Restitution,
     tabLabel,
 } from "../core/restitution";
+import { parseViewed, serializeReview, withViewed } from "../core/review";
 import { readDiffs } from "./git";
 
 const run = promisify(execFile);
@@ -50,6 +51,42 @@ function tabIds(fileNames: string[]): string[] {
         .filter(isTabId);
 }
 
+function reviewFile(gitRoot: string, id: string): string {
+    return join(restitutionDir(gitRoot), `${id}.review.json`);
+}
+
+async function readViewed(gitRoot: string, id: string): Promise<string[]> {
+    return parseViewed(
+        await readFile(reviewFile(gitRoot, id), "utf8").catch(() => ""),
+    );
+}
+
+/** Mark a step Viewed (or not). Only the extension writes this file. */
+export async function setViewed(
+    gitRoot: string,
+    id: string,
+    fingerprint: string,
+    on: boolean,
+): Promise<void> {
+    if (!isTabId(id)) {
+        throw new Error(`Invalid restitution id: ${id}`);
+    }
+    const file = reviewFile(gitRoot, id);
+    const viewed = withViewed(await readViewed(gitRoot, id), fingerprint, on);
+    const temporary = `${file}.${process.pid}.tmp`;
+    await writeFile(temporary, serializeReview(viewed));
+    await rename(temporary, file);
+}
+
+/** Move the review sidecar along with its restitution, if there is one. */
+async function moveReview(from: string, to: string): Promise<void> {
+    await rename(from, to).catch((error) => {
+        if (!isNotFound(error)) {
+            throw error;
+        }
+    });
+}
+
 async function readTab(gitRoot: string, id: string): Promise<Tab | undefined> {
     const file = join(restitutionDir(gitRoot), `${id}.json`);
     try {
@@ -66,6 +103,7 @@ async function readTab(gitRoot: string, id: string): Promise<Tab | undefined> {
                   label: tabLabel(parsed.value),
                   updatedAt,
                   restitution: parsed.value,
+                  viewed: await readViewed(gitRoot, id),
               }
             : {
                   kind: "error",
@@ -172,6 +210,10 @@ export async function archiveTab(gitRoot: string, id: string): Promise<void> {
         join(restitutionDir(gitRoot), `${id}.json`),
         join(archive, `${id}.json`),
     );
+    await moveReview(
+        reviewFile(gitRoot, id),
+        join(archive, `${id}.review.json`),
+    );
 }
 
 async function closedNames(gitRoot: string): Promise<string[]> {
@@ -236,6 +278,10 @@ export async function restoreTab(gitRoot: string, id: string): Promise<string> {
     await rename(
         join(folder, ARCHIVE, `${id}.json`),
         join(folder, `${target}.json`),
+    );
+    await moveReview(
+        join(folder, ARCHIVE, `${id}.review.json`),
+        reviewFile(gitRoot, target),
     );
     return target;
 }

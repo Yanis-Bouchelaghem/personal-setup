@@ -144,12 +144,119 @@ body {
     border-color: color-mix(in srgb, var(--accent) 40%, var(--glass-border));
 }
 
+/*
+ * The step header stays pinned under the tabs and the goal header while you
+ * read a long step, so Viewed is always within reach.
+ */
 .card-head {
+    position: sticky;
+    top: calc(var(--tabs-h) + var(--goalhead-h, 44px) + 14px);
+    z-index: 1;
     display: flex;
     align-items: center;
     gap: 8px;
-    margin-bottom: 7px;
     min-width: 0;
+    margin: -11px -13px 7px;
+    padding: 9px 13px 5px;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+    background: color-mix(
+        in srgb,
+        var(--vscode-editor-background, var(--bg)) 70%,
+        transparent
+    );
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+}
+
+/* A folded step is only its header. */
+.card.collapsed {
+    padding-top: 0;
+    padding-bottom: 0;
+    opacity: 0.72;
+}
+
+.card.collapsed .card-head {
+    position: static;
+    margin: 0 -13px;
+    padding: 9px 13px;
+    background: transparent;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+}
+
+.card.collapsed:hover {
+    opacity: 1;
+}
+
+.chev {
+    display: grid;
+    flex: none;
+    place-items: center;
+    width: 20px;
+    height: 20px;
+    margin-left: -4px;
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition:
+        color 0.15s ease,
+        background-color 0.15s ease;
+}
+
+.chev:hover {
+    color: var(--fg);
+    background: color-mix(in srgb, var(--fg) 10%, transparent);
+}
+
+.chev svg {
+    transition: transform 0.15s ease;
+}
+
+.chev[aria-expanded="false"] svg {
+    transform: rotate(-90deg);
+}
+
+.chev:focus-visible,
+.viewed input:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: 1px;
+}
+
+.viewed {
+    display: flex;
+    flex: none;
+    align-items: center;
+    gap: 5px;
+    color: var(--muted);
+    font-size: 11.5px;
+    cursor: pointer;
+    user-select: none;
+}
+
+.viewed:hover {
+    color: var(--fg);
+}
+
+.viewed input {
+    margin: 0;
+    accent-color: var(--accent);
+    cursor: pointer;
+}
+
+.viewed-card .step-no {
+    text-decoration: line-through;
+    text-decoration-color: color-mix(in srgb, var(--fg) 35%, transparent);
+}
+
+.goal-progress {
+    flex: none;
+    color: var(--muted);
+    font-size: 11.5px;
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
 }
 
 .step-no {
@@ -244,7 +351,9 @@ body {
 @media (prefers-reduced-motion: reduce) {
     .card,
     .tab,
-    .tab::before {
+    .tab::before,
+    .chev,
+    .chev svg {
         transition: none;
     }
 }

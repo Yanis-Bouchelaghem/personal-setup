@@ -24,6 +24,7 @@ import {
     readViewState,
     restitutionDir,
     restoreTab,
+    setViewed,
     writeRestitution,
 } from "./store";
 import { submitRestitution } from "./submit";
@@ -203,5 +204,45 @@ describe("closed tabs", () => {
         const dir = repo();
         expect(await readClosedTabs(dir)).toEqual([]);
         expect(await countClosed(dir)).toBe(0);
+    });
+});
+
+describe("review sidecar", () => {
+    it("remembers Viewed per tab, and is not itself a tab", async () => {
+        const dir = repo();
+        await writeRestitution(dir, "t1", restitution("a.ts"));
+        await setViewed(dir, "t1", "fp-1", true);
+        await setViewed(dir, "t1", "fp-2", true);
+        await setViewed(dir, "t1", "fp-1", false);
+
+        const tabs = await readTabs(dir);
+        expect(tabs).toHaveLength(1);
+        expect(tabs[0]?.kind === "ok" && tabs[0].viewed).toEqual(["fp-2"]);
+    });
+
+    it("shows nothing viewed when there is no sidecar", async () => {
+        const dir = repo();
+        await writeRestitution(dir, "t1", restitution("a.ts"));
+        const [tab] = await readTabs(dir);
+        expect(tab?.kind === "ok" && tab.viewed).toEqual([]);
+    });
+
+    it("follows the tab into the archive and back", async () => {
+        const dir = repo();
+        await writeRestitution(dir, "t1", restitution("a.ts"));
+        await setViewed(dir, "t1", "fp-1", true);
+        await archiveTab(dir, "t1");
+        expect(existsSync(join(restitutionDir(dir), "t1.review.json"))).toBe(
+            false,
+        );
+
+        const id = await restoreTab(dir, "t1");
+        const [tab] = await readTabs(dir);
+        expect(tab?.id).toBe(id);
+        expect(tab?.kind === "ok" && tab.viewed).toEqual(["fp-1"]);
+    });
+
+    it("rejects ids that could escape the folder", async () => {
+        await expect(setViewed(repo(), "../x", "fp", true)).rejects.toThrow();
     });
 });

@@ -1,0 +1,28 @@
+import type { Hunk } from "./diff";
+import type { Step } from "./restitution";
+
+/** FNV-1a, 32 bit: plenty to tell "same content" from "changed". */
+function fnv1a(text: string): string {
+    let hash = 0x811c9dc5;
+    for (let index = 0; index < text.length; index++) {
+        hash ^= text.charCodeAt(index);
+        hash = Math.imul(hash, 0x01000193);
+    }
+    return (hash >>> 0).toString(16).padStart(8, "0");
+}
+
+/**
+ * Identity of what a reader looked at: the step's words and the lines it
+ * changed. Line numbers and context are left out, so edits elsewhere in the
+ * file don't make a viewed step look new; any change to the step itself does.
+ */
+export function stepFingerprint(step: Step, hunks: Hunk[]): string {
+    const changes = hunks
+        .flatMap((hunk) => hunk.lines)
+        .filter((line) => line.kind !== "ctx")
+        .map((line) => `${line.kind}${line.text}`)
+        .join("\n");
+    return fnv1a(
+        [step.file ?? "", step.why, step.because ?? "", changes].join("\0"),
+    );
+}

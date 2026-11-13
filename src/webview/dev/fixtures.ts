@@ -1,4 +1,5 @@
-import { parseUnifiedDiff } from "../../core/diff";
+import { hunksForRange, parseUnifiedDiff } from "../../core/diff";
+import { stepFingerprint } from "../../core/fingerprint";
 import type { ViewState } from "../../core/messages";
 import type { Restitution } from "../../core/restitution";
 
@@ -148,6 +149,14 @@ const diffs = Object.fromEntries(
     parseUnifiedDiff(SAMPLE_DIFFS).map((diff) => [diff.file, diff]),
 );
 
+// Step 1.2 starts out viewed, so the folded look is on screen.
+const VIEWED = [
+    stepFingerprint(
+        many.goals[0]!.steps[1]!,
+        hunksForRange(diffs["test/config.test.ts"]),
+    ),
+];
+
 const ago = (minutes: number) => Date.now() - minutes * 60_000;
 
 const small: Restitution = {
@@ -178,6 +187,7 @@ export const fixtures: Record<string, ViewState> = {
                 label: "Review fixes",
                 updatedAt: ago(1),
                 restitution: { ...many, label: "Review fixes" },
+                viewed: VIEWED,
             },
             {
                 kind: "ok",
@@ -185,6 +195,7 @@ export const fixtures: Record<string, ViewState> = {
                 label: "Request id header",
                 updatedAt: ago(35),
                 restitution: small,
+                viewed: [],
             },
             {
                 kind: "error",
@@ -208,6 +219,7 @@ export const fixtures: Record<string, ViewState> = {
                 label: "Review fixes",
                 updatedAt: ago(1),
                 restitution: { ...many, label: "Review fixes" },
+                viewed: VIEWED,
             },
         ],
         diffs,
@@ -222,6 +234,7 @@ export const fixtures: Record<string, ViewState> = {
                 label: "A tab label that is much too long to fit in the strip",
                 updatedAt: ago(2),
                 restitution: long,
+                viewed: [],
             },
             {
                 kind: "ok",
@@ -229,6 +242,7 @@ export const fixtures: Record<string, ViewState> = {
                 label: "Second",
                 updatedAt: ago(9),
                 restitution: small,
+                viewed: [],
             },
         ],
         diffs: {},

@@ -3,7 +3,7 @@ import { homedir } from "node:os";
 import * as vscode from "vscode";
 
 import { findGitRoot } from "../node/gitRoot";
-import { archiveTab } from "../node/store";
+import { archiveTab, setViewed } from "../node/store";
 import {
     connectAgents,
     installServer,
@@ -20,6 +20,7 @@ export function activate(context: vscode.ExtensionContext): void {
     // The git root can sit above the workspace folder (a module in a monorepo).
     const root = folder && findGitRoot(folder.uri.fsPath);
 
+    let viewedWrites: Promise<void> = Promise.resolve();
     const plan = new PlanViewProvider(context.extensionUri, {
         onOpen: (request) => {
             if (root) {
@@ -37,6 +38,24 @@ export function activate(context: vscode.ExtensionContext): void {
             }
         },
         onReopenTab: () => reopen(),
+        onSetViewed: (message) => {
+            if (!root) {
+                return;
+            }
+            // One write at a time: each one reads the file it then rewrites.
+            viewedWrites = viewedWrites
+                .then(() =>
+                    setViewed(
+                        root,
+                        message.tabId,
+                        message.fingerprint,
+                        message.viewed,
+                    ),
+                )
+                .catch((error: unknown) =>
+                    log.error(`Could not save Viewed: ${String(error)}`),
+                );
+        },
     });
     const reopen = () => {
         if (root) {

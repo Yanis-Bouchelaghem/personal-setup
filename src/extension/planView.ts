@@ -5,6 +5,7 @@ import * as vscode from "vscode";
 import type {
     FromWebview,
     OpenRequest,
+    SetViewed,
     ToWebview,
     ViewState,
 } from "../core/messages";
@@ -22,6 +23,7 @@ export class PlanViewProvider implements vscode.WebviewViewProvider {
             onOpen: (request: OpenRequest) => void;
             onCloseTab: (id: string) => void;
             onReopenTab: () => void;
+            onSetViewed: (message: SetViewed) => void;
         },
     ) {}
 
@@ -44,6 +46,8 @@ export class PlanViewProvider implements vscode.WebviewViewProvider {
                 this.handlers.onCloseTab(message.id);
             } else if (message.type === "reopenTab") {
                 this.handlers.onReopenTab();
+            } else if (message.type === "setViewed") {
+                this.handlers.onSetViewed(message);
             } else {
                 this.handlers.onOpen(message);
             }
