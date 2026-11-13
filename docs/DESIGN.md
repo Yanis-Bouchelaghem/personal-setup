@@ -58,11 +58,15 @@ The extension keeps `.restitution/` out of `git status` through `.git/info/exclu
 
 ## Writing rules (for the agent)
 
-1. **Goals come from the request, in its words.** Six fixes asked means six goals. Extra work you did gets its own goal, honestly titled ("Unrequested: ...").
-2. **Goals are independent changesets.** One goal can be read, reviewed and reverted without the others. Goals are numbered by position; `ref` is an optional label from the request.
-3. **Steps follow the order a competent engineer would have worked:** usually the change that forces the others comes first, the fix before its test. Default to one step per goal, at most three.
-4. **A test goes in the same step as the code it proves**, never in a separate goal.
-5. **`why` is one sentence, 15 words at most, shaped "action, then reason":** what was done, then why. "Set Authorization through Headers, because a plain object kept both casings." Never "Before it did X, now it does Y".
-6. **`because` is optional.** Add it only when a reader would otherwise wonder why this step exists or why it comes next. Independent steps get none.
-7. **No background and no "what to check".** The reader knows the codebase and the request.
-8. **Write the ideal path, not your history.** When the code changes again, rewrite the story instead of appending "then I fixed ...".
+The rules agents follow live in `src/core/guide.ts`: it is both what the MCP server sends as `instructions` and what `restitution_guide` returns, so there is one source of truth. In short: goals come from the request and are independent changesets; one short action-then-reason sentence per step; a test goes in the same step as its code; `because` only when it helps the reader; no background, no "what to check".
+
+`file` is relative to the git root. `lines` is an optional `[from, to]` on the new side, to pick one hunk of a big file.
+
+## MCP
+
+`src/mcp/server.ts` is a stdio server bundled to `dist/mcp-server.js`. The extension copies it to its global storage (a path that survives updates) and "Restitution: Connect agents" registers it with Claude Code (all projects, or this workspace only) and Codex. Copilot finds it through VS Code's MCP provider API. Tools:
+
+- `restitution_guide`: the rules and format.
+- `restitution_submit`: saves `.restitution/working.json` atomically, then reports changed hunks no step explains and steps pointing at unchanged code. It never blocks.
+
+`npm run build && node scripts/mcp-smoke.mjs <repo>` drives the server like an agent would. `scripts/make-sandbox.sh <dir> [clean]` builds a scratch repo to test on.

@@ -1,6 +1,7 @@
 #!/bin/sh
 # Build a scratch git repo with uncommitted changes and a matching restitution,
-# so the panel has real diffs to show. Usage: scripts/make-sandbox.sh <dir>
+# so the panel has real diffs to show. Usage: scripts/make-sandbox.sh <dir> [clean]
+# With "clean" it stops after the first commit: a blank slate for an agent to change.
 set -eu
 dir="${1:?usage: make-sandbox.sh <dir>}"
 rm -rf "$dir" && mkdir -p "$dir/src/gateway" "$dir/test" && cd "$dir"
@@ -33,6 +34,11 @@ cat > src/swagger.js <<'JS'
 module.exports = { info: { title: "Adapter", version: "1.0.0" } };
 JS
 git add -A && git commit -q -m "Initial commit"
+
+if [ "${2:-}" = "clean" ]; then
+    echo "Clean sandbox ready: $dir"
+    exit 0
+fi
 
 # Uncommitted work: two edits and one new file.
 cat > src/config.ts <<'TS'
