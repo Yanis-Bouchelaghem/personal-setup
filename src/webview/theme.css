@@ -81,23 +81,46 @@ body {
 /* Goals */
 .goal {
     margin-bottom: 20px;
+    scroll-margin-top: calc(var(--tabs-h) + 8px);
 }
 
 .goal-head {
     position: sticky;
     top: calc(var(--tabs-h) + 8px);
     z-index: 2;
-    display: flex;
-    align-items: center;
-    gap: 10px;
     margin: 0 0 10px;
-    padding: 9px 12px;
+    padding: 0;
     border-radius: var(--radius-lg);
     background: var(--glass-fill-strong);
     -webkit-backdrop-filter: blur(16px) saturate(150%);
     backdrop-filter: blur(16px) saturate(150%);
     font-size: 1em;
     font-weight: 600;
+}
+
+/* The whole goal header is the fold control. */
+.goal-toggle {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 9px 12px;
+    border: 0;
+    border-radius: inherit;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.goal-toggle:hover {
+    background: color-mix(in srgb, var(--fg) 5%, transparent);
+}
+
+.goal-toggle:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: -1px;
 }
 
 .goal-no {
@@ -125,14 +148,31 @@ body {
     font-weight: 400;
 }
 
+/* The steps hang on a rail inside their goal: one thing after another. */
 .steps {
+    position: relative;
     display: flex;
     flex-direction: column;
     gap: 10px;
+    margin-left: 14px;
+    padding-left: 20px;
+}
+
+.steps::before {
+    content: "";
+    position: absolute;
+    top: 6px;
+    bottom: 6px;
+    left: 0;
+    width: 2px;
+    border-radius: 2px;
+    background: color-mix(in srgb, var(--fg) 16%, transparent);
 }
 
 /* Step cards */
 .card {
+    position: relative;
+    scroll-margin-top: calc(var(--tabs-h) + var(--goalhead-h, 44px) + 24px);
     padding: 11px 13px 12px;
     border-radius: var(--radius-lg);
     transition:
@@ -208,6 +248,7 @@ body {
     transition: transform 0.15s ease;
 }
 
+.goal.folded .chev svg,
 .card.collapsed .chev svg {
     transform: rotate(-90deg);
 }
@@ -287,12 +328,65 @@ body {
     line-height: 1.5;
 }
 
+/* A step's node on the rail; filled once it is viewed. */
+.card::before {
+    content: "";
+    position: absolute;
+    top: 17px;
+    left: -26px;
+    width: 10px;
+    height: 10px;
+    box-sizing: border-box;
+    border: 2px solid color-mix(in srgb, var(--fg) 40%, transparent);
+    border-radius: 999px;
+    background: var(--bg);
+}
+
+.card.viewed-card::before {
+    border-color: color-mix(in srgb, var(--fg) 40%, transparent);
+    background: color-mix(in srgb, var(--fg) 40%, transparent);
+}
+
+/* Why this step follows the previous one, written onto the rail. */
 .because {
-    margin: 8px 0 0;
-    padding-left: 10px;
-    border-left: 2px solid color-mix(in srgb, var(--accent) 55%, transparent);
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    width: fit-content;
+    max-width: 100%;
+    margin: -2px 0;
+    padding: 5px 10px 5px 8px;
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--fg) 7%, transparent);
     color: var(--muted);
-    font-size: 0.93em;
+    font-size: 11.5px;
+    line-height: 1.4;
+}
+
+.because svg {
+    flex: none;
+    margin-top: 2px;
+}
+
+.ref {
+    display: inline;
+    margin: 0 1px;
+    padding: 0 4px;
+    border: 0;
+    border-radius: 4px;
+    background: color-mix(in srgb, var(--fg) 12%, transparent);
+    color: var(--fg);
+    font: inherit;
+    font-variant-numeric: tabular-nums;
+    cursor: pointer;
+}
+
+.ref:hover {
+    background: color-mix(in srgb, var(--fg) 22%, transparent);
+}
+
+.ref:focus-visible {
+    outline: 1px solid var(--accent);
 }
 
 /* Empty and error states */
@@ -722,4 +816,110 @@ body {
 
 .tab:not(.active) .tab-close:hover {
     background: color-mix(in srgb, var(--fg) 18%, var(--bg));
+}
+
+/* Overview: the goals at a glance. */
+.overview {
+    margin: 0 0 18px;
+    padding: 12px 8px 8px;
+    border-radius: var(--radius-lg);
+}
+
+.overview-title {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    margin: 0 8px 8px;
+    font-weight: 600;
+}
+
+.overview-count {
+    color: var(--muted);
+    font-size: 11.5px;
+    font-weight: 400;
+    font-variant-numeric: tabular-nums;
+}
+
+.overview-bar {
+    height: 3px;
+    margin: 0 8px 8px;
+    overflow: hidden;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--fg) 12%, transparent);
+}
+
+.overview-bar span {
+    display: block;
+    height: 100%;
+    border-radius: 3px;
+    background: color-mix(in srgb, var(--fg) 55%, transparent);
+    transition: width 0.25s ease;
+}
+
+.overview ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.overview-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    padding: 6px 8px;
+    border: 0;
+    border-radius: var(--radius-md);
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+}
+
+.overview-row:hover {
+    background: color-mix(in srgb, var(--fg) 8%, transparent);
+}
+
+.overview-row:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: -1px;
+}
+
+.overview-goal {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.overview-row.finished .overview-goal {
+    color: var(--muted);
+}
+
+.overview-row.finished .goal-progress::after {
+    content: " ✓";
+}
+
+/* Where a jump lands. */
+@keyframes flash {
+    from {
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--fg) 55%, transparent);
+    }
+    to {
+        box-shadow: 0 0 0 2px transparent;
+    }
+}
+
+.flash {
+    animation: flash 1.2s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .flash,
+    .overview-bar span {
+        animation: none;
+        transition: none;
+    }
 }

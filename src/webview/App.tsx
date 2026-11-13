@@ -6,6 +6,7 @@ import type { Tab, ViewState } from "../core/messages";
 import { GoalSection } from "./GoalSection";
 import type { Host } from "./host";
 import { Notice } from "./Notice";
+import { Overview } from "./Overview";
 import { TabBar } from "./TabBar";
 
 export function App({ host }: { host: Host }) {
@@ -193,6 +194,7 @@ function TabContent({
     const [viewed, setViewed] = useState<ReadonlySet<string>>(
         () => new Set(saved),
     );
+    const [folded, setFolded] = useState<ReadonlySet<number>>(new Set());
     const savedKey = saved.join(",");
     useEffect(() => setViewed(new Set(saved)), [savedKey]);
 
@@ -204,6 +206,28 @@ function TabContent({
         );
     }
     const { restitution } = tab;
+    const labels = new Set(
+        restitution.goals.flatMap((goal, goalIndex) =>
+            goal.steps.map(
+                (_, stepIndex) => `${goalIndex + 1}.${stepIndex + 1}`,
+            ),
+        ),
+    );
+    const fingerprints = restitution.goals.map((goal) =>
+        goal.steps.map((step) =>
+            stepFingerprint(
+                step,
+                hunksForRange(
+                    step.file ? diffs[step.file] : undefined,
+                    step.lines,
+                ),
+            ),
+        ),
+    );
+    const done = fingerprints.map(
+        (goalPrints) => goalPrints.filter((print) => viewed.has(print)).length,
+    );
+
     const changeViewed = (fingerprint: string, on: boolean) => {
         setViewed((previous) => {
             const next = new Set(previous);
@@ -221,29 +245,61 @@ function TabContent({
             viewed: on,
         });
     };
+    const toggleFold = (goal: number) =>
+        setFolded((previous) => {
+            const next = new Set(previous);
+            if (!next.delete(goal)) {
+                next.add(goal);
+            }
+            return next;
+        });
+    // Unfold first when the target is inside a folded goal, then scroll once it is drawn.
+    const reveal = (goal: number, selector: string) => {
+        setFolded((previous) => {
+            const next = new Set(previous);
+            next.delete(goal);
+            return next;
+        });
+        requestAnimationFrame(() =>
+            requestAnimationFrame(() => {
+                const target = document.querySelector(selector);
+                target?.scrollIntoView({ behavior: "smooth", block: "start" });
+                target?.classList.add("flash");
+                setTimeout(() => target?.classList.remove("flash"), 1400);
+            }),
+        );
+    };
+    const gotoGoal = (goal: number) =>
+        reveal(goal, `[data-goal="${goal + 1}"]`);
+    const gotoStep = (label: string) =>
+        reveal(Number(label.split(".")[0]) - 1, `[data-step="${label}"]`);
+
     return (
         <>
             {restitution.request && (
                 <p className="request">{restitution.request}</p>
+            )}
+            {restitution.goals.length > 1 && (
+                <Overview
+                    goals={restitution.goals}
+                    done={done}
+                    onGoto={gotoGoal}
+                />
             )}
             {restitution.goals.map((goal, index) => (
                 <GoalSection
                     key={`${index}-${goal.title}`}
                     goal={goal}
                     number={index + 1}
-                    fingerprints={goal.steps.map((step) =>
-                        stepFingerprint(
-                            step,
-                            hunksForRange(
-                                step.file ? diffs[step.file] : undefined,
-                                step.lines,
-                            ),
-                        ),
-                    )}
+                    fingerprints={fingerprints[index] ?? []}
                     viewed={viewed}
                     diffs={diffs}
+                    folded={folded.has(index)}
+                    labels={labels}
+                    onToggleFold={() => toggleFold(index)}
                     onViewedChange={changeViewed}
                     onOpenRequest={(request) => host.send(request)}
+                    onGoto={gotoStep}
                 />
             ))}
         </>

@@ -1,9 +1,12 @@
-import { useLayoutEffect, useRef } from "react";
+import { Fragment, useLayoutEffect } from "react";
 
 import type { FileDiff } from "../core/diff";
 import type { OpenRequest } from "../core/messages";
 import type { Goal } from "../core/restitution";
+import { Because } from "./Because";
+import { ChevronIcon } from "./Icons";
 import { StepCard } from "./StepCard";
+import { useScrollAnchor } from "./useScrollAnchor";
 
 export function GoalSection({
     goal,
@@ -11,8 +14,12 @@ export function GoalSection({
     fingerprints,
     viewed,
     diffs,
+    folded,
+    labels,
+    onToggleFold,
     onViewedChange,
     onOpenRequest,
+    onGoto,
 }: {
     goal: Goal;
     number: number;
@@ -20,19 +27,26 @@ export function GoalSection({
     fingerprints: string[];
     viewed: ReadonlySet<string>;
     diffs: Record<string, FileDiff>;
+    folded: boolean;
+    /** Every step label in the restitution, for `because` references. */
+    labels: ReadonlySet<string>;
+    onToggleFold: () => void;
     onViewedChange: (fingerprint: string, viewed: boolean) => void;
     onOpenRequest: (request: OpenRequest) => void;
+    onGoto: (label: string) => void;
 }) {
-    const section = useRef<HTMLElement>(null);
-    const head = useRef<HTMLHeadingElement>(null);
+    const { box, head, remember } = useScrollAnchor<
+        HTMLElement,
+        HTMLHeadingElement
+    >(folded);
 
     // The step headers pin just under this one, so they need its real height.
     useLayoutEffect(() => {
         const element = head.current;
-        if (!element || !section.current) {
+        const target = box.current;
+        if (!element || !target) {
             return undefined;
         }
-        const target = section.current;
         const sync = () =>
             target.style.setProperty(
                 "--goalhead-h",
@@ -42,40 +56,68 @@ export function GoalSection({
         const observer = new ResizeObserver(sync);
         observer.observe(element);
         return () => observer.disconnect();
-    }, []);
+    }, [box, head]);
 
     const done = fingerprints.filter((fingerprint) =>
         viewed.has(fingerprint),
     ).length;
 
     return (
-        <section className="goal" ref={section}>
+        <section
+            className={`goal${folded ? " folded" : ""}`}
+            data-goal={number}
+            ref={box}
+        >
             <h2 className="goal-head glass" ref={head}>
-                <span className="goal-no">{number}</span>
-                <span className="goal-title">{goal.title}</span>
-                <span className="goal-progress" title="Steps viewed">
-                    {done}/{goal.steps.length}
-                </span>
-                {goal.ref && <span className="goal-ref">{goal.ref}</span>}
+                <button
+                    className="goal-toggle"
+                    type="button"
+                    aria-expanded={!folded}
+                    title={folded ? "Unfold this goal" : "Fold this goal"}
+                    onClick={() => {
+                        remember();
+                        onToggleFold();
+                    }}
+                >
+                    <span className="chev" aria-hidden="true">
+                        <ChevronIcon />
+                    </span>
+                    <span className="goal-no">{number}</span>
+                    <span className="goal-title">{goal.title}</span>
+                    <span className="goal-progress" title="Steps viewed">
+                        {done}/{goal.steps.length}
+                    </span>
+                    {goal.ref && <span className="goal-ref">{goal.ref}</span>}
+                </button>
             </h2>
-            <div className="steps">
-                {goal.steps.map((step, index) => {
-                    const fingerprint = fingerprints[index] ?? "";
-                    return (
-                        <StepCard
-                            key={`${index}-${step.why}`}
-                            step={step}
-                            label={`${number}.${index + 1}`}
-                            diffs={diffs}
-                            viewed={viewed.has(fingerprint)}
-                            onViewedChange={(on) =>
-                                onViewedChange(fingerprint, on)
-                            }
-                            onOpenRequest={onOpenRequest}
-                        />
-                    );
-                })}
-            </div>
+            {!folded && (
+                <div className="steps">
+                    {goal.steps.map((step, index) => {
+                        const fingerprint = fingerprints[index] ?? "";
+                        return (
+                            <Fragment key={`${index}-${step.why}`}>
+                                {step.because && (
+                                    <Because
+                                        text={step.because}
+                                        labels={labels}
+                                        onGoto={onGoto}
+                                    />
+                                )}
+                                <StepCard
+                                    step={step}
+                                    label={`${number}.${index + 1}`}
+                                    diffs={diffs}
+                                    viewed={viewed.has(fingerprint)}
+                                    onViewedChange={(on) =>
+                                        onViewedChange(fingerprint, on)
+                                    }
+                                    onOpenRequest={onOpenRequest}
+                                />
+                            </Fragment>
+                        );
+                    })}
+                </div>
+            )}
         </section>
     );
 }

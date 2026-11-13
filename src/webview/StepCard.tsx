@@ -1,10 +1,9 @@
-import { useLayoutEffect, useRef } from "react";
-
 import { type FileDiff, firstChangedLine, hunksForRange } from "../core/diff";
 import type { OpenRequest } from "../core/messages";
 import type { Step } from "../core/restitution";
 import { DiffView } from "./DiffView";
 import { ChevronIcon, DiffIcon, FileIcon, IconButton } from "./Icons";
+import { useScrollAnchor } from "./useScrollAnchor";
 
 /** Folder part fades and truncates first; the file name always stays visible. */
 function FilePath({ path }: { path: string }) {
@@ -45,30 +44,19 @@ export function StepCard({
 
     // Viewed is the only state: a viewed step is folded to its header.
     const open = !viewed;
-    const card = useRef<HTMLElement>(null);
-    const head = useRef<HTMLElement>(null);
-    const anchor = useRef<number | undefined>(undefined);
-
-    // Folding changes the card's height. Put it back where its header was, so
-    // what you were reading doesn't jump (the header is pinned while you read).
-    useLayoutEffect(() => {
-        if (anchor.current !== undefined && card.current) {
-            const drift =
-                card.current.getBoundingClientRect().top - anchor.current;
-            window.scrollBy(0, drift);
-            anchor.current = undefined;
-        }
-    }, [viewed]);
-
+    const { box, head, remember } = useScrollAnchor<HTMLElement, HTMLElement>(
+        viewed,
+    );
     const toggleViewed = () => {
-        anchor.current = head.current?.getBoundingClientRect().top;
+        remember();
         onViewedChange(!viewed);
     };
 
     return (
         <article
             className={`card glass${open ? "" : " collapsed viewed-card"}`}
-            ref={card}
+            data-step={label}
+            ref={box}
         >
             {/* The whole header toggles Viewed; its own controls keep their jobs. */}
             <header
@@ -127,7 +115,6 @@ export function StepCard({
             {open && (
                 <>
                     <p className="why">{step.why}</p>
-                    {step.because && <p className="because">{step.because}</p>}
                     {hunks.length > 0 && <DiffView hunks={hunks} />}
                     {file && hunks.length === 0 && (
                         <p className="no-diff">

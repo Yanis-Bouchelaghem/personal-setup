@@ -71,3 +71,11 @@ The rules agents follow live in `src/core/guide.ts`: it is both what the MCP ser
 - `restitution_submit`: saves `.restitution/working.json` atomically, then reports changed hunks no step explains and steps pointing at unchanged code. It never blocks.
 
 `npm run build && node scripts/mcp-smoke.mjs <repo>` drives the server like an agent would. `scripts/make-sandbox.sh <dir> [clean]` builds a scratch repo to test on.
+
+## Panel layout
+
+- **Tabs** along the top, one per restitution file.
+- **Overview** (from two goals up): the goals with their progress, and a click jumps to one, unfolding it first.
+- **Goals** are foldable: the whole header is the control. Folding keeps the header where it was, so nothing jumps.
+- **Steps** hang on a rail inside their goal. A step's `because` is drawn as a connector between it and the previous card, and any step label in it ("1.2") is a button that scrolls there.
+- **Viewed** folds a step to its header; the whole step header toggles it.
