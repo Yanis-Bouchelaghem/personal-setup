@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 
 import type { ReviewRequest } from "../core/review";
+import { SwapLabel } from "./SwapLabel";
 
 function plural(count: number, word: string): string {
     return `${count} ${word}${count === 1 ? "" : "s"}`;
@@ -58,7 +59,10 @@ export function FeedbackBar({
                         setCopied(true);
                     }}
                 >
-                    {copied ? "Copied!" : "Copy for agent"}
+                    <SwapLabel
+                        texts={["Copy for agent", "Copied!"]}
+                        current={copied ? "Copied!" : "Copy for agent"}
+                    />
                 </button>
             </div>
         </>

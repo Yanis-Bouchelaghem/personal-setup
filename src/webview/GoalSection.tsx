@@ -92,12 +92,10 @@ export function GoalSection({
                     </span>
                     <span className="goal-no">{number}</span>
                     <span className="goal-title">{goal.title}</span>
-                    {updated && (
-                        <span
-                            className="updated-dot"
-                            title="Has new or changed steps"
-                        />
-                    )}
+                    <span
+                        className={`updated-dot${updated ? " on" : ""}`}
+                        title={updated ? "Has new or changed steps" : undefined}
+                    />
                     <span className="goal-progress" title="Steps viewed">
                         {done}/{goal.steps.length}
                     </span>

@@ -43,12 +43,14 @@ export function Overview({
                                 <span className="overview-goal">
                                     {goal.title}
                                 </span>
-                                {updated && (
-                                    <span
-                                        className="updated-dot"
-                                        title="Has new or changed steps"
-                                    />
-                                )}
+                                <span
+                                    className={`updated-dot${updated ? " on" : ""}`}
+                                    title={
+                                        updated
+                                            ? "Has new or changed steps"
+                                            : undefined
+                                    }
+                                />
                                 <span className="goal-progress">
                                     {done[index]}/{goal.steps.length}
                                 </span>

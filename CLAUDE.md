@@ -19,5 +19,6 @@ Read `docs/DESIGN.md` first: it holds the decisions, the file format and the wri
 - `src/core` is pure TypeScript. It must not import `vscode`, `node:*` or other layers (oxlint enforces it).
 - TypeScript stays on 6.x: the sonarjs lint plugin breaks on the 7.x native compiler.
 - Colours come from `--vscode-*` variables only.
+- Nothing moves when its state changes: a label that switches text uses `SwapLabel` (sized to its widest text), and markers that come and go keep their space (`visibility`, not `display`).
 - The user reviews every milestone visually before the next one starts.
 - **Commit often**: small logical commits, each with `npm run check` green. End messages with the `Co-Authored-By` line.

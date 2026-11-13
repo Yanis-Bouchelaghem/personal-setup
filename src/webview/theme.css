@@ -942,12 +942,18 @@ body {
     border-color: var(--updated);
 }
 
+/* Always in place, only visible when the goal has updates: nothing shifts. */
 .updated-dot {
     flex: none;
     width: 7px;
     height: 7px;
     border-radius: 999px;
     background: var(--updated);
+    visibility: hidden;
+}
+
+.updated-dot.on {
+    visibility: visible;
 }
 
 /* A toggle button that is on: clarify marked, comment written. */
@@ -1011,6 +1017,9 @@ body {
 .feedback-summary {
     flex: 1;
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: 12.5px;
     font-weight: 600;
 }
@@ -1074,4 +1083,18 @@ body {
 .primary-btn.copied:hover {
     background: var(--vscode-testing-iconPassed, #3fb950);
     color: var(--vscode-editor-background, #1f1f1f);
+}
+
+/* Every text of a changing label in one cell: the widest sets the size. */
+.swap {
+    display: inline-grid;
+}
+
+.swap > span {
+    grid-area: 1 / 1;
+    text-align: center;
+}
+
+.swap > span[aria-hidden="true"] {
+    visibility: hidden;
 }
