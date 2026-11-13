@@ -14,13 +14,20 @@ const DEBOUNCE_MS = 80;
  * Keep the panel in sync with `<gitRoot>/.restitution/working.json`.
  * The git root can sit above the workspace folder (a module inside a monorepo).
  */
-export function watchRestitution(view: PlanViewProvider): vscode.Disposable {
+export function watchRestitution(
+    view: PlanViewProvider,
+    log: vscode.LogOutputChannel,
+): vscode.Disposable {
     const folder = vscode.workspace.workspaceFolders?.[0];
     const root = folder && findGitRoot(folder.uri.fsPath);
     if (!root) {
+        log.info(
+            `No git repository for ${folder?.uri.fsPath ?? "(no folder)"}`,
+        );
         view.setState({ status: "no-repo" });
         return new vscode.Disposable(() => undefined);
     }
+    log.info(`Watching ${restitutionDir(root)}`);
 
     const disposables: vscode.Disposable[] = [];
     let timer: NodeJS.Timeout | undefined;
@@ -28,14 +35,19 @@ export function watchRestitution(view: PlanViewProvider): vscode.Disposable {
         clearTimeout(timer);
         timer = setTimeout(() => {
             readViewState(root).then(
-                (state) => view.setState(state),
-                (error: unknown) =>
-                    view.setState({ status: "error", errors: [String(error)] }),
+                (state) => {
+                    log.info(`State: ${state.status}`);
+                    view.setState(state);
+                },
+                (error: unknown) => {
+                    log.error(String(error));
+                    view.setState({ status: "error", errors: [String(error)] });
+                },
             );
         }, DEBOUNCE_MS);
     };
 
-    void ensureRestitutionDir(root).then(() => {
+    const start = () => {
         const pattern = new vscode.RelativePattern(
             vscode.Uri.file(restitutionDir(root)),
             "working.json",
@@ -48,6 +60,10 @@ export function watchRestitution(view: PlanViewProvider): vscode.Disposable {
             watcher.onDidDelete(refresh),
         );
         refresh();
+    };
+    ensureRestitutionDir(root).then(start, (error: unknown) => {
+        log.error(`Could not prepare .restitution/: ${String(error)}`);
+        view.setState({ status: "error", errors: [String(error)] });
     });
 
     return new vscode.Disposable(() => {

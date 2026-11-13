@@ -3,3 +3,4 @@ dist
 .shots
 *.vsix
 .restitution
+.vscode-dev
