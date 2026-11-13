@@ -1,5 +1,6 @@
 import type { Goal } from "../core/restitution";
 import type { StepState } from "./GoalSection";
+import { UpdatedTag } from "./UpdatedTag";
 
 /** The goals at a glance, with progress and what changed; a click jumps to one. */
 export function Overview({
@@ -43,14 +44,7 @@ export function Overview({
                                 <span className="overview-goal">
                                     {goal.title}
                                 </span>
-                                <span
-                                    className={`updated-dot${updated ? " on" : ""}`}
-                                    title={
-                                        updated
-                                            ? "Has new or changed steps"
-                                            : undefined
-                                    }
-                                />
+                                <UpdatedTag shown={updated ?? false} />
                                 <span className="goal-progress">
                                     {done[index]}/{goal.steps.length}
                                 </span>

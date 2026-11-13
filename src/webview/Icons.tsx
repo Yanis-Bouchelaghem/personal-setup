@@ -133,22 +133,3 @@ export function CommentIcon() {
         </Icon>
     );
 }
-
-/** A small tick, for "updated since you last looked". */
-export function TickIcon() {
-    return (
-        <svg
-            width="11"
-            height="11"
-            viewBox="0 0 16 16"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            aria-hidden="true"
-        >
-            <path d="M3 8.5l3.2 3L13 4.5" />
-        </svg>
-    );
-}

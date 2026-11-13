@@ -106,7 +106,7 @@ How to handle it lives with the agent, not in the prompt: the `restitution_feedb
 
 All of it lives in `<id>.review.json`, written only by the extension: `viewed`, `known` (steps the reader was already shown) and `requests`.
 
-- **Updated steps.** A step's fingerprint covers its words, connector, file and changed lines. On the first look at a tab every step becomes known; later, any step whose fingerprint isn't known (new, or changed by the agent) gets a yellow tick and border, a yellow dot on its goal and in the overview, and comes back unfolded even if it was viewed. Viewing it makes it known.
+- **Updated steps.** A step's fingerprint covers its words, connector, file and changed lines. On the first look at a tab every step becomes known; later, any step whose fingerprint isn't known (new, or changed by the agent) gets an even yellow ring, its goal (and its overview row) gets a yellow "Updated" pill, and it comes back unfolded even if it was viewed. Resting the pointer on it for half a second, or viewing it, makes it known.
 - **Requests close themselves.** Copying marks the requests sent; once the agent rewrites the tab after that, they are hidden as answered. Editing a request un-sends it.
 
 ## Panel layout

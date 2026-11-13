@@ -12,10 +12,10 @@ import {
     DiffIcon,
     FileIcon,
     IconButton,
-    TickIcon,
 } from "./Icons";
 import { Note } from "./Note";
 import { useScrollAnchor } from "./useScrollAnchor";
+import { useSeenOnHover } from "./useSeenOnHover";
 
 /** Folder part fades and truncates first; the file name always stays visible. */
 function FilePath({ path }: { path: string }) {
@@ -60,6 +60,7 @@ export function StepCard({
     updated,
     request,
     onViewedChange,
+    onSeen,
     onOpenRequest,
     onRequestChange,
 }: {
@@ -72,6 +73,8 @@ export function StepCard({
     /** What the reader asks the agent about this step, if anything. */
     request: ReviewRequest | undefined;
     onViewedChange: (viewed: boolean) => void;
+    /** The reader has looked at this updated step: clear its mark. */
+    onSeen: () => void;
     onOpenRequest: (request: OpenRequest) => void;
     onRequestChange: (clarify: boolean, comment: string | undefined) => void;
 }) {
@@ -91,6 +94,8 @@ export function StepCard({
         onViewedChange(!viewed);
     };
 
+    const hover = useSeenOnHover(updated, onSeen);
+
     const classes = [
         "card",
         "glass",
@@ -102,6 +107,7 @@ export function StepCard({
             className={classes.filter(Boolean).join(" ")}
             data-step={label}
             ref={box}
+            {...hover}
         >
             {/* The whole header toggles Viewed; its own controls keep their jobs. */}
             <header
@@ -120,14 +126,6 @@ export function StepCard({
                     <ChevronIcon />
                 </span>
                 <span className="step-no">{label}</span>
-                {updated && (
-                    <span
-                        className="updated-tag"
-                        title="New or changed since you last looked"
-                    >
-                        <TickIcon />
-                    </span>
-                )}
                 {file && <FilePath path={file} />}
                 <span className="actions">
                     {open && code.canDiff && (

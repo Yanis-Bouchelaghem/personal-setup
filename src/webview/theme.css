@@ -918,17 +918,6 @@ body {
     --updated: var(--vscode-gitDecoration-modifiedResourceForeground, #e2c08d);
 }
 
-.updated-tag {
-    display: grid;
-    flex: none;
-    place-items: center;
-    width: 17px;
-    height: 17px;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--updated) 22%, transparent);
-    color: var(--updated);
-}
-
 /* An even ring on all four sides: the border plus a 1px ring just outside it. */
 .card.updated {
     border-color: var(--updated);
@@ -940,20 +929,6 @@ body {
 
 .card.updated::before {
     border-color: var(--updated);
-}
-
-/* Always in place, only visible when the goal has updates: nothing shifts. */
-.updated-dot {
-    flex: none;
-    width: 7px;
-    height: 7px;
-    border-radius: 999px;
-    background: var(--updated);
-    visibility: hidden;
-}
-
-.updated-dot.on {
-    visibility: visible;
 }
 
 /* A toggle button that is on: clarify marked, comment written. */
@@ -1097,4 +1072,16 @@ body {
 
 .swap > span[aria-hidden="true"] {
     visibility: hidden;
+}
+
+/* "Updated" on a goal: the git "modified" yellow, with text that reads on it. */
+.updated-pill {
+    flex: none;
+    padding: 1px 7px;
+    border-radius: 999px;
+    background: var(--updated);
+    color: var(--vscode-editor-background, #1f1f1f);
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.5;
 }

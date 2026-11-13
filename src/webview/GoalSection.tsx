@@ -7,6 +7,7 @@ import type { ReviewRequest } from "../core/review";
 import { Connector } from "./Connector";
 import { ChevronIcon } from "./Icons";
 import { StepCard } from "./StepCard";
+import { UpdatedTag } from "./UpdatedTag";
 import { useScrollAnchor } from "./useScrollAnchor";
 
 /** Where a step stands for the reader. */
@@ -25,6 +26,7 @@ export function GoalSection({
     folded,
     onToggleFold,
     onViewedChange,
+    onSeen,
     onRequestChange,
     onOpenRequest,
 }: {
@@ -36,6 +38,7 @@ export function GoalSection({
     folded: boolean;
     onToggleFold: () => void;
     onViewedChange: (fingerprint: string, viewed: boolean) => void;
+    onSeen: (fingerprint: string) => void;
     onRequestChange: (
         fingerprint: string,
         label: string,
@@ -92,10 +95,7 @@ export function GoalSection({
                     </span>
                     <span className="goal-no">{number}</span>
                     <span className="goal-title">{goal.title}</span>
-                    <span
-                        className={`updated-dot${updated ? " on" : ""}`}
-                        title={updated ? "Has new or changed steps" : undefined}
-                    />
+                    <UpdatedTag shown={updated} />
                     <span className="goal-progress" title="Steps viewed">
                         {done}/{goal.steps.length}
                     </span>
@@ -131,6 +131,7 @@ export function GoalSection({
                                         }
                                         onViewedChange(fingerprint, on);
                                     }}
+                                    onSeen={() => onSeen(fingerprint)}
                                     onRequestChange={(clarify, comment) =>
                                         onRequestChange(
                                             fingerprint,

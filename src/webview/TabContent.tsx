@@ -113,6 +113,7 @@ export function TabContent({
                     onViewedChange={(step, on) =>
                         act({ type: "viewed", step, on })
                     }
+                    onSeen={(step) => act({ type: "known", steps: [step] })}
                     onRequestChange={(step, label, clarify, comment) =>
                         act({ type: "request", step, label, clarify, comment })
                     }
