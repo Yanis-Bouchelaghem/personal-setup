@@ -13,7 +13,7 @@
     --radius-lg: 14px;
     --radius-md: 10px;
     --radius-sm: 8px;
-    --tabs-h: 44px;
+    --tabs-h: 36px;
 
     /* The editor background sits a touch above the side bar in most themes. */
     --glass-fill: color-mix(
@@ -381,26 +381,42 @@ body {
     color: var(--fg);
 }
 
-/* Tabs: like browser tabs. They borrow the editor's own tab colours. */
-.tabs {
+/* Tabs: flat and square, separated by thin dividers, seamless with the content below. */
+.tabbar {
     position: sticky;
     top: 0;
     z-index: 3;
-    display: flex;
-    align-items: stretch;
-    gap: 2px;
     height: var(--tabs-h);
     margin: -12px -12px 12px;
-    padding: 6px 8px;
-    overflow-x: auto;
-    background: color-mix(
-        in srgb,
-        var(--vscode-editorGroupHeader-tabsBackground, var(--bg)) 86%,
-        transparent
-    );
-    border-bottom: 1px solid var(--glass-border);
+}
+
+/*
+ * The frost behind the strip. Its lower edge fades out, so content scrolling
+ * underneath dissolves instead of being cut by a visible line.
+ */
+.tabbar::before {
+    content: "";
+    position: absolute;
+    inset: 0 0 -16px;
+    background: color-mix(in srgb, var(--bg) 72%, transparent);
     -webkit-backdrop-filter: blur(16px) saturate(150%);
     backdrop-filter: blur(16px) saturate(150%);
+    -webkit-mask-image: linear-gradient(
+        to bottom,
+        #000 calc(100% - 16px),
+        transparent
+    );
+    mask-image: linear-gradient(to bottom, #000 calc(100% - 16px), transparent);
+    pointer-events: none;
+}
+
+.tabs {
+    position: relative;
+    display: flex;
+    align-items: stretch;
+    height: 100%;
+    padding: 0 8px;
+    overflow-x: auto;
     scrollbar-width: none;
 }
 
@@ -411,7 +427,6 @@ body {
     align-items: center;
     min-width: 76px;
     max-width: 200px;
-    border-radius: var(--radius-md);
     color: var(--vscode-tab-inactiveForeground, var(--muted));
     transition:
         color 0.12s ease,
@@ -420,36 +435,35 @@ body {
 
 .tab:hover {
     color: var(--vscode-tab-activeForeground, var(--fg));
-    background: color-mix(in srgb, var(--fg) 9%, transparent);
 }
 
 .tab.active {
     color: var(--vscode-tab-activeForeground, var(--fg));
-    background: var(
-        --vscode-tab-activeBackground,
-        var(--vscode-editor-background)
-    );
-    box-shadow:
-        0 0 0 1px var(--glass-border),
-        0 2px 6px -2px rgb(0 0 0 / 0.35);
 }
 
-/* A thin divider between resting tabs, hidden next to the active or hovered one. */
+/* The active tab is marked by a bar along its bottom edge. */
+.tab.active::before {
+    content: "";
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    height: 2px;
+    background: var(--accent);
+}
+
+/* The thin | between tabs. */
 .tab::after {
     content: "";
     position: absolute;
-    top: 8px;
-    right: -2px;
-    bottom: 8px;
+    top: 10px;
+    right: 0;
+    bottom: 10px;
     width: 1px;
     background: var(--glass-border);
 }
 
-.tab.active::after,
-.tab:hover::after,
-.tab:last-child::after,
-.tab:has(+ .tab.active)::after,
-.tab:has(+ .tab:hover)::after {
+.tab:last-child::after {
     display: none;
 }
 
@@ -460,7 +474,7 @@ body {
     gap: 6px;
     min-width: 0;
     height: 100%;
-    padding: 0 2px 0 10px;
+    padding: 0 2px 0 12px;
     border: 0;
     background: transparent;
     color: inherit;
@@ -494,7 +508,7 @@ body {
     margin-right: 6px;
     padding: 0;
     border: 0;
-    border-radius: 999px;
+    border-radius: 3px;
     background: transparent;
     color: inherit;
     opacity: 0;
@@ -519,7 +533,7 @@ body {
 }
 
 @media (prefers-reduced-transparency: reduce), (forced-colors: active) {
-    .tabs {
+    .tabbar::before {
         -webkit-backdrop-filter: none;
         backdrop-filter: none;
         background: var(--bg);

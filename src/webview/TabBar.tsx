@@ -16,36 +16,38 @@ export function TabBar({
     onClose: (id: string) => void;
 }) {
     return (
-        <div className="tabs" role="tablist">
-            {tabs.map((tab) => (
-                <div
-                    key={tab.id}
-                    className={`tab${tab.id === activeId ? " active" : ""}`}
-                >
-                    <button
-                        className="tab-label"
-                        type="button"
-                        role="tab"
-                        aria-selected={tab.id === activeId}
-                        title={tab.label}
-                        onClick={() => onSelect(tab.id)}
+        <div className="tabbar">
+            <div className="tabs" role="tablist">
+                {tabs.map((tab) => (
+                    <div
+                        key={tab.id}
+                        className={`tab${tab.id === activeId ? " active" : ""}`}
                     >
-                        {unread.has(tab.id) && (
-                            <span className="dot" title="Updated" />
-                        )}
-                        <span className="tab-text">{tab.label}</span>
-                    </button>
-                    <button
-                        className="tab-close"
-                        type="button"
-                        aria-label={`Close ${tab.label}`}
-                        title="Close (kept in .restitution/archive)"
-                        onClick={() => onClose(tab.id)}
-                    >
-                        <CloseIcon />
-                    </button>
-                </div>
-            ))}
+                        <button
+                            className="tab-label"
+                            type="button"
+                            role="tab"
+                            aria-selected={tab.id === activeId}
+                            title={tab.label}
+                            onClick={() => onSelect(tab.id)}
+                        >
+                            {unread.has(tab.id) && (
+                                <span className="dot" title="Updated" />
+                            )}
+                            <span className="tab-text">{tab.label}</span>
+                        </button>
+                        <button
+                            className="tab-close"
+                            type="button"
+                            aria-label={`Close ${tab.label}`}
+                            title="Close (kept in .restitution/archive)"
+                            onClick={() => onClose(tab.id)}
+                        >
+                            <CloseIcon />
+                        </button>
+                    </div>
+                ))}
+            </div>
         </div>
     );
 }
