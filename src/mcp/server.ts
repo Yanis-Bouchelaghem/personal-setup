@@ -4,7 +4,7 @@ import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js"
 import { GUIDE, SERVER_INSTRUCTIONS } from "../core/guide";
 import { RestitutionSchema } from "../core/restitution";
 import { findGitRoot } from "../node/gitRoot";
-import { newTabId } from "../node/store";
+import { newTabId } from "../node/store/paths";
 import { submitRestitution } from "../node/submit";
 
 /**

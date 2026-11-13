@@ -3,7 +3,8 @@ import { homedir } from "node:os";
 import * as vscode from "vscode";
 
 import { findGitRoot } from "../node/gitRoot";
-import { archiveTab, setViewed } from "../node/store";
+import { archiveTab } from "../node/store/archive";
+import { setViewed } from "../node/store/review";
 import {
     connectAgents,
     installServer,

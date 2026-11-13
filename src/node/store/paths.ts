@@ -1,0 +1,67 @@
+import { randomBytes } from "node:crypto";
+import { join } from "node:path";
+
+/**
+ * Where things live under `<gitRoot>/.restitution/`:
+ *
+ *   <id>.json          one restitution, shown as one tab (the agent's file)
+ *   <id>.review.json   the human's Viewed state for that tab
+ *   archive/           closed tabs, with their review files
+ */
+const DIR = ".restitution";
+const ARCHIVE = "archive";
+
+/** The line that keeps the folder out of `git status`. */
+export const EXCLUDE_ENTRY = `${DIR}/`;
+
+export function restitutionDir(gitRoot: string): string {
+    return join(gitRoot, DIR);
+}
+
+export function archiveDir(gitRoot: string): string {
+    return join(restitutionDir(gitRoot), ARCHIVE);
+}
+
+export function tabFile(gitRoot: string, id: string): string {
+    return join(restitutionDir(gitRoot), `${id}.json`);
+}
+
+export function reviewFile(gitRoot: string, id: string): string {
+    return join(restitutionDir(gitRoot), `${id}.review.json`);
+}
+
+export function archivedTabFile(gitRoot: string, id: string): string {
+    return join(archiveDir(gitRoot), `${id}.json`);
+}
+
+export function archivedReviewFile(gitRoot: string, id: string): string {
+    return join(archiveDir(gitRoot), `${id}.review.json`);
+}
+
+/** Ids become file names, so keep them plain. */
+export function isTabId(id: string): boolean {
+    return /^[a-z0-9][a-z0-9-]{0,63}$/i.test(id);
+}
+
+export function assertTabId(id: string): void {
+    if (!isTabId(id)) {
+        throw new Error(`Invalid restitution id: ${id}`);
+    }
+}
+
+/** Unique, readable, and roughly sortable by creation time. */
+export function newTabId(): string {
+    return `${Date.now().toString(36)}-${randomBytes(2).toString("hex")}`;
+}
+
+/**
+ * The tab ids among the names in a folder: `<id>.json`, but not dotfiles,
+ * temporary files or review files.
+ */
+export function tabIds(fileNames: string[]): string[] {
+    return fileNames
+        .filter((name) => name.endsWith(".json") && !name.startsWith("."))
+        .filter((name) => !name.endsWith(".review.json"))
+        .map((name) => name.slice(0, -".json".length))
+        .filter(isTabId);
+}

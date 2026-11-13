@@ -1,10 +1,8 @@
 import * as vscode from "vscode";
 
-import {
-    ensureRestitutionDir,
-    readViewState,
-    restitutionDir,
-} from "../node/store";
+import { ensureRestitutionDir } from "../node/store/exclude";
+import { restitutionDir } from "../node/store/paths";
+import { readViewState } from "../node/store/viewState";
 import type { PlanViewProvider } from "./planView";
 
 const DEBOUNCE_MS = 80;

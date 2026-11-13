@@ -8,7 +8,7 @@ Plan and milestones: `~/.claude/plans/eager-sauteeing-treehouse.md` (scroll mode
 
 - A JSON file is the contract between agent and viewer. The agent writes it through an MCP tool; writing the file by hand also works.
 - Explanations live only in the side panel. "Open in editor" opens the native `vscode.diff` on demand.
-- Each step after the first in a goal carries a connector word (`link`: then, so, in parallel, finally; default then). The page reads as one sentence: the next card's text continues after the word. The model chooses the word; nothing checks it, because this is only a guide.
+- Each step after the first in a goal carries a connector word (`link`: then, so or in parallel; default then). The page reads as one sentence: the next card's text continues after the word. The model chooses the word; nothing checks it, because this is only a guide.
 - The explanation is optional. Nothing blocks a commit or a turn.
 - MCP transport is **stdio** with the official SDK: the agent spawns it in the project folder, so it finds the repo for free, with no port, token or stale URL.
 - Colours come only from VS Code theme variables. "Glass" is a light touch on cards and sticky headers.
@@ -63,7 +63,7 @@ The rules agents follow live in `src/core/guide.ts`: it is both what the MCP ser
 
 - Goals come from the request. **A goal stands on its own and could be reverted without touching another goal**; parts that only make sense together (a feature with its config, tests and docs) are one goal with several steps. There is no limit on steps: the model should teach well, and the user can ask for more or less detail.
 - A step's `why` is one short sentence, action then reason. The first step of a goal starts the sentence; every other step continues after its connector word, so the goal reads aloud as one sentence.
-- Connector words, with the definition each agent is given: **then** (the default: comes after and builds on the previous step), **so** (the previous step forces this one), **in parallel** (independent of the previous step, readable in either order), **finally** (the last step, wrapping up: docs, cleanup). There are no connectors between goals.
+- Connector words, with the definition each agent is given: **then** (the default: comes after and builds on the previous step), **so** (the previous step forces this one), **in parallel** (independent of the previous step, readable in either order). There are no connectors between goals.
 - No background and no "what to check".
 
 `file` is relative to the git root. `lines` is an optional `[from, to]` on the new side, to pick one hunk of a big file.

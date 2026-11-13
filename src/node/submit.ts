@@ -1,7 +1,7 @@
 import { checkCoverage, describeSubmit } from "../core/coverage";
 import type { Restitution } from "../core/restitution";
 import { readAllDiffs } from "./git";
-import { readTabs, writeRestitution } from "./store";
+import { readTabs, writeRestitution } from "./store/tabs";
 
 /**
  * Save a restitution as the tab `id` and say what is still off. Coverage

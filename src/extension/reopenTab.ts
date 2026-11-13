@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
 import { timeAgo } from "../core/time";
-import { readClosedTabs, restoreTab } from "../node/store";
+import { readClosedTabs, restoreTab } from "../node/store/archive";
 import type { PlanViewProvider } from "./planView";
 
 /** Pick a closed restitution and bring it back, selected. */

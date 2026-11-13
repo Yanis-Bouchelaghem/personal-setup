@@ -22,7 +22,7 @@ const many: Restitution = {
                 },
                 {
                     file: "src/swagger.js",
-                    link: "finally",
+                    link: "then",
                     why: "say in the API description that the URL must be https, so the docs match.",
                 },
             ],

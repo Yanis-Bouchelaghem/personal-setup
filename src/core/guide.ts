@@ -36,8 +36,8 @@ Each step is a card. Between two cards of the same goal sits one connector word,
   Require https for ADAPTER_APIGEE_URL, so bearer tokens never leave in clear text.     <- step 1, no connector
   Then
   write the test that rejects an http URL, to catch a regression early.                 <- step 2, link "then"
-  Finally
-  note in the README that the URL must be https, so operators know before deploying.    <- step 3, link "finally"
+  Then
+  note in the README that the URL must be https, so operators know before deploying.    <- step 3, link "then"
 
 - "why" is ONE sentence of about 15 words or fewer, shaped action then reason: what was done, then why. Never "Before it did X, now it does Y".
 - The first step of a goal starts the sentence: capitalised, imperative ("Require https ...").
@@ -54,8 +54,6 @@ Each step is a card. Between two cards of the same goal sits one connector word,
   Reads as: "So / update the call sites to the new signature."
 - "in parallel". This step and the previous one do not depend on each other: the reader could read them in either order. Use it only when nothing in this step needs the previous one (it does not import from it, call it or test it).
   Reads as: "In parallel / update the README row for the new setting."
-- "finally". The last step of the goal, wrapping up what the steps before built: docs, cleanup, a last check. Only on the final step.
-  Reads as: "Finally / document the new setting in the README."
 
 Goals have no connectors between them: they are independent.
 
@@ -75,7 +73,7 @@ Teach it the way you would to a colleague who has not seen the change: foundatio
         { "file": "src/gateway/retry.ts", "link": "so", "why": "build withRetry on top of it, retrying only 5xx responses with exponential backoff." },
         { "file": "src/gateway/client.ts", "link": "then", "why": "run json() through withRetry, so every JSON call benefits." },
         { "file": "test/retry.test.ts", "link": "then", "why": "write the unit tests to cover what was added." },
-        { "file": "README.md", "link": "finally", "why": "describe the retry behaviour, so operators know what to expect." }
+        { "file": "README.md", "link": "then", "why": "describe the retry behaviour, so operators know what to expect." }
       ]
     }
   ]
