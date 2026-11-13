@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef } from "react";
 
 import { type FileDiff, firstChangedLine, hunksForRange } from "../core/diff";
 import type { OpenRequest } from "../core/messages";
@@ -43,7 +43,8 @@ export function StepCard({
     const canOpenFile =
         file !== undefined && hunks.length > 0 && status !== "deleted";
 
-    const [open, setOpen] = useState(!viewed);
+    // Viewed is the only state: a viewed step is folded to its header.
+    const open = !viewed;
     const card = useRef<HTMLElement>(null);
     const head = useRef<HTMLElement>(null);
     const anchor = useRef<number | undefined>(undefined);
@@ -57,35 +58,34 @@ export function StepCard({
             window.scrollBy(0, drift);
             anchor.current = undefined;
         }
-    }, [open]);
+    }, [viewed]);
 
-    const change = (next: boolean) => {
-        if (next !== open) {
-            anchor.current = head.current?.getBoundingClientRect().top;
-            setOpen(next);
-        }
-    };
-    const toggleViewed = (checked: boolean) => {
-        onViewedChange(checked);
-        change(!checked); // viewed folds the card; un-viewing opens it again
+    const toggleViewed = () => {
+        anchor.current = head.current?.getBoundingClientRect().top;
+        onViewedChange(!viewed);
     };
 
     return (
         <article
-            className={`card glass${open ? "" : " collapsed"}${viewed ? " viewed-card" : ""}`}
+            className={`card glass${open ? "" : " collapsed viewed-card"}`}
             ref={card}
         >
-            <header className="card-head" ref={head}>
-                <button
-                    className="chev"
-                    type="button"
-                    aria-expanded={open}
-                    aria-label={open ? "Fold this step" : "Unfold this step"}
-                    title={open ? "Fold" : "Unfold"}
-                    onClick={() => change(!open)}
-                >
+            {/* The whole header toggles Viewed; its own controls keep their jobs. */}
+            <header
+                className="card-head"
+                ref={head}
+                onClick={(event) => {
+                    const own =
+                        event.target instanceof Element &&
+                        event.target.closest("button, label, a");
+                    if (!own) {
+                        toggleViewed();
+                    }
+                }}
+            >
+                <span className="chev" aria-hidden="true">
                     <ChevronIcon />
-                </button>
+                </span>
                 <span className="step-no">{label}</span>
                 {file && <FilePath path={file} />}
                 <span className="actions">
@@ -119,7 +119,7 @@ export function StepCard({
                     <input
                         type="checkbox"
                         checked={viewed}
-                        onChange={(event) => toggleViewed(event.target.checked)}
+                        onChange={toggleViewed}
                     />
                     <span>Viewed</span>
                 </label>

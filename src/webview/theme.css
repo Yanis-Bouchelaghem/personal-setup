@@ -149,6 +149,8 @@ body {
  * read a long step, so Viewed is always within reach.
  */
 .card-head {
+    cursor: pointer;
+    user-select: none;
     position: sticky;
     top: calc(var(--tabs-h) + var(--goalhead-h, 44px) + 14px);
     z-index: 1;
@@ -166,6 +168,10 @@ body {
     );
     -webkit-backdrop-filter: blur(8px);
     backdrop-filter: blur(8px);
+}
+
+.card-head:hover {
+    box-shadow: inset 0 0 0 999px color-mix(in srgb, var(--fg) 5%, transparent);
 }
 
 /* A folded step is only its header. */
@@ -192,34 +198,20 @@ body {
     display: grid;
     flex: none;
     place-items: center;
-    width: 20px;
+    width: 16px;
     height: 20px;
     margin-left: -4px;
-    padding: 0;
-    border: 0;
-    border-radius: var(--radius-sm);
-    background: transparent;
     color: var(--muted);
-    cursor: pointer;
-    transition:
-        color 0.15s ease,
-        background-color 0.15s ease;
-}
-
-.chev:hover {
-    color: var(--fg);
-    background: color-mix(in srgb, var(--fg) 10%, transparent);
 }
 
 .chev svg {
     transition: transform 0.15s ease;
 }
 
-.chev[aria-expanded="false"] svg {
+.card.collapsed .chev svg {
     transform: rotate(-90deg);
 }
 
-.chev:focus-visible,
 .viewed input:focus-visible {
     outline: 1px solid var(--accent);
     outline-offset: 1px;
@@ -352,7 +344,6 @@ body {
     .card,
     .tab,
     .tab::before,
-    .chev,
     .chev svg {
         transition: none;
     }
