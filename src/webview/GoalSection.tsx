@@ -1,5 +1,5 @@
 import type { FileDiff } from "../core/diff";
-import type { OpenDiff } from "../core/messages";
+import type { OpenRequest } from "../core/messages";
 import type { Goal } from "../core/restitution";
 import { StepCard } from "./StepCard";
 
@@ -7,12 +7,12 @@ export function GoalSection({
     goal,
     number,
     diffs,
-    onOpenDiff,
+    onOpenRequest,
 }: {
     goal: Goal;
     number: number;
     diffs: Record<string, FileDiff>;
-    onOpenDiff: (request: OpenDiff) => void;
+    onOpenRequest: (request: OpenRequest) => void;
 }) {
     return (
         <section className="goal">
@@ -28,7 +28,7 @@ export function GoalSection({
                         step={step}
                         label={`${number}.${index + 1}`}
                         diffs={diffs}
-                        onOpenDiff={onOpenDiff}
+                        onOpenRequest={onOpenRequest}
                     />
                 ))}
             </div>

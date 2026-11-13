@@ -36,7 +36,9 @@ export function DiffView({ hunks }: { hunks: Hunk[] }) {
                     type="button"
                     onClick={() => setExpanded(!expanded)}
                 >
-                    {expanded ? "Show less" : `Show ${hidden} more lines`}
+                    {expanded
+                        ? "Show less"
+                        : `Show ${hidden} more ${hidden === 1 ? "line" : "lines"}`}
                 </button>
             )}
         </div>

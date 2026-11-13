@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import type { OpenDiff, ViewState } from "../core/messages";
+import type { OpenRequest, ViewState } from "../core/messages";
 import { GoalSection } from "./GoalSection";
 import type { Host } from "./host";
 import { Notice } from "./Notice";
@@ -16,17 +16,20 @@ export function App({ host }: { host: Host }) {
 
     return (
         <main className="app">
-            <Body state={state} onOpenDiff={(request) => host.send(request)} />
+            <Body
+                state={state}
+                onOpenRequest={(request) => host.send(request)}
+            />
         </main>
     );
 }
 
 function Body({
     state,
-    onOpenDiff,
+    onOpenRequest,
 }: {
     state: ViewState;
-    onOpenDiff: (request: OpenDiff) => void;
+    onOpenRequest: (request: OpenRequest) => void;
 }) {
     if (state.status === "no-repo") {
         return (
@@ -67,7 +70,7 @@ function Body({
                     goal={goal}
                     number={index + 1}
                     diffs={state.diffs}
-                    onOpenDiff={onOpenDiff}
+                    onOpenRequest={onOpenRequest}
                 />
             ))}
         </>

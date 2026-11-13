@@ -22,4 +22,9 @@ export type OpenDiff = {
     status?: FileDiff["status"];
 };
 
-export type FromWebview = { type: "ready" } | OpenDiff;
+export type OpenFile = { type: "openFile"; file: string; line?: number };
+
+/** Both buttons on a card: the change as a diff, or the file at its line. */
+export type OpenRequest = OpenDiff | OpenFile;
+
+export type FromWebview = { type: "ready" } | OpenRequest;

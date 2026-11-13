@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 
 import { findGitRoot } from "../node/gitRoot";
-import { openDiff } from "./openDiff";
+import { openInEditor } from "./openInEditor";
 import { PlanViewProvider } from "./planView";
 import { watchRestitution } from "./watchRestitution";
 
@@ -13,8 +13,8 @@ export function activate(context: vscode.ExtensionContext): void {
 
     const plan = new PlanViewProvider(context.extensionUri, (request) => {
         if (root) {
-            openDiff(root, request).catch((error: unknown) =>
-                log.error(`Could not open diff: ${String(error)}`),
+            openInEditor(root, request).catch((error: unknown) =>
+                log.error(`Could not open in editor: ${String(error)}`),
             );
         }
     });
