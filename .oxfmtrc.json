@@ -1,6 +1,6 @@
 {
     "$schema": "./node_modules/oxfmt/configuration_schema.json",
-    "ignorePatterns": ["dist", ".shots", "package-lock.json"],
+    "ignorePatterns": ["dist", ".shots", "package-lock.json", "sandbox"],
     "printWidth": 80,
     "tabWidth": 4,
     "sortImports": true,

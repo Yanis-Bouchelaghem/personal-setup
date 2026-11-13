@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import { parseUnifiedDiff } from "./diff";
-import { stepFingerprint } from "./fingerprint";
-import type { Step } from "./restitution";
+import { goalFingerprints, stepFingerprint } from "./fingerprint";
+import type { Restitution, Step } from "./restitution";
 
 const diff = (body: string, start = 10) =>
     parseUnifiedDiff(
@@ -54,5 +54,37 @@ describe("stepFingerprint", () => {
         expect(stepFingerprint(step, edited)).not.toBe(
             stepFingerprint(step, diff("ctx")),
         );
+    });
+});
+
+describe("goalFingerprints", () => {
+    const restitution: Restitution = {
+        version: 1,
+        goals: [
+            {
+                title: "One",
+                steps: [step, { file: "a.ts", why: "Then more." }],
+            },
+            { title: "Two", steps: [{ why: "No code here." }] },
+        ],
+    };
+    const diffs = {
+        "a.ts": parseUnifiedDiff(
+            "diff --git a/a.ts b/a.ts\n--- a/a.ts\n+++ b/a.ts\n@@ -1,1 +1,1 @@\n-old\n+new\n",
+        )[0]!,
+    };
+
+    it("answers goal by goal, step by step", () => {
+        const prints = goalFingerprints(restitution, diffs);
+        expect(prints.map((goal) => goal.length)).toEqual([2, 1]);
+    });
+
+    it("is stable, and tells steps with different code apart", () => {
+        expect(goalFingerprints(restitution, diffs)).toEqual(
+            goalFingerprints(restitution, diffs),
+        );
+        const [first, second] = goalFingerprints(restitution, diffs)[0]!;
+        expect(first).toBe(second); // same file, same hunk: the same code
+        expect(goalFingerprints(restitution, {})[1]![0]).not.toBe(first);
     });
 });

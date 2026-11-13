@@ -1,0 +1,78 @@
+{
+    "version": 1,
+    "label": "Review fixes",
+    "request": "/code-review --fix",
+    "goals": [
+        {
+            "title": "Reject plain-http Apigee URLs",
+            "ref": "#1",
+            "steps": [
+                {
+                    "file": "src/config.ts",
+                    "lines": [
+                        7,
+                        17
+                    ],
+                    "why": "Require https for ADAPTER_APIGEE_URL, so bearer tokens never leave in clear text."
+                },
+                {
+                    "file": "test/config.test.ts",
+                    "lines": [
+                        1,
+                        18
+                    ],
+                    "link": "then",
+                    "why": "write the test that rejects an http URL, to catch a regression early."
+                },
+                {
+                    "file": "README.md",
+                    "lines": [
+                        7,
+                        13
+                    ],
+                    "link": "then",
+                    "why": "note in the README that the URL must be https, so operators know before deploying."
+                }
+            ]
+        },
+        {
+            "title": "Stop sending two Authorization headers",
+            "ref": "#2",
+            "steps": [
+                {
+                    "file": "src/gateway/client.ts",
+                    "lines": [
+                        15,
+                        38
+                    ],
+                    "why": "Set Authorization through Headers, because a plain object kept both casings."
+                },
+                {
+                    "file": "test/gateway.test.ts",
+                    "link": "then",
+                    "why": "assert that a single header goes out, to prove the casing clash is gone."
+                }
+            ]
+        },
+        {
+            "title": "One bad plugin must not block the catalog",
+            "ref": "#4",
+            "steps": [
+                {
+                    "file": "src/marketplace/schema.ts",
+                    "why": "Parse each plugin on its own, so one bad entry can't fail the catalog."
+                },
+                {
+                    "file": "src/marketplace/rewriter.ts",
+                    "link": "so",
+                    "why": "rewrite only the plugins that parsed, and keep the skipped count."
+                },
+                {
+                    "file": "test/marketplace.test.ts",
+                    "link": "then",
+                    "why": "write the unit tests to cover what was added, with one broken plugin among good ones."
+                }
+            ]
+        }
+    ]
+}

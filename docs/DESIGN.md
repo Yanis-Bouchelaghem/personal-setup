@@ -75,7 +75,11 @@ The rules agents follow live in `src/core/guide.ts`: it is both what the MCP ser
 - `restitution_guide`: the rules and format.
 - `restitution_submit`: saves `.restitution/working.json` atomically, then reports changed hunks no step explains and steps pointing at unchanged code. It never blocks.
 
-`npm run build && node scripts/mcp-smoke.mjs <repo>` drives the server like an agent would. `scripts/make-sandbox.sh <dir> [clean]` builds a scratch repo to test on.
+## Trying it
+
+- `npm run build && node scripts/mcp-smoke.mjs <repo>` drives the MCP server like an agent would.
+- `scripts/make-sandbox.sh <dir> [clean]` builds a scratch repo from the files in `sandbox/` (`base/` as committed, `changes/` as changed, `deleted.txt`, and `restitutions/`, one file per tab). With `clean` it stops after the first commit, for an agent to change.
+- `npm run dump:state -- <repo>` writes the panel's state for a repo, and `npm run webview:dev` then shows it in a browser at `/?state=/state.json`.
 
 ## Panel layout
 

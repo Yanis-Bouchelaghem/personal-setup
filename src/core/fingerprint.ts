@@ -1,5 +1,5 @@
-import type { Hunk } from "./diff";
-import type { Step } from "./restitution";
+import { type FileDiff, type Hunk, hunksForRange } from "./diff";
+import type { Restitution, Step } from "./restitution";
 
 /** FNV-1a, 32 bit: plenty to tell "same content" from "changed". */
 function fnv1a(text: string): string {
@@ -24,4 +24,22 @@ export function stepFingerprint(step: Step, hunks: Hunk[]): string {
         .map((line) => `${line.kind}${line.text}`)
         .join("\n");
     return fnv1a([step.file ?? "", changes || step.why].join("\0"));
+}
+
+/** The fingerprint of every step, goal by goal, against the current diffs. */
+export function goalFingerprints(
+    restitution: Restitution,
+    diffs: Record<string, FileDiff>,
+): string[][] {
+    return restitution.goals.map((goal) =>
+        goal.steps.map((step) =>
+            stepFingerprint(
+                step,
+                hunksForRange(
+                    step.file ? diffs[step.file] : undefined,
+                    step.lines,
+                ),
+            ),
+        ),
+    );
 }

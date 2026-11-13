@@ -21,7 +21,8 @@
     "check": "npm run format:check && npm run lint && npm run typecheck && npm test",
     "dev:host": "npm run build && code --user-data-dir=.vscode-dev/data --extensions-dir=.vscode-dev/ext --extensionDevelopmentPath=\"$PWD\" \"$PWD\"",
     "package": "npm run build && vsce package --no-dependencies --allow-missing-repository --skip-license",
-    "install:local": "npm run package && code --install-extension restitution-0.0.1.vsix --force"
+    "install:local": "npm run package && code --install-extension restitution-0.0.1.vsix --force",
+    "dump:state": "node scripts/dump-state.mjs"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.32.2",
