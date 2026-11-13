@@ -28,9 +28,24 @@ export function DevShell() {
         document.documentElement.classList.add("dev");
     }, [theme]);
 
+    // `?state=/x.json` shows a real ViewState, e.g. one dumped from a repo.
+    const [loaded, setLoaded] = useState<ViewState>();
+    useEffect(() => {
+        const url = params.get("state");
+        if (url) {
+            fetch(url)
+                .then((response) => response.json())
+                .then(setLoaded)
+                .catch(() => undefined);
+        }
+    }, []);
+
     const host = useMemo(
-        () => fixtureHost(fixtures[fixture] ?? { status: "empty", closed: 0 }),
-        [fixture],
+        () =>
+            fixtureHost(
+                loaded ?? fixtures[fixture] ?? { status: "empty", closed: 0 },
+            ),
+        [fixture, loaded],
     );
 
     return (

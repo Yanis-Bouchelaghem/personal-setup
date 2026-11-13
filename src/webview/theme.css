@@ -709,3 +709,17 @@ body {
     background: transparent;
     color: var(--fg);
 }
+
+/* Resting tabs keep no room for the ×: it floats over the label's end on hover. */
+.tab:not(.active) .tab-close {
+    position: absolute;
+    top: 50%;
+    right: 4px;
+    margin: 0;
+    transform: translateY(-50%);
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+}
+
+.tab:not(.active) .tab-close:hover {
+    background: color-mix(in srgb, var(--fg) 18%, var(--bg));
+}
