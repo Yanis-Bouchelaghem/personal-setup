@@ -13,7 +13,7 @@
     --radius-lg: 14px;
     --radius-md: 10px;
     --radius-sm: 8px;
-    --tabs-h: 40px;
+    --tabs-h: 44px;
 
     /* The editor background sits a touch above the side bar in most themes. */
     --glass-fill: color-mix(
@@ -85,7 +85,7 @@ body {
 
 .goal-head {
     position: sticky;
-    top: calc(var(--tabs-h) + 16px);
+    top: calc(var(--tabs-h) + 8px);
     z-index: 2;
     display: flex;
     align-items: center;
@@ -381,59 +381,92 @@ body {
     color: var(--fg);
 }
 
-/* Tabs */
+/* Tabs: like browser tabs. They borrow the editor's own tab colours. */
 .tabs {
     position: sticky;
-    top: 8px;
+    top: 0;
     z-index: 3;
     display: flex;
-    gap: 4px;
+    align-items: stretch;
+    gap: 2px;
     height: var(--tabs-h);
-    margin: 0 0 10px;
-    padding: 5px;
+    margin: -12px -12px 12px;
+    padding: 6px 8px;
     overflow-x: auto;
-    border-radius: var(--radius-lg);
-    background: var(--glass-fill-strong);
+    background: color-mix(
+        in srgb,
+        var(--vscode-editorGroupHeader-tabsBackground, var(--bg)) 86%,
+        transparent
+    );
+    border-bottom: 1px solid var(--glass-border);
     -webkit-backdrop-filter: blur(16px) saturate(150%);
     backdrop-filter: blur(16px) saturate(150%);
     scrollbar-width: none;
 }
 
 .tab {
+    position: relative;
     display: flex;
-    flex: none;
+    flex: 0 1 170px;
     align-items: center;
-    max-width: 190px;
-    border: 1px solid transparent;
+    min-width: 76px;
+    max-width: 200px;
     border-radius: var(--radius-md);
-    color: var(--muted);
+    color: var(--vscode-tab-inactiveForeground, var(--muted));
     transition:
-        color 0.15s ease,
-        background-color 0.15s ease;
+        color 0.12s ease,
+        background-color 0.12s ease;
 }
 
 .tab:hover {
-    color: var(--fg);
-    background: color-mix(in srgb, var(--fg) 7%, transparent);
+    color: var(--vscode-tab-activeForeground, var(--fg));
+    background: color-mix(in srgb, var(--fg) 9%, transparent);
 }
 
 .tab.active {
-    color: var(--fg);
-    background: color-mix(in srgb, var(--accent) 20%, transparent);
-    border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+    color: var(--vscode-tab-activeForeground, var(--fg));
+    background: var(
+        --vscode-tab-activeBackground,
+        var(--vscode-editor-background)
+    );
+    box-shadow:
+        0 0 0 1px var(--glass-border),
+        0 2px 6px -2px rgb(0 0 0 / 0.35);
+}
+
+/* A thin divider between resting tabs, hidden next to the active or hovered one. */
+.tab::after {
+    content: "";
+    position: absolute;
+    top: 8px;
+    right: -2px;
+    bottom: 8px;
+    width: 1px;
+    background: var(--glass-border);
+}
+
+.tab.active::after,
+.tab:hover::after,
+.tab:last-child::after,
+.tab:has(+ .tab.active)::after,
+.tab:has(+ .tab:hover)::after {
+    display: none;
 }
 
 .tab-label {
     display: flex;
+    flex: 1;
     align-items: center;
     gap: 6px;
     min-width: 0;
-    padding: 3px 2px 3px 10px;
+    height: 100%;
+    padding: 0 2px 0 10px;
     border: 0;
     background: transparent;
     color: inherit;
     font: inherit;
     font-size: 12px;
+    text-align: left;
     cursor: pointer;
 }
 
@@ -456,25 +489,39 @@ body {
     display: grid;
     flex: none;
     place-items: center;
-    width: 20px;
-    height: 20px;
-    margin-right: 4px;
+    width: 18px;
+    height: 18px;
+    margin-right: 6px;
     padding: 0;
     border: 0;
-    border-radius: var(--radius-sm);
+    border-radius: 999px;
     background: transparent;
     color: inherit;
-    opacity: 0.55;
+    opacity: 0;
     cursor: pointer;
+}
+
+.tab:hover .tab-close,
+.tab.active .tab-close,
+.tab-close:focus-visible {
+    opacity: 0.8;
 }
 
 .tab-close:hover {
     opacity: 1;
-    background: color-mix(in srgb, var(--fg) 12%, transparent);
+    background: color-mix(in srgb, var(--fg) 16%, transparent);
 }
 
 .tab-label:focus-visible,
 .tab-close:focus-visible {
     outline: 1px solid var(--accent);
-    outline-offset: 1px;
+    outline-offset: -1px;
+}
+
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+    .tabs {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        background: var(--bg);
+    }
 }

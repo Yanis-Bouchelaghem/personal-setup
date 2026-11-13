@@ -15,6 +15,10 @@
         -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     --vscode-font-size: 13px;
     --vscode-editor-font-family: "SF Mono", Menlo, Consolas, monospace;
+    --vscode-editorGroupHeader-tabsBackground: #181818;
+    --vscode-tab-activeBackground: #1f1f1f;
+    --vscode-tab-activeForeground: #ffffff;
+    --vscode-tab-inactiveForeground: #9d9d9d;
 }
 
 :root[data-theme="light"] {
@@ -30,6 +34,10 @@
         -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
     --vscode-font-size: 13px;
     --vscode-editor-font-family: "SF Mono", Menlo, Consolas, monospace;
+    --vscode-editorGroupHeader-tabsBackground: #f8f8f8;
+    --vscode-tab-activeBackground: #ffffff;
+    --vscode-tab-activeForeground: #333333;
+    --vscode-tab-inactiveForeground: #868686;
 }
 
 /* Narrow like a side bar, with a small toolbar on top. */
