@@ -28,6 +28,15 @@ export function DevShell() {
         document.documentElement.classList.add("dev");
     }, [theme]);
 
+    // `?width=600` widens the panel, to see the layout in a wide side bar.
+    useEffect(() => {
+        const width = params.get("width");
+        const root = document.getElementById("root");
+        if (width && root) {
+            root.style.maxWidth = `${width}px`;
+        }
+    }, []);
+
     // `?state=/x.json` shows a real ViewState, e.g. one dumped from a repo.
     const [loaded, setLoaded] = useState<ViewState>();
     useEffect(() => {

@@ -6,7 +6,7 @@ Read `docs/DESIGN.md` first: it holds the decisions, the file format and the wri
 
 - `npm run check`: format, lint, typecheck, tests. Run it before saying anything is done.
 - `npm run build`: bundles the extension (esbuild) and the webview (Vite) into `dist/`.
-- `npm run webview:dev`: the React app in a browser, with fixtures and a theme switcher.
+- `npm run webview:dev`: the React app in a browser, with fixtures and a theme switcher (`?width=600` for a wider panel).
 - `npm run shots`: screenshots of the harness in `.shots/` for visual review.
 - `npm run dump:state -- <repo>`: the panel's state for a repo, viewable in the harness at `/?state=/state.json`.
 - `scripts/make-sandbox.sh <dir>`: a scratch repo with uncommitted changes and restitutions, built from `sandbox/`.

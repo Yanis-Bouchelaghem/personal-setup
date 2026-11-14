@@ -15,6 +15,7 @@ import {
     IconButton,
 } from "./Icons";
 import { Note } from "./Note";
+import { useLabelsFit } from "./useLabelsFit";
 import { useScrollAnchor } from "./useScrollAnchor";
 import { useSeenOnHover } from "./useSeenOnHover";
 
@@ -117,6 +118,7 @@ export function StepCard({
     };
 
     const hover = useSeenOnHover(updated, onSeen);
+    const labelled = useLabelsFit(head);
 
     // Where a click on the card takes you: the file with the changes
     // selected, or the diff when the file is gone.
@@ -155,7 +157,7 @@ export function StepCard({
         >
             {/* The whole header toggles Viewed; its own controls keep their jobs. */}
             <header
-                className="card-head"
+                className={labelled ? "card-head labelled" : "card-head"}
                 ref={head}
                 onClick={(event) => {
                     const own =
