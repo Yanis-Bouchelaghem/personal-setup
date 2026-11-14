@@ -1084,6 +1084,17 @@ body {
     cursor: auto;
 }
 
+/* The same glow as the header's, on the parts of the card a click opens:
+   not over the header, the diff, a button or the comment, which do their own job. */
+.card.opens:not(.collapsed):hover:not(
+        :has(.card-head:hover, .diff:hover, button:hover, .note:hover)
+    ) {
+    background-image: linear-gradient(
+        color-mix(in srgb, var(--fg) 5%, transparent),
+        color-mix(in srgb, var(--fg) 5%, transparent)
+    );
+}
+
 /* Diff and File, at the right end of the header. */
 .card-head .open-actions {
     margin-left: 0;
