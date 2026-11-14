@@ -10,6 +10,8 @@ export type Tab =
           label: string;
           updatedAt: number;
           restitution: Restitution;
+          /** What each step's code was when it was explained (by fingerprint). */
+          code: Record<string, string>;
           /** Steps marked Viewed (by fingerprint): folded to their header. */
           viewed: string[];
           /** Steps the reader was already shown; absent before the first look. */

@@ -7,6 +7,7 @@ import {
     tabLabel,
 } from "../../core/restitution";
 import { pendingRequests } from "../../core/review";
+import { readCodeSnapshot } from "./code";
 import { ensureRestitutionDir } from "./exclude";
 import { listNames, orMissing, writeAtomically } from "./files";
 import { assertTabId, restitutionDir, tabFile, tabIds } from "./paths";
@@ -31,7 +32,10 @@ async function readTab(gitRoot: string, id: string): Promise<Tab | undefined> {
                 errors: parsed.errors,
             } satisfies Tab;
         }
-        const review = await readReview(gitRoot, id);
+        const [review, code] = await Promise.all([
+            readReview(gitRoot, id),
+            readCodeSnapshot(gitRoot, id),
+        ]);
         return {
             kind: "ok",
             id,
@@ -41,6 +45,7 @@ async function readTab(gitRoot: string, id: string): Promise<Tab | undefined> {
             viewed: review.viewed,
             ...(review.known ? { known: review.known } : {}),
             requests: pendingRequests(review, updatedAt),
+            code,
         } satisfies Tab;
     });
 }

@@ -170,6 +170,16 @@ describe("uncoveredChanges", () => {
 describe("describeSubmit", () => {
     const r = restitution([{ file: "src/a.ts", lines: [[1, 2]] }]);
 
+    it("points at steps whose code changed since they were explained", () => {
+        const clean = { missing: [], unexplained: [] };
+        expect(describeSubmit(r, clean, ["1.1"])).toMatch(
+            /The code of step 1\.1 changed since you explained it/,
+        );
+        expect(describeSubmit(r, clean, ["1.1", "2.3"])).toMatch(
+            /steps 1\.1, 2\.3 changed since you explained them/,
+        );
+    });
+
     it("confirms a clean submission", () => {
         const text = describeSubmit(r, { missing: [], unexplained: [] });
         expect(text).toMatch(/Saved: 1 goals, 1 steps/);

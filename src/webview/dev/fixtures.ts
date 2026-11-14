@@ -1,5 +1,5 @@
 import { parseUnifiedDiff } from "../../core/diff";
-import { goalFingerprints } from "../../core/fingerprint";
+import { codeSnapshot, goalFingerprints } from "../../core/fingerprint";
 import type { ViewState } from "../../core/messages";
 import type { Restitution } from "../../core/restitution";
 
@@ -177,9 +177,11 @@ const diffs = Object.fromEntries(
 
 // The review on the main fixture: 1.4 viewed (folded), 3.2 just updated by
 // the agent, 2.1 marked to clarify with a comment, and a question on 3.3.
-const PRINTS = goalFingerprints(many, diffs);
+// The code under 1.1 changed after it was explained.
+const PRINTS = goalFingerprints(many);
 const print = (goal: number, step: number) => PRINTS[goal]?.[step] ?? "";
 const REVIEW = {
+    code: { ...codeSnapshot(many, diffs), [print(0, 0)]: "00000000" },
     viewed: [print(0, 3)],
     known: PRINTS.flat().filter((fingerprint) => fingerprint !== print(2, 1)),
     requests: [
@@ -237,6 +239,7 @@ export const fixtures: Record<string, ViewState> = {
                 label: "Request id header",
                 updatedAt: ago(35),
                 restitution: small,
+                code: {},
                 viewed: [],
                 requests: [],
             },
@@ -277,6 +280,7 @@ export const fixtures: Record<string, ViewState> = {
                 label: "A tab label that is much too long to fit in the strip",
                 updatedAt: ago(2),
                 restitution: long,
+                code: {},
                 viewed: [],
                 requests: [],
             },
@@ -286,6 +290,7 @@ export const fixtures: Record<string, ViewState> = {
                 label: "Second",
                 updatedAt: ago(9),
                 restitution: small,
+                code: {},
                 viewed: [],
                 requests: [],
             },
@@ -311,6 +316,7 @@ export const fixtures: Record<string, ViewState> = {
             label,
             updatedAt: ago(index * 7 + 1),
             restitution: { ...small, label },
+            code: {},
             viewed: [],
             requests: [],
         })),

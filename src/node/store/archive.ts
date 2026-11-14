@@ -4,9 +4,11 @@ import { parseRestitution, tabLabel } from "../../core/restitution";
 import { listNames, moveIfExists, orMissing } from "./files";
 import {
     archiveDir,
+    archivedCodeFile,
     archivedReviewFile,
     archivedTabFile,
     assertTabId,
+    codeFile,
     restitutionDir,
     reviewFile,
     tabFile,
@@ -22,6 +24,7 @@ export async function archiveTab(gitRoot: string, id: string): Promise<void> {
         reviewFile(gitRoot, id),
         archivedReviewFile(gitRoot, id),
     );
+    await moveIfExists(codeFile(gitRoot, id), archivedCodeFile(gitRoot, id));
 }
 
 export async function countClosed(gitRoot: string): Promise<number> {
@@ -73,6 +76,10 @@ export async function restoreTab(gitRoot: string, id: string): Promise<string> {
     await moveIfExists(
         archivedReviewFile(gitRoot, id),
         reviewFile(gitRoot, target),
+    );
+    await moveIfExists(
+        archivedCodeFile(gitRoot, id),
+        codeFile(gitRoot, target),
     );
     return target;
 }

@@ -149,3 +149,13 @@ export function DocIcon() {
         </Icon>
     );
 }
+
+/** A triangle with an exclamation mark: something may be off. */
+export function WarningIcon() {
+    return (
+        <Icon>
+            <path d="M8 2.2 14.3 13.3H1.7z" />
+            <path d="M8 6.5v3M8 11.4v.1" />
+        </Icon>
+    );
+}

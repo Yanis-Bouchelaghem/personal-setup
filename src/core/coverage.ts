@@ -135,6 +135,8 @@ export function uncoveredChanges(
 export function describeSubmit(
     restitution: Restitution,
     coverage: Coverage | undefined,
+    /** Steps left as they were whose code changed since they were written. */
+    stale: readonly string[] = [],
 ): string {
     const steps = restitution.goals.reduce((n, g) => n + g.steps.length, 0);
     const lines = [
@@ -152,6 +154,13 @@ export function describeSubmit(
     if (coverage.unexplained.length > 0) {
         lines.push(
             `Changed lines no step shows: ${coverage.unexplained.join(", ")}. Widen a step's "lines" to include them, or add a step.`,
+        );
+    }
+    if (stale.length > 0) {
+        lines.push(
+            stale.length === 1
+                ? `The code of step ${stale[0]} changed since you explained it: check that its "why" still holds.`
+                : `The code of steps ${stale.join(", ")} changed since you explained them: check that their "why" still holds.`,
         );
     }
     if (lines.length > 1) {

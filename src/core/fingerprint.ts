@@ -12,20 +12,20 @@ function fnv1a(text: string): string {
 }
 
 /**
- * Identity of a step as the reader saw it: its words, its connector, its file,
- * the lines it changed, its examples and its docs. Anything the agent changes in a step changes its
- * fingerprint, so the step comes back unviewed and marked as updated; a step
- * the agent leaves alone keeps it. Line numbers and context are left out, so
- * an edit elsewhere in the file doesn't count as a change to this step.
+ * Identity of a step: what the agent wrote (file, lines, words, connector,
+ * examples, docs). Anything the agent changes in a step changes it, so the
+ * step comes back unviewed and marked as updated; a step the agent leaves
+ * alone keeps it, even when the code under it changes (that is a different
+ * signal, see `codeDigest`).
  */
-export function stepFingerprint(step: Step, hunks: Hunk[]): string {
-    const changes = hunks
-        .flatMap((hunk) => hunk.lines)
-        .filter((line) => line.kind !== "ctx")
-        .map((line) => `${line.kind}${line.text}`)
-        .join("\n");
-    const parts = [step.file ?? "", changes, step.why, step.link ?? "then"];
-    // Only when there are examples, so steps without any keep their fingerprint.
+export function stepFingerprint(step: Step): string {
+    const parts = [
+        step.file ?? "",
+        JSON.stringify(step.lines ?? []),
+        step.why,
+        step.link ?? "then",
+    ];
+    // Only when present, so adding these fields changes nothing for others.
     if (step.examples) {
         parts.push(JSON.stringify(step.examples));
     }
@@ -35,20 +35,75 @@ export function stepFingerprint(step: Step, hunks: Hunk[]): string {
     return fnv1a(parts.join("\0"));
 }
 
-/** The fingerprint of every step, goal by goal, against the current diffs. */
-export function goalFingerprints(
+/** The fingerprint of every step, goal by goal. */
+export function goalFingerprints(restitution: Restitution): string[][] {
+    return restitution.goals.map((goal) => goal.steps.map(stepFingerprint));
+}
+
+/**
+ * What a step's code looks like now: its changed lines, without line numbers
+ * or the context around them. Undefined when it shows no change.
+ */
+export function codeDigest(hunks: Hunk[]): string | undefined {
+    const changes = hunks
+        .flatMap((hunk) => hunk.lines)
+        .filter((line) => line.kind !== "ctx")
+        .map((line) => `${line.kind}${line.text}`);
+    return changes.length > 0 ? fnv1a(changes.join("\n")) : undefined;
+}
+
+/** The code each step shows, right now. */
+export function stepHunks(step: Step, diffs: Record<string, FileDiff>): Hunk[] {
+    return selectLines(
+        step.file ? diffs[step.file] : undefined,
+        step.lines ?? [],
+    );
+}
+
+/**
+ * A snapshot of every step's code, keyed by step fingerprint: what the
+ * explanations were written against.
+ */
+export function codeSnapshot(
     restitution: Restitution,
     diffs: Record<string, FileDiff>,
-): string[][] {
-    return restitution.goals.map((goal) =>
-        goal.steps.map((step) =>
-            stepFingerprint(
-                step,
-                selectLines(
-                    step.file ? diffs[step.file] : undefined,
-                    step.lines ?? [],
-                ),
-            ),
+): Record<string, string> {
+    const snapshot: Record<string, string> = {};
+    for (const step of restitution.goals.flatMap((goal) => goal.steps)) {
+        const digest = codeDigest(stepHunks(step, diffs));
+        if (digest) {
+            snapshot[stepFingerprint(step)] = digest;
+        }
+    }
+    return snapshot;
+}
+
+/**
+ * Whether a step's code changed since its explanation was written. Only when
+ * both are known: a step whose changes are gone (committed, say) shows that
+ * on its own, and is not "changed".
+ */
+export function isStale(
+    written: string | undefined,
+    now: string | undefined,
+): boolean {
+    return written !== undefined && now !== undefined && written !== now;
+}
+
+/** The labels ("2.1") of the steps whose code changed since `snapshot`. */
+export function staleLabels(
+    restitution: Restitution,
+    diffs: Record<string, FileDiff>,
+    snapshot: Record<string, string>,
+): string[] {
+    return restitution.goals.flatMap((goal, g) =>
+        goal.steps.flatMap((step, s) =>
+            isStale(
+                snapshot[stepFingerprint(step)],
+                codeDigest(stepHunks(step, diffs)),
+            )
+                ? [`${g + 1}.${s + 1}`]
+                : [],
         ),
     );
 }

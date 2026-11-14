@@ -16,6 +16,8 @@ export type StepState = {
     fingerprint: string;
     viewed: boolean;
     updated: boolean;
+    /** Its code changed after it was explained. */
+    stale: boolean;
     request: ReviewRequest | undefined;
 };
 
@@ -124,6 +126,7 @@ export function GoalSection({
                                     diffs={diffs}
                                     viewed={state?.viewed ?? false}
                                     updated={state?.updated ?? false}
+                                    stale={state?.stale ?? false}
                                     request={state?.request}
                                     onViewedChange={(on) => {
                                         // The last step viewed folds the goal: keep its header where it is.

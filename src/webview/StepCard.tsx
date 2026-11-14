@@ -15,6 +15,7 @@ import {
     DiffIcon,
     FileIcon,
     IconButton,
+    WarningIcon,
 } from "./Icons";
 import { Note } from "./Note";
 import { useLabelsFit } from "./useLabelsFit";
@@ -83,6 +84,7 @@ export function StepCard({
     diffs,
     viewed,
     updated,
+    stale,
     request,
     onViewedChange,
     onSeen,
@@ -96,6 +98,8 @@ export function StepCard({
     viewed: boolean;
     /** New or changed since the reader last looked. */
     updated: boolean;
+    /** Its code changed after it was explained: the words may be out of date. */
+    stale: boolean;
     /** What the reader asks the agent about this step, if anything. */
     request: ReviewRequest | undefined;
     onViewedChange: (viewed: boolean) => void;
@@ -187,6 +191,16 @@ export function StepCard({
                     <ChevronIcon />
                 </button>
                 <span className="step-no">{label}</span>
+                {stale && (
+                    <span
+                        className="stale-mark"
+                        title="The code changed after this was explained: it may be out of date"
+                        role="img"
+                        aria-label="Code changed since explained"
+                    >
+                        <WarningIcon />
+                    </span>
+                )}
                 {file && <FilePath path={file} />}
                 <span className="actions">
                     <IconButton
@@ -230,6 +244,15 @@ export function StepCard({
             </header>
             <Collapse open={open} snap={snap}>
                 <div className="card-body">
+                    {stale && (
+                        <p className="stale-note">
+                            <WarningIcon />
+                            <span>
+                                The code changed after this was explained, so it
+                                may be out of date.
+                            </span>
+                        </p>
+                    )}
                     <p className="why">{step.why}</p>
                     {step.docs && (
                         <DocLinks docs={step.docs} onOpen={onOpenUrl} />

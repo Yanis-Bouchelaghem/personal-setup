@@ -6,7 +6,8 @@ import { join } from "node:path";
  *
  *   <id>.json          one restitution, shown as one tab (the agent's file)
  *   <id>.review.json   the human's Viewed state for that tab
- *   archive/           closed tabs, with their review files
+ *   <id>.code.json     what each step's code was when it was explained (server)
+ *   archive/           closed tabs, with their review and code files
  */
 const DIR = ".restitution";
 const ARCHIVE = "archive";
@@ -28,6 +29,14 @@ export function tabFile(gitRoot: string, id: string): string {
 
 export function reviewFile(gitRoot: string, id: string): string {
     return join(restitutionDir(gitRoot), `${id}.review.json`);
+}
+
+export function codeFile(gitRoot: string, id: string): string {
+    return join(restitutionDir(gitRoot), `${id}.code.json`);
+}
+
+export function archivedCodeFile(gitRoot: string, id: string): string {
+    return join(archiveDir(gitRoot), `${id}.code.json`);
 }
 
 export function archivedTabFile(gitRoot: string, id: string): string {
@@ -56,12 +65,15 @@ export function newTabId(): string {
 
 /**
  * The tab ids among the names in a folder: `<id>.json`, but not dotfiles,
- * temporary files or review files.
+ * temporary files, review or code files.
  */
 export function tabIds(fileNames: string[]): string[] {
     return fileNames
         .filter((name) => name.endsWith(".json") && !name.startsWith("."))
-        .filter((name) => !name.endsWith(".review.json"))
+        .filter(
+            (name) =>
+                !name.endsWith(".review.json") && !name.endsWith(".code.json"),
+        )
         .map((name) => name.slice(0, -".json".length))
         .filter(isTabId);
 }

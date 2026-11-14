@@ -3,7 +3,12 @@ import { useEffect, useState } from "react";
 import type { Uncovered } from "../core/coverage";
 import type { FileDiff } from "../core/diff";
 import { feedbackPrompt } from "../core/feedback";
-import { goalFingerprints } from "../core/fingerprint";
+import {
+    codeDigest,
+    isStale,
+    stepFingerprint,
+    stepHunks,
+} from "../core/fingerprint";
 import type { Tab } from "../core/messages";
 import type { Restitution } from "../core/restitution";
 import type { Review } from "../core/review";
@@ -22,19 +27,29 @@ function stepStates(
     restitution: Restitution,
     diffs: Record<string, FileDiff>,
     review: Review,
+    code: Record<string, string>,
 ): StepState[][] {
     const viewed = new Set(review.viewed);
     // Before the first look nothing is "updated": it is all new.
     const known = review.known && new Set(review.known);
-    return goalFingerprints(restitution, diffs).map((prints) =>
-        prints.map((fingerprint) => ({
-            fingerprint,
-            viewed: viewed.has(fingerprint),
-            updated: known !== undefined && !known.has(fingerprint),
-            request: review.requests.find(
-                (request) => request.step === fingerprint,
-            ),
-        })),
+    return restitution.goals.map((goal) =>
+        goal.steps
+            .map((step) => ({
+                step,
+                fingerprint: stepFingerprint(step),
+            }))
+            .map(({ step, fingerprint }) => ({
+                fingerprint,
+                viewed: viewed.has(fingerprint),
+                updated: known !== undefined && !known.has(fingerprint),
+                stale: isStale(
+                    code[fingerprint],
+                    codeDigest(stepHunks(step, diffs)),
+                ),
+                request: review.requests.find(
+                    (request) => request.step === fingerprint,
+                ),
+            })),
     );
 }
 
@@ -54,7 +69,9 @@ export function TabContent({
     const [showUncovered, setShowUncovered] = useState(false);
     const { review, act, copy } = useReview(tab, host);
     const states =
-        tab.kind === "ok" ? stepStates(tab.restitution, diffs, review) : [];
+        tab.kind === "ok"
+            ? stepStates(tab.restitution, diffs, review, tab.code)
+            : [];
     const folding = useGoalFolding(
         states.map((goal) => goal.every((state) => state.viewed)),
     );

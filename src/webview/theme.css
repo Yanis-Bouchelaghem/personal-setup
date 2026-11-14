@@ -1566,3 +1566,38 @@ body {
     outline: 1px solid var(--accent);
     outline-offset: 1px;
 }
+
+/* Code changed after the step was explained: a warning colour from the theme. */
+:root {
+    --stale: var(
+        --vscode-editorWarning-foreground,
+        var(--vscode-problemsWarningIcon-foreground, #cca700)
+    );
+}
+
+.stale-mark {
+    display: inline-grid;
+    flex: none;
+    place-items: center;
+    color: var(--stale);
+}
+
+.stale-note {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    margin: 0 0 8px;
+    padding: 6px 9px;
+    border: 1px solid color-mix(in srgb, var(--stale) 45%, transparent);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--stale) 12%, transparent);
+    color: var(--fg);
+    font-size: 12px;
+    line-height: 1.4;
+}
+
+.stale-note svg {
+    flex: none;
+    margin-top: 1px;
+    color: var(--stale);
+}
