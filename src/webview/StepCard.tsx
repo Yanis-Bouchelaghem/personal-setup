@@ -4,6 +4,7 @@ import { changedRanges, type FileDiff, selectLines } from "../core/diff";
 import type { OpenRequest } from "../core/messages";
 import type { Step } from "../core/restitution";
 import type { ReviewRequest } from "../core/review";
+import { Collapse } from "./Collapse";
 import { DiffView } from "./DiffView";
 import { Example } from "./Example";
 import {
@@ -109,9 +110,10 @@ export function StepCard({
 
     // Viewed is the only state: a viewed step is folded to its header.
     const open = !viewed;
-    const { box, head, remember } = useScrollAnchor<HTMLElement, HTMLElement>(
-        viewed,
-    );
+    const { box, head, remember, snap } = useScrollAnchor<
+        HTMLElement,
+        HTMLElement
+    >(viewed);
     const toggleViewed = () => {
         remember();
         onViewedChange(!viewed);
@@ -222,8 +224,8 @@ export function StepCard({
                     </span>
                 )}
             </header>
-            {open && (
-                <>
+            <Collapse open={open} snap={snap}>
+                <div className="card-body">
                     <p className="why">{step.why}</p>
                     {step.examples?.map((example, index) => (
                         <Example key={index} example={example} />
@@ -234,28 +236,29 @@ export function StepCard({
                             No uncommitted changes in these lines.
                         </p>
                     )}
-                </>
-            )}
+                    {!writing && !comment && (
+                        <button
+                            className="icon-btn comment-btn"
+                            type="button"
+                            title="Ask a question, or request a change"
+                            onClick={() => setWriting(true)}
+                        >
+                            <CommentIcon />
+                            <span>Comment</span>
+                        </button>
+                    )}
+                </div>
+            </Collapse>
             {/* A comment stays visible even on a folded step, without its code. */}
-            {writing || comment ? (
-                <Note
-                    comment={comment}
-                    focus={writing}
-                    onSave={(text) => onRequestChange(clarify, text)}
-                    onDone={() => setWriting(false)}
-                />
-            ) : (
-                open && (
-                    <button
-                        className="icon-btn comment-btn"
-                        type="button"
-                        title="Ask a question, or request a change"
-                        onClick={() => setWriting(true)}
-                    >
-                        <CommentIcon />
-                        <span>Comment</span>
-                    </button>
-                )
+            {(writing || comment) && (
+                <div className="card-note">
+                    <Note
+                        comment={comment}
+                        focus={writing}
+                        onSave={(text) => onRequestChange(clarify, text)}
+                        onDone={() => setWriting(false)}
+                    />
+                </div>
             )}
         </article>
     );

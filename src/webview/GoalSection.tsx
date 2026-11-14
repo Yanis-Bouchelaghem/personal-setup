@@ -4,6 +4,7 @@ import type { FileDiff } from "../core/diff";
 import type { OpenRequest } from "../core/messages";
 import type { Goal } from "../core/restitution";
 import type { ReviewRequest } from "../core/review";
+import { Collapse } from "./Collapse";
 import { Connector } from "./Connector";
 import { ChevronIcon } from "./Icons";
 import { StepCard } from "./StepCard";
@@ -47,7 +48,7 @@ export function GoalSection({
     ) => void;
     onOpenRequest: (request: OpenRequest) => void;
 }) {
-    const { box, head, remember } = useScrollAnchor<
+    const { box, head, remember, snap } = useScrollAnchor<
         HTMLElement,
         HTMLHeadingElement
     >(folded);
@@ -104,7 +105,7 @@ export function GoalSection({
                     {goal.ref && <span className="goal-ref">{goal.ref}</span>}
                 </button>
             </h2>
-            {!folded && (
+            <Collapse open={!folded} snap={snap}>
                 <div className="steps">
                     {goal.steps.map((step, index) => {
                         const state = steps[index];
@@ -148,7 +149,7 @@ export function GoalSection({
                         );
                     })}
                 </div>
-            )}
+            </Collapse>
         </section>
     );
 }

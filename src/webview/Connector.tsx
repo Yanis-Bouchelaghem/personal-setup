@@ -4,5 +4,9 @@
  */
 export function Connector({ link }: { link: string }) {
     const word = link.charAt(0).toUpperCase() + link.slice(1);
-    return <p className="connector">{word}</p>;
+    return (
+        <p className="connector">
+            <span>{word}</span>
+        </p>
+    );
 }

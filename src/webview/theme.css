@@ -153,25 +153,49 @@ body {
     font-weight: 400;
 }
 
-/* The steps hang on a rail inside their goal: one thing after another. */
+/*
+ * The steps hang on a rail inside their goal, under its chevron. The line and
+ * the dots are placed from the same numbers, so every dot sits exactly on the
+ * line: --rail-x is the line's centre from the left of .steps, --rail-pad the
+ * room left of the cards, --dot-y a dot's centre from the top of its card (the
+ * middle of the card's header).
+ */
 .steps {
-    position: relative;
+    --rail-x: 8px;
+    --rail-pad: 26px;
+    --rail-w: 2px;
+    --dot: 10px;
+    --dot-y: 22px;
+    --gap: 10px;
+    --rail-color: color-mix(in srgb, var(--fg) 16%, var(--bg));
     display: flex;
     flex-direction: column;
-    gap: 10px;
-    margin-left: 14px;
-    padding-left: 20px;
+    gap: var(--gap);
+    margin-left: 8px;
+    padding-left: var(--rail-pad);
 }
 
-.steps::before {
+/* The line: each card and connector draws its own stretch, across half of
+   the gap on either side, so it runs from the first dot to the last and
+   never past them. */
+.steps > .card::after,
+.steps > .connector::before {
     content: "";
     position: absolute;
-    top: 6px;
-    bottom: 6px;
-    left: 0;
-    width: 2px;
-    border-radius: 2px;
-    background: color-mix(in srgb, var(--fg) 16%, transparent);
+    top: calc(var(--gap) / -2);
+    bottom: calc(var(--gap) / -2);
+    left: calc(var(--rail-x) - var(--rail-pad) - var(--rail-w) / 2);
+    width: var(--rail-w);
+    background: var(--rail-color);
+    pointer-events: none;
+}
+
+.steps > .card:first-child::after {
+    top: var(--dot-y);
+}
+
+.steps > .card:last-child::after {
+    bottom: calc(100% - var(--dot-y));
 }
 
 /* Step cards */
@@ -180,11 +204,12 @@ body {
     container: card / inline-size;
     position: relative;
     scroll-margin-top: calc(var(--tabs-h) + var(--goalhead-h, 44px) + 24px);
-    padding: 11px 13px 12px;
+    padding: 0 13px;
     border-radius: var(--radius-lg);
     transition:
         border-color 0.15s ease,
-        background-color 0.15s ease;
+        background-color 0.15s ease,
+        opacity 0.2s ease;
 }
 
 .card:hover {
@@ -208,8 +233,8 @@ body {
     align-items: center;
     gap: 8px;
     min-width: 0;
-    margin: -11px -13px 7px;
-    padding: 9px 13px 5px;
+    margin: 0 -13px;
+    padding: 9px 13px;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
     background: color-mix(
         in srgb,
@@ -226,15 +251,11 @@ body {
 
 /* A folded step is only its header. */
 .card.collapsed {
-    padding-top: 0;
-    padding-bottom: 0;
     opacity: 0.72;
 }
 
 .card.collapsed .card-head {
     position: static;
-    margin: 0 -13px;
-    padding: 9px 13px;
     background: transparent;
     -webkit-backdrop-filter: none;
     backdrop-filter: none;
@@ -341,32 +362,39 @@ body {
     line-height: 1.45;
 }
 
-/* A step's node on the rail; filled once it is viewed. */
-.card::before {
+/* A step's dot on the rail, level with its header: a ring, filled once the
+   step is viewed, accented while the pointer is on the card. */
+.steps > .card::before {
     content: "";
     position: absolute;
-    top: 17px;
-    left: -26px;
-    width: 10px;
-    height: 10px;
+    z-index: 1;
+    top: calc(var(--dot-y) - var(--dot) / 2);
+    left: calc(var(--rail-x) - var(--rail-pad) - var(--dot) / 2);
+    width: var(--dot);
+    height: var(--dot);
     box-sizing: border-box;
-    border: 2px solid color-mix(in srgb, var(--fg) 40%, transparent);
+    border: 2px solid color-mix(in srgb, var(--fg) 42%, var(--bg));
     border-radius: 999px;
     background: var(--bg);
+    transition:
+        border-color 0.15s ease,
+        background-color 0.15s ease;
 }
 
-.card.viewed-card::before {
-    border-color: color-mix(in srgb, var(--fg) 40%, transparent);
-    background: color-mix(in srgb, var(--fg) 40%, transparent);
+.steps > .card.viewed-card::before {
+    background: color-mix(in srgb, var(--fg) 42%, var(--bg));
+}
+
+.steps > .card:hover::before {
+    border-color: var(--accent);
 }
 
 /* One word between two cards: with the card text it reads as a sentence. */
 .connector {
+    position: relative;
     width: fit-content;
     max-width: 100%;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
+    box-sizing: border-box;
     margin: -2px 0;
     padding: 5px 16px;
     border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
@@ -996,7 +1024,7 @@ body {
         var(--glass-shadow);
 }
 
-.card.updated::before {
+.steps > .card.updated::before {
     border-color: var(--updated);
 }
 
@@ -1033,8 +1061,13 @@ body {
     border-color: var(--accent);
 }
 
-.card.collapsed .note {
-    margin: 0 0 9px;
+/* Below the header (or the body): the comment stays even on a folded step. */
+.card-note {
+    padding-bottom: 12px;
+}
+
+.card-note .note {
+    margin: 0;
 }
 
 /* Pinned to the bottom while anything is asked. */
@@ -1324,11 +1357,59 @@ body {
     }
 
     .steps {
-        margin-left: 6px;
-        padding-left: 12px;
+        --rail-x: 6px;
+        --rail-pad: 18px;
+        margin-left: 2px;
     }
+}
 
-    .card::before {
-        left: -18px;
+/* The connector word ends in "…" when the side bar is very narrow. */
+.connector > span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* The body of a step, under its header: folds with it. */
+.card-body {
+    padding: 3px 0 12px;
+}
+
+/*
+ * Opening and closing: the row grows from nothing to its content's height,
+ * and fades in. overflow: clip (not hidden) so pinned headers inside still
+ * stick; a little clip margin once open lets rings and focus outlines show.
+ */
+.collapse {
+    display: grid;
+    grid-template-rows: 0fr;
+    opacity: 0;
+    transition:
+        grid-template-rows 0.22s cubic-bezier(0.2, 0, 0, 1),
+        opacity 0.18s ease;
+}
+
+.collapse.open {
+    grid-template-rows: 1fr;
+    opacity: 1;
+}
+
+.collapse.snap {
+    transition: none;
+}
+
+.collapse-inner {
+    min-height: 0;
+    overflow: clip;
+}
+
+.collapse.open > .collapse-inner {
+    overflow-clip-margin: 8px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .collapse {
+        transition: none;
     }
 }

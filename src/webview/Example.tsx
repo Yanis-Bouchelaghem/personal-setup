@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import type { StepExample } from "../core/restitution";
+import { Collapse } from "./Collapse";
 import { ChevronIcon } from "./Icons";
 
 /**
@@ -22,7 +23,9 @@ export function Example({ example }: { example: StepExample }) {
                 </span>
                 <span className="example-title">{example.title}</span>
             </button>
-            {open && <pre className="example-body">{example.body}</pre>}
+            <Collapse open={open}>
+                <pre className="example-body">{example.body}</pre>
+            </Collapse>
         </div>
     );
 }
