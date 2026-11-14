@@ -113,3 +113,8 @@ export async function readAllDiffs(
 ): Promise<Record<string, FileDiff>> {
     return readDiffs(root, await listChangedFiles(root));
 }
+
+/** Start a git repository in `folder` (`git init`). */
+export async function initRepo(folder: string): Promise<void> {
+    await run("git", ["-C", folder, "init"]);
+}

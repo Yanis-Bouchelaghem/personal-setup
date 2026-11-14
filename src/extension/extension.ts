@@ -3,6 +3,7 @@ import { homedir } from "node:os";
 import * as vscode from "vscode";
 
 import type { ReviewAction } from "../core/review";
+import { initRepo } from "../node/git";
 import { findGitRoot } from "../node/gitRoot";
 import { archiveTab } from "../node/store/archive";
 import { updateReview } from "../node/store/review";
@@ -20,16 +21,18 @@ export function activate(context: vscode.ExtensionContext): void {
     const log = vscode.window.createOutputChannel("Restitution", { log: true });
     const folder = vscode.workspace.workspaceFolders?.[0];
     // The git root can sit above the workspace folder (a module in a monorepo).
-    const root = folder && findGitRoot(folder.uri.fsPath);
+    // It is looked for again until found: a repository can be created later.
+    let root: string | undefined;
 
     // One review write at a time: each one reads the file it then rewrites.
     let reviewWrites: Promise<void> = Promise.resolve();
     const review = (tabId: string, action: ReviewAction) => {
-        if (!root) {
+        const repo = root;
+        if (!repo) {
             return;
         }
         reviewWrites = reviewWrites
-            .then(() => updateReview(root, tabId, action))
+            .then(() => updateReview(repo, tabId, action))
             .catch((error: unknown) =>
                 log.error(`Could not save the review: ${String(error)}`),
             );
@@ -64,6 +67,18 @@ export function activate(context: vscode.ExtensionContext): void {
                 (error: unknown) =>
                     log.error(`Could not copy the review: ${String(error)}`),
             );
+        },
+        onInitRepo: () => {
+            if (folder) {
+                initRepo(folder.uri.fsPath).then(connect, (error: unknown) => {
+                    log.error(
+                        `Could not create a repository: ${String(error)}`,
+                    );
+                    void vscode.window.showErrorMessage(
+                        `Restitution could not run "git init": ${String(error)}`,
+                    );
+                });
+            }
         },
     });
     const reopen = () => {
@@ -100,14 +115,32 @@ export function activate(context: vscode.ExtensionContext): void {
         ),
     );
 
-    if (root) {
-        context.subscriptions.push(watchRestitution(root, plan, log));
-    } else {
-        log.info(
-            `No git repository for ${folder?.uri.fsPath ?? "(no folder)"}`,
-        );
-        plan.setState({ status: "no-repo" });
+    // Find the repository and start watching it; until there is one, the
+    // panel says why it needs one, and we look again when the window gets
+    // focus (a terminal "git init" counts too).
+    function connect() {
+        if (root) {
+            return;
+        }
+        root = folder && findGitRoot(folder.uri.fsPath);
+        if (root) {
+            log.info(`Git repository: ${root}`);
+            context.subscriptions.push(watchRestitution(root, plan, log));
+        } else {
+            log.info(
+                `No git repository for ${folder?.uri.fsPath ?? "(no folder)"}`,
+            );
+            plan.setState({ status: "no-repo", folder: folder?.name });
+        }
     }
+    connect();
+    context.subscriptions.push(
+        vscode.window.onDidChangeWindowState((state) => {
+            if (state.focused) {
+                connect();
+            }
+        }),
+    );
     log.info("Activated");
 }
 

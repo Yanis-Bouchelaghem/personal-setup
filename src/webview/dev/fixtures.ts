@@ -312,7 +312,7 @@ export const fixtures: Record<string, ViewState> = {
     },
     empty: { status: "empty", closed: 0 },
     emptyClosed: { status: "empty", closed: 2 },
-    norepo: { status: "no-repo" },
+    norepo: { status: "no-repo", folder: "my-project" },
     error: {
         status: "error",
         errors: [

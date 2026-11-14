@@ -25,6 +25,7 @@ export class PlanViewProvider implements vscode.WebviewViewProvider {
             onReopenTab: () => void;
             onReview: (message: ReviewMessage) => void;
             onCopyFeedback: (tabId: string, text: string) => void;
+            onInitRepo: () => void;
         },
     ) {}
 
@@ -51,6 +52,8 @@ export class PlanViewProvider implements vscode.WebviewViewProvider {
                 this.handlers.onReview(message);
             } else if (message.type === "copyFeedback") {
                 this.handlers.onCopyFeedback(message.tabId, message.text);
+            } else if (message.type === "initRepo") {
+                this.handlers.onInitRepo();
             } else {
                 this.handlers.onOpen(message);
             }

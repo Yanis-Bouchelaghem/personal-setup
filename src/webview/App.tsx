@@ -46,7 +46,22 @@ function Body({
     if (state.status === "no-repo") {
         return (
             <Notice title="No git repository">
-                Open a folder inside a git repository to see a restitution.
+                <p>
+                    Restitution shows what changed by comparing your files with
+                    their last commit, using git. It works for any language, but
+                    it needs a git repository.
+                </p>
+                {state.folder ? (
+                    <button
+                        className="primary-btn notice-action"
+                        type="button"
+                        onClick={() => host.send({ type: "initRepo" })}
+                    >
+                        Create a repository in {state.folder}
+                    </button>
+                ) : (
+                    <p>Open a folder to get started.</p>
+                )}
             </Notice>
         );
     }

@@ -58,7 +58,7 @@ server.registerTool(
         const root = repoRoot();
         if (!root) {
             return text(
-                "Not inside a git repository, so there is nowhere to save the restitution.",
+                "Not inside a git repository. Restitution compares the files with their last commit (git) to show what changed, so it needs one. Tell the user; they can create it with `git init`, or from the Restitution panel. Your code changes are unaffected.",
                 true,
             );
         }

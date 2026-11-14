@@ -27,7 +27,8 @@ export type Tab =
 
 /** What the panel shows. The extension computes it, the webview renders it. */
 export type ViewState =
-    | { status: "no-repo" }
+    /** No git repository; `folder` is the open folder, if any. */
+    | { status: "no-repo"; folder?: string }
     | { status: "empty"; closed: number }
     | { status: "error"; errors: string[] }
     | {
@@ -86,4 +87,5 @@ export type FromWebview =
     | CloseTab
     | ReopenTab
     | ReviewMessage
-    | CopyFeedback;
+    | CopyFeedback
+    | { type: "initRepo" };

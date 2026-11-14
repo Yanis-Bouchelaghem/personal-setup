@@ -1515,3 +1515,7 @@ body {
 .uncovered-row .overview-goal {
     color: var(--muted);
 }
+
+.notice-action {
+    margin-top: 4px;
+}
