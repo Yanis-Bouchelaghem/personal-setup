@@ -18,6 +18,7 @@ import { GoalSection, type StepState } from "./GoalSection";
 import type { Host } from "./host";
 import { Notice } from "./Notice";
 import { Overview } from "./Overview";
+import { scrollToElement } from "./scrollTo";
 import { countChanged, UncoveredSection } from "./UncoveredSection";
 import { useGoalFolding } from "./useGoalFolding";
 import { useReview } from "./useReview";
@@ -125,9 +126,10 @@ export function TabContent({
                     uncovered={countChanged(uncovered)}
                     onGotoUncovered={() => {
                         setShowUncovered(true);
-                        document
-                            .getElementById("uncovered")
-                            ?.scrollIntoView({ behavior: "smooth" });
+                        const section = document.getElementById("uncovered");
+                        if (section) {
+                            scrollToElement(section);
+                        }
                     }}
                 />
             )}

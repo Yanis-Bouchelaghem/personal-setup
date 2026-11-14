@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
+import { scrollToElement } from "./scrollTo";
+
 /**
  * Which goals are folded. A goal whose steps are all viewed folds itself, and
  * unfolds again when that stops being true (the agent changed one of its
@@ -42,7 +44,9 @@ export function useGoalFolding(allViewed: boolean[]) {
                 const target = document.querySelector(
                     `[data-goal="${goal + 1}"]`,
                 );
-                target?.scrollIntoView({ behavior: "smooth", block: "start" });
+                if (target) {
+                    scrollToElement(target);
+                }
                 target?.classList.add("flash");
                 setTimeout(() => target?.classList.remove("flash"), 1400);
             }),

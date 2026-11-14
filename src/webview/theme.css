@@ -1474,6 +1474,7 @@ body {
 /* Changed, but in no guide: the end of a tab, quieter than the goals. */
 .uncovered {
     margin-bottom: 20px;
+    scroll-margin-top: calc(var(--tabs-h) + 8px);
 }
 
 .uncovered-head {
