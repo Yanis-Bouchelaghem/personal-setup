@@ -20,7 +20,6 @@ export function Example({ example }: { example: StepExample }) {
                 <span className="chev" aria-hidden="true">
                     <ChevronIcon />
                 </span>
-                <span className="example-kicker">Example</span>
                 <span className="example-title">{example.title}</span>
             </button>
             {open && <pre className="example-body">{example.body}</pre>}

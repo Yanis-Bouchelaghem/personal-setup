@@ -14,7 +14,7 @@ const LineRangeSchema = z
  * step whose code handles it.
  */
 const ExampleSchema = z.object({
-    /** What it is and where it comes from: "Microsoft Graph: change notification body". */
+    /** A natural phrase saying what it is and where it comes from: "An example of a plugin the marketplace API could return". */
     title: z.string().min(1),
     /** The data itself, shown verbatim in monospace. */
     body: z.string().min(1),

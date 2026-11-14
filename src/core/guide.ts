@@ -76,7 +76,7 @@ Goals have no connectors between them: they are independent.
 A step can carry examples of concrete data that crosses the boundary with something outside this codebase: what an external API sends or receives (a Microsoft Graph notification, a webhook body, a gateway error response), a file format, a CLI's output, an environment value. The reader sees the data next to the code that handles it. Do not add examples for calls inside the codebase: the code already shows those.
 
 - Put the example on the step whose code reads, writes or defines that data: the parser of the payload, the schema it is validated against, the client that sends it. Its place must make obvious what the example is.
-- "title" says what it is and where it comes from: "Microsoft Graph: change notification body", "Gateway: 503 response".
+- "title" is a natural phrase, in the user's language, saying what the data is and where it comes from, so it makes sense on its own: "An example of a plugin the marketplace API could return", "What Microsoft Graph sends us when a new message arrives", "The answer the gateway gives when it is overloaded". Not a label like "Gateway: 503 response".
 - "body" is the data itself, verbatim and realistic but short: cut long lists to one or two items with "…", and replace secrets, tokens and personal data with obvious placeholders.
 - The reader sees the title, folded, between the "why" and the code, and opens it on click.
 
@@ -93,7 +93,7 @@ Teach it the way you would to a colleague who has not seen the change: foundatio
       "title": "Retry transient gateway failures",
       "steps": [
         { "file": "src/errors.ts", "lines": [[11, 23]], "why": "Add a GatewayError that carries the upstream status, so callers can tell a 5xx from a 4xx.",
-          "examples": [ { "title": "Gateway: 503 response", "body": "HTTP/1.1 503 Service Unavailable\\n\\n{ \\"error\\": \\"upstream_unavailable\\", \\"retryAfter\\": 2 }" } ] },
+          "examples": [ { "title": "The answer the gateway gives when it is overloaded", "body": "HTTP/1.1 503 Service Unavailable\\n\\n{ \\"error\\": \\"upstream_unavailable\\", \\"retryAfter\\": 2 }" } ] },
         { "file": "src/gateway/retry.ts", "lines": [[1, 35]], "link": "then", "why": "build withRetry on top of it, retrying only 5xx responses with exponential backoff." },
         { "file": "src/gateway/client.ts", "lines": [[1, 10], [15, 38]], "link": "then", "why": "run json() through withRetry, so every JSON call benefits." },
         { "link": "which means", "why": "a call that fails with a 5xx now takes up to 7 seconds before the error reaches the caller." },
