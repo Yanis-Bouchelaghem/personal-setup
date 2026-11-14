@@ -58,16 +58,16 @@ Each step is a card. Between two cards of the same goal sits one connector word,
 
 "link" says how this step follows the previous step of the same goal. Leave it out on the first step of a goal. Leave it out anywhere else and the connector is "then".
 
-To choose between the first three, imagine the work stopped right before this step:
-
-- "then" (the default). Stopping here leaves code that works but is not finished: the helper exists and nothing uses it yet, the tests are not written. Use it when in doubt.
+- "then" (the default). This step builds on the previous one: stop right before it and the code still works, it is just not finished (the helper exists and nothing uses it yet, the tests are not written). Use it when in doubt.
   Reads as: "Then / write the unit tests to cover what was added."
-- "so". Stopping here leaves something broken: the build, the tests, or the consequence a "which means" step just described. The previous step forces this one.
-  Reads as: "So / update the three call sites to pass the new timeout."
 - "in parallel". Leave this step out entirely and no other step would notice: the reader could read it before or after the previous one.
   Reads as: "In parallel / update the README row for the new setting."
-- "which means". This step changes no code: it says what the previous step implies outside the code, that the reader must know. Behaviour that changes for users, operators or callers; something that now has to happen. Give it no file and no lines. When some code deals with that consequence, the next step follows with "so".
-  Reads as: "Which means / any environment still set to an http:// URL now fails at startup. So / say in the README that the URL must be https."
+- "which means". This step changes no code: it says what the previous step implies, that the reader must know. Behaviour that changes for users, operators or callers; something that now has to happen, in the code or outside it. Give it no file and no lines.
+  Reads as: "Which means / any environment still set to an http:// URL now fails at startup."
+- "so". ONLY right after a "which means" step (the tool rejects it anywhere else): this step is the code that deals with the consequence just stated.
+  Reads as: "Which means / every caller must now pass a timeout. So / update the three callers."
+
+A change that forces another (a new parameter, so the callers change) is worth saying out loud: put the consequence in a "which means" step and the forced change after "so". The reader then knows why that code changed, not just that it did. A consequence that needs no code is followed by "then", or ends the goal.
 
 Goals have no connectors between them: they are independent.
 

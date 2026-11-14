@@ -63,7 +63,7 @@ const many: Restitution = {
                 {
                     file: "src/marketplace/marketplaceRewriter.ts",
                     lines: [[10, 24]],
-                    link: "so",
+                    link: "then",
                     why: "rewrite only the plugins that parsed, and keep the skipped count.",
                 },
                 {

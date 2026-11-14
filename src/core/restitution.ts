@@ -36,11 +36,28 @@ export const StepSchema = z
         },
     );
 
-export const GoalSchema = z.object({
-    title: z.string().min(1),
-    ref: z.string().min(1).optional(),
-    steps: z.array(StepSchema).min(1),
-});
+export const GoalSchema = z
+    .object({
+        title: z.string().min(1),
+        ref: z.string().min(1).optional(),
+        steps: z.array(StepSchema).min(1),
+    })
+    .superRefine((goal, context) => {
+        // "so" answers the consequence a "which means" step just stated.
+        goal.steps.forEach((step, index) => {
+            if (
+                step.link === "so" &&
+                goal.steps[index - 1]?.link !== "which means"
+            ) {
+                context.addIssue({
+                    code: "custom",
+                    path: ["steps", index, "link"],
+                    message:
+                        '"so" only follows a "which means" step: state the consequence first, or use "then"',
+                });
+            }
+        });
+    });
 
 export const RestitutionSchema = z.object({
     version: z.literal(1),

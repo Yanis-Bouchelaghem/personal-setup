@@ -28,6 +28,20 @@ function accepts(fields: object): boolean {
     return parseRestitution(JSON.stringify(restitution)).ok;
 }
 
+/** Parse a one-goal restitution whose steps carry these links. */
+function withLinks(...links: (string | undefined)[]) {
+    const restitution = {
+        version: 1,
+        goals: [
+            {
+                title: "T",
+                steps: links.map((link) => ({ why: "Do it.", link })),
+            },
+        ],
+    };
+    return parseRestitution(JSON.stringify(restitution));
+}
+
 function withLines(lines: unknown): boolean {
     return accepts({ file: "a.ts", lines });
 }
@@ -92,5 +106,17 @@ describe("parseRestitution", () => {
         expect(withLines([[5, 2]])).toBe(false);
         expect(withLines([[0, 2]])).toBe(false);
         expect(withLines([1, 2])).toBe(false);
+    });
+
+    it('accepts "so" only right after a "which means" step', () => {
+        expect(withLinks(undefined, "which means", "so").ok).toBe(true);
+        expect(withLinks(undefined, "which means", "then").ok).toBe(true);
+        expect(withLinks(undefined, "so")).toEqual({
+            ok: false,
+            errors: [
+                'goals.0.steps.1.link: "so" only follows a "which means" step: state the consequence first, or use "then"',
+            ],
+        });
+        expect(withLinks(undefined, "which means", "so", "so").ok).toBe(false);
     });
 });
