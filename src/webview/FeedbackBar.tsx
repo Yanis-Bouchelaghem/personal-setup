@@ -10,8 +10,8 @@ function plural(count: number, word: string): string {
 /**
  * Pinned to the bottom while anything is asked: what you are about to send,
  * a button to copy it for your agent, and one to start over. It slides up
- * when the first thing is asked, with a short glow, and back down when
- * nothing is left.
+ * when the first thing is asked and back down when nothing is left, and
+ * glows briefly each time something new is asked.
  */
 export function FeedbackBar({
     requests,
@@ -32,11 +32,11 @@ export function FeedbackBar({
     }, [copied]);
 
     const shown = requests.length > 0;
-    const glow = useGlowOnAppear(shown);
-
-    // While the bar slides away it keeps saying what it said.
     const clarify = requests.filter((request) => request.clarify).length;
     const comments = requests.filter((request) => request.comment).length;
+    const glow = useGlowOnAdd(clarify + comments);
+
+    // While the bar slides away it keeps saying what it said.
     const summary = [
         ...(clarify ? [plural(clarify, "step") + " to clarify"] : []),
         ...(comments ? [plural(comments, "comment")] : []),
@@ -89,17 +89,18 @@ export function FeedbackBar({
 }
 
 /**
- * A glow when the bar comes up, fading away: only when it appears, not when
- * a tab that already has requests is opened.
+ * A glow each time something new is asked (a step marked to clarify, a new
+ * comment), fading away; not when something is removed or edited, and not
+ * when a tab that already has requests is opened.
  */
-function useGlowOnAppear(shown: boolean) {
+function useGlowOnAdd(asks: number) {
     const [on, setOn] = useState(false);
-    const before = useRef(shown);
+    const before = useRef(asks);
     useEffect(() => {
-        if (shown && !before.current) {
+        if (asks > before.current) {
             setOn(true);
         }
-        before.current = shown;
-    }, [shown]);
+        before.current = asks;
+    }, [asks]);
     return { on, end: () => setOn(false) };
 }
