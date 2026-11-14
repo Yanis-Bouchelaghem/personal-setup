@@ -6,7 +6,8 @@ import { join } from "node:path";
  *
  *   <id>.json          one restitution, shown as one tab (the agent's file)
  *   <id>.review.json   the human's Viewed state for that tab
- *   <id>.code.json     what each step's code was when it was explained (server)
+ *   <id>.code.json     what each step's code was when it was explained (server;
+ *                      the panel adds a baseline for steps it never saw)
  *   archive/           closed tabs, with their review and code files
  */
 const DIR = ".restitution";
