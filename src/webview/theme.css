@@ -188,7 +188,7 @@ body {
 
 /*
  * The step header stays pinned under the tabs and the goal header while you
- * read a long step, so Viewed is always within reach.
+ * read a long step, so folding it is always within reach.
  */
 .card-head {
     cursor: pointer;
@@ -255,30 +255,19 @@ body {
     transform: rotate(-90deg);
 }
 
-.viewed input:focus-visible {
+/* The step's chevron is a button, so Viewed can be toggled from the keyboard. */
+.chev-btn {
+    padding: 0;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    font: inherit;
+    cursor: pointer;
+}
+
+.chev-btn:focus-visible {
     outline: 1px solid var(--accent);
     outline-offset: 1px;
-}
-
-.viewed {
-    display: flex;
-    flex: none;
-    align-items: center;
-    gap: 5px;
-    color: var(--muted);
-    font-size: 11.5px;
-    cursor: pointer;
-    user-select: none;
-}
-
-.viewed:hover {
-    color: var(--fg);
-}
-
-.viewed input {
-    margin: 0;
-    accent-color: var(--accent);
-    cursor: pointer;
 }
 
 .viewed-card .step-no {
@@ -1095,7 +1084,7 @@ body {
     cursor: auto;
 }
 
-/* Diff and File, after Viewed at the right end of the header. */
+/* Diff and File, at the right end of the header. */
 .card-head .open-actions {
     margin-left: 0;
 }

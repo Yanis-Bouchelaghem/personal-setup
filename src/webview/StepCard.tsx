@@ -143,15 +143,24 @@ export function StepCard({
                 onClick={(event) => {
                     const own =
                         event.target instanceof Element &&
-                        event.target.closest("button, label, a");
+                        event.target.closest("button, a");
                     if (!own) {
                         toggleViewed();
                     }
                 }}
             >
-                <span className="chev" aria-hidden="true">
+                {/* The header's toggle, for the keyboard. */}
+                <button
+                    className="chev chev-btn"
+                    type="button"
+                    aria-expanded={open}
+                    title={
+                        viewed ? "Viewed (click to unfold)" : "Mark as viewed"
+                    }
+                    onClick={toggleViewed}
+                >
                     <ChevronIcon />
-                </span>
+                </button>
                 <span className="step-no">{label}</span>
                 {file && <FilePath path={file} />}
                 <span className="actions">
@@ -170,14 +179,6 @@ export function StepCard({
                         <ClarifyIcon />
                     </IconButton>
                 </span>
-                <label className="viewed">
-                    <input
-                        type="checkbox"
-                        checked={viewed}
-                        onChange={toggleViewed}
-                    />
-                    <span>Viewed</span>
-                </label>
                 {/* Always there, folded or not, and an absent one keeps its slot:
                     Viewed sits in the same place on every card. */}
                 <span className="actions open-actions">
