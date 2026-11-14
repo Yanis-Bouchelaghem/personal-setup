@@ -8,13 +8,6 @@ const LineRangeSchema = z
     .tuple([z.number().int().positive(), z.number().int().positive()])
     .refine(([from, to]) => from <= to, "a range must be [from, to]");
 
-/**
- * How a step follows the previous one in its goal. The page reads as one
- * sentence: the step's text continues after the connector word.
- */
-export const LINKS = ["then", "so", "in parallel", "which means"] as const;
-export type Link = (typeof LINKS)[number];
-
 export const StepSchema = z
     .object({
         why: z.string().min(1),
@@ -25,8 +18,14 @@ export const StepSchema = z
          * or the old side for a deleted file. Required with `file`.
          */
         lines: z.array(LineRangeSchema).min(1).optional(),
-        /** Leave out on the first step of a goal; no word means "then". */
-        link: z.enum(LINKS).optional(),
+        /**
+         * The connector word shown before this step, in the reader's
+         * language: the page reads as one sentence, the step's text
+         * continuing after it. Free text, so the agent can translate it;
+         * the guide defines the meanings. Left out on a goal's first step;
+         * no word anywhere else shows "then".
+         */
+        link: z.string().min(1).optional(),
     })
     .refine(
         (step) => (step.file === undefined) === (step.lines === undefined),
@@ -36,28 +35,11 @@ export const StepSchema = z
         },
     );
 
-export const GoalSchema = z
-    .object({
-        title: z.string().min(1),
-        ref: z.string().min(1).optional(),
-        steps: z.array(StepSchema).min(1),
-    })
-    .superRefine((goal, context) => {
-        // "so" answers the consequence a "which means" step just stated.
-        goal.steps.forEach((step, index) => {
-            if (
-                step.link === "so" &&
-                goal.steps[index - 1]?.link !== "which means"
-            ) {
-                context.addIssue({
-                    code: "custom",
-                    path: ["steps", index, "link"],
-                    message:
-                        '"so" only follows a "which means" step: state the consequence first, or use "then"',
-                });
-            }
-        });
-    });
+export const GoalSchema = z.object({
+    title: z.string().min(1),
+    ref: z.string().min(1).optional(),
+    steps: z.array(StepSchema).min(1),
+});
 
 export const RestitutionSchema = z.object({
     version: z.literal(1),

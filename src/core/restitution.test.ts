@@ -108,15 +108,9 @@ describe("parseRestitution", () => {
         expect(withLines([1, 2])).toBe(false);
     });
 
-    it('accepts "so" only right after a "which means" step', () => {
-        expect(withLinks(undefined, "which means", "so").ok).toBe(true);
-        expect(withLinks(undefined, "which means", "then").ok).toBe(true);
-        expect(withLinks(undefined, "so")).toEqual({
-            ok: false,
-            errors: [
-                'goals.0.steps.1.link: "so" only follows a "which means" step: state the consequence first, or use "then"',
-            ],
-        });
-        expect(withLinks(undefined, "which means", "so", "so").ok).toBe(false);
+    it("takes any connector word, so the agent can write it in the reader's language", () => {
+        expect(withLinks(undefined, "so").ok).toBe(true);
+        expect(withLinks(undefined, "ce qui veut dire", "donc").ok).toBe(true);
+        expect(withLinks(undefined, "").ok).toBe(false);
     });
 });

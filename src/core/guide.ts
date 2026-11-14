@@ -56,7 +56,7 @@ Each step is a card. Between two cards of the same goal sits one connector word,
 
 ## Connectors (the "link" field)
 
-"link" says how this step follows the previous step of the same goal. Leave it out on the first step of a goal. Leave it out anywhere else and the connector is "then".
+"link" is the connector word shown before this step: it says how this step follows the previous step of the same goal. Leave it out on the first step of a goal and give it on every other step. There are four connectors, defined here in English. Write the whole restitution (titles, "why", connector words) in the language the user writes to you in, and translate the connector words with it, keeping their meaning (in French: "ensuite", "en parallèle", "ce qui veut dire", "donc").
 
 - "then" (the default). This step builds on the previous one: stop right before it and the code still works, it is just not finished (the helper exists and nothing uses it yet, the tests are not written). Use it when in doubt.
   Reads as: "Then / write the unit tests to cover what was added."
@@ -64,7 +64,7 @@ Each step is a card. Between two cards of the same goal sits one connector word,
   Reads as: "In parallel / update the README row for the new setting."
 - "which means". This step changes no code: it says what the previous step implies, that the reader must know. Behaviour that changes for users, operators or callers; something that now has to happen, in the code or outside it. Give it no file and no lines.
   Reads as: "Which means / any environment still set to an http:// URL now fails at startup."
-- "so". ONLY right after a "which means" step (the tool rejects it anywhere else): this step is the code that deals with the consequence just stated.
+- "so". ONLY right after a "which means" step: this step is the code that deals with the consequence just stated.
   Reads as: "Which means / every caller must now pass a timeout. So / update the three callers."
 
 A change that forces another (a new parameter, so the callers change) is worth saying out loud: put the consequence in a "which means" step and the forced change after "so". The reader then knows why that code changed, not just that it did. A consequence that needs no code is followed by "then", or ends the goal.

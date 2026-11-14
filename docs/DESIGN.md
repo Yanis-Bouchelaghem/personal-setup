@@ -8,7 +8,7 @@ Plan and milestones: `~/.claude/plans/eager-sauteeing-treehouse.md` (scroll mode
 
 - A JSON file is the contract between agent and viewer. The agent writes it through an MCP tool; writing the file by hand also works.
 - Explanations live only in the side panel. "Open in editor" opens the native `vscode.diff` on demand.
-- Each step after the first in a goal carries a connector word (`link`: then, so, in parallel or which means; default then). The page reads as one sentence: the next card's text continues after the word. The model chooses the word; only the so-after-which-means rule is checked, because this is only a guide.
+- Each step after the first in a goal carries a connector word (`link`: free text, the word as shown, in the reader's language; default "then"). The page reads as one sentence: the next card's text continues after the word. The model chooses and translates the word; nothing checks it, so the panel works in any language, and because this is only a guide.
 - The explanation is optional. Nothing blocks a commit or a turn.
 - MCP transport is **stdio** with the official SDK: the agent spawns it in the project folder, so it finds the repo for free, with no port, token or stale URL.
 - Colours come only from VS Code theme variables. "Glass" is a light touch on cards and sticky headers.
@@ -68,7 +68,7 @@ The rules agents follow live in `src/core/guide.ts`: it is both what the MCP ser
 
 - Goals come from the request. **A goal stands on its own and could be reverted without touching another goal**; parts that only make sense together (a feature with its config, tests and docs) are one goal with several steps. There is no limit on steps: the model should teach well, and the user can ask for more or less detail.
 - A step's `why` is one short sentence, action then reason. The first step of a goal starts the sentence; every other step continues after its connector word, so the goal reads aloud as one sentence.
-- Connector words, with the definition each agent is given: **then** (the default: builds on the previous step; stop before it and the code still works, just unfinished), **in parallel** (leave the step out and no other step notices), **which means** (a step with no code that states a consequence: behaviour that changes for users, operators or callers, or something that now has to happen), and **so**, only right after a **which means**: the code that deals with that consequence. A forced change (a new parameter, so the callers change) is said out loud that way, so the reader knows why the code changed. The schema rejects a **so** anywhere else; the other choices are the model's, unchecked. There are no connectors between goals.
+- Connector words, with the definition each agent is given: **then** (the default: builds on the previous step; stop before it and the code still works, just unfinished), **in parallel** (leave the step out and no other step notices), **which means** (a step with no code that states a consequence: behaviour that changes for users, operators or callers, or something that now has to happen), and **so**, only right after a **which means**: the code that deals with that consequence. A forced change (a new parameter, so the callers change) is said out loud that way, so the reader knows why the code changed. The guide defines the four in English and asks the agent to write the whole restitution, connector words included, in the user's language; nothing validates them. There are no connectors between goals.
 - No background and no "what to check".
 
 ### Exact lines
