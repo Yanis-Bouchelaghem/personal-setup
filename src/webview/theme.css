@@ -1085,3 +1085,36 @@ body {
     font-weight: 700;
     line-height: 1.5;
 }
+
+/* A click on the card body opens its code; the diff keeps a normal cursor for selecting. */
+.card.opens {
+    cursor: pointer;
+}
+
+.card.opens .diff {
+    cursor: auto;
+}
+
+/* Diff and File, after Viewed at the right end of the header. */
+.card-head .open-actions {
+    margin-left: 0;
+}
+
+/* Under the inline diff: open a comment box in its place. */
+.comment-btn {
+    margin: 8px 0 0 -4px;
+    padding: 0 8px 0 5px;
+    font: inherit;
+    font-size: 12px;
+}
+
+.icon-btn.absent {
+    visibility: hidden;
+}
+
+/* Too narrow for the folder to read as anything: show only the file name (the full path is in its tooltip). */
+@container card (max-width: 380px) {
+    .chip .dir {
+        display: none;
+    }
+}

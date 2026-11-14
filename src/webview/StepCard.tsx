@@ -96,11 +96,33 @@ export function StepCard({
 
     const hover = useSeenOnHover(updated, onSeen);
 
+    // Where a click on the card takes you: the file with the changes
+    // selected, or the diff when the file is gone.
+    const openFile = () =>
+        onOpenRequest({
+            type: "openFile",
+            file: file ?? "",
+            ranges: code.selection,
+        });
+    const openDiff = () =>
+        onOpenRequest({
+            type: "openDiff",
+            file: file ?? "",
+            ranges: code.selection,
+            status: code.status,
+        });
+    const openCode = code.canOpenFile
+        ? openFile
+        : code.canDiff
+          ? openDiff
+          : undefined;
+
     const classes = [
         "card",
         "glass",
         open ? "" : "collapsed viewed-card",
         updated ? "updated" : "",
+        openCode ? "opens" : "",
     ];
     return (
         <article
@@ -108,6 +130,11 @@ export function StepCard({
             data-step={label}
             ref={box}
             {...hover}
+            onClick={(event) => {
+                if (openCode && opensCode(event.target)) {
+                    openCode();
+                }
+            }}
         >
             {/* The whole header toggles Viewed; its own controls keep their jobs. */}
             <header
@@ -128,37 +155,6 @@ export function StepCard({
                 <span className="step-no">{label}</span>
                 {file && <FilePath path={file} />}
                 <span className="actions">
-                    {open && code.canDiff && (
-                        <IconButton
-                            label="Open the diff in the editor"
-                            onClick={() =>
-                                onOpenRequest({
-                                    type: "openDiff",
-                                    file: file ?? "",
-                                    ranges: code.selection,
-                                    status: code.status,
-                                })
-                            }
-                            text="Diff"
-                        >
-                            <DiffIcon />
-                        </IconButton>
-                    )}
-                    {open && code.canOpenFile && (
-                        <IconButton
-                            label="Open the file, with the changes selected"
-                            onClick={() =>
-                                onOpenRequest({
-                                    type: "openFile",
-                                    file: file ?? "",
-                                    ranges: code.selection,
-                                })
-                            }
-                            text="File"
-                        >
-                            <FileIcon />
-                        </IconButton>
-                    )}
                     <IconButton
                         label={
                             clarify
@@ -173,14 +169,6 @@ export function StepCard({
                     >
                         <ClarifyIcon />
                     </IconButton>
-                    <IconButton
-                        label={comment ? "Edit your comment" : "Comment"}
-                        pressed={comment !== ""}
-                        onClick={() => setWriting(true)}
-                        text="Comment"
-                    >
-                        <CommentIcon />
-                    </IconButton>
                 </span>
                 <label className="viewed">
                     <input
@@ -190,6 +178,26 @@ export function StepCard({
                     />
                     <span>Viewed</span>
                 </label>
+                {/* Always there, folded or not, and an absent one keeps its slot:
+                    Viewed sits in the same place on every card. */}
+                <span className="actions open-actions">
+                    <IconButton
+                        label="Open the diff in the editor"
+                        onClick={openDiff}
+                        text="Diff"
+                        absent={!code.canDiff}
+                    >
+                        <DiffIcon />
+                    </IconButton>
+                    <IconButton
+                        label="Open the file, with the changes selected"
+                        onClick={openFile}
+                        text="File"
+                        absent={!code.canOpenFile}
+                    >
+                        <FileIcon />
+                    </IconButton>
+                </span>
             </header>
             {open && (
                 <>
@@ -203,14 +211,40 @@ export function StepCard({
                 </>
             )}
             {/* A comment stays visible even on a folded step, without its code. */}
-            {(writing || comment) && (
+            {writing || comment ? (
                 <Note
                     comment={comment}
                     focus={writing}
                     onSave={(text) => onRequestChange(clarify, text)}
                     onDone={() => setWriting(false)}
                 />
+            ) : (
+                open && (
+                    <button
+                        className="icon-btn comment-btn"
+                        type="button"
+                        title="Ask a question, or request a change"
+                        onClick={() => setWriting(true)}
+                    >
+                        <CommentIcon />
+                        <span>Comment</span>
+                    </button>
+                )
             )}
         </article>
     );
+}
+
+/**
+ * A click on the card opens its code, except on the parts with a job of
+ * their own (the header, the inline diff, buttons, the comment) or when it
+ * ends a text selection.
+ */
+function opensCode(target: EventTarget) {
+    if (!(target instanceof Element)) {
+        return false;
+    }
+    const own = target.closest(".card-head, .diff, button, textarea, a");
+    const selecting = (window.getSelection()?.toString() ?? "") !== "";
+    return own === null && !selecting;
 }

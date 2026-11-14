@@ -49,17 +49,22 @@ export function IconButton({
     text,
     onClick,
     pressed,
+    absent,
     children,
 }: {
     label: string;
     text?: string;
     onClick: () => void;
     pressed?: boolean;
+    /** Not available here: invisible, but it keeps its place. */
+    absent?: boolean;
     children: ReactNode;
 }) {
     return (
         <button
-            className="icon-btn"
+            className={absent ? "icon-btn absent" : "icon-btn"}
+            aria-hidden={absent}
+            disabled={absent}
             type="button"
             title={label}
             aria-label={label}

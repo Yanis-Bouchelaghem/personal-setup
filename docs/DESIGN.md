@@ -94,7 +94,7 @@ A step that points at code gives both `file` (relative to the git root) and `lin
 
 ## Reviewing: comments, clarify, and what changed
 
-Each step header has, next to the diff and file buttons, two toggles: **Clarify** (ask the agent to explain this step in smaller steps) and **Comment** (a question or change request, typed in a box under the step). While anything is asked, a bar pinned to the bottom sums it up ("1 step to clarify · 2 comments") with **Copy for agent** and **Reset**. The copied text is short, only what is asked:
+Each step has two ways to ask: **Clarify** in its header (ask the agent to explain this step in smaller steps) and **Comment** under its code (a question or change request, typed in a box that takes the button's place). While anything is asked, a bar pinned to the bottom sums it up ("1 step to clarify · 2 comments") with **Copy for agent** and **Reset**. The copied text is short, only what is asked:
 
 ```
 My review of the restitution "Review fixes" (id: review-fixes):
@@ -116,4 +116,5 @@ All of it lives in `<id>.review.json`, written only by the extension: `viewed`, 
 - **Goals** are foldable: the whole header is the control. Folding keeps the header where it was, so nothing jumps. A goal whose steps are all viewed folds itself (and starts folded); it unfolds again if the agent changes one of its steps. Folding or unfolding by hand wins until then.
 - **Steps** hang on a rail inside their goal. Between two cards sits one prominent connector word, so the goal reads as a sentence.
 - **Viewed** folds a step to its header; the whole step header toggles it.
-- **Header buttons** (Diff, File, Clarify, Comment) show a one-word label next to their icon when the card is wide enough (a container query on the card), and only the icon otherwise.
+- **Clicking a step** anywhere but its header, its inline diff, a button or the comment opens the file with the changes selected (the diff, for a deleted file). Ending a text selection does not count.
+- **Header**: number, file, Clarify, Viewed, then Diff and File at the right end. Diff and File stay on folded steps, and one a step cannot use keeps its slot, so Viewed sits in the same place on every card. Buttons show a one-word label next to their icon when the card is wide enough (a container query on the card), and only the icon otherwise; on a narrow card the file chip drops its folder.
