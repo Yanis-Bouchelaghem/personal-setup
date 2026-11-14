@@ -49,7 +49,6 @@ export function IconButton({
     text,
     onClick,
     pressed,
-    absent,
     unavailable,
     children,
 }: {
@@ -57,8 +56,6 @@ export function IconButton({
     text?: string;
     onClick: () => void;
     pressed?: boolean;
-    /** Not available here: invisible, but it keeps its place. */
-    absent?: boolean;
     /** Why it cannot be used here: greyed out, with this as its tooltip. */
     unavailable?: string;
     children: ReactNode;
@@ -66,9 +63,7 @@ export function IconButton({
     const tooltip = unavailable ?? label;
     return (
         <button
-            className={absent ? "icon-btn absent" : "icon-btn"}
-            aria-hidden={absent}
-            disabled={absent}
+            className="icon-btn"
             // aria-disabled rather than disabled, so the tooltip still shows.
             aria-disabled={unavailable !== undefined}
             type="button"

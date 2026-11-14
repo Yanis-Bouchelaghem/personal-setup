@@ -195,29 +195,29 @@ export function StepCard({
                         <ClarifyIcon />
                     </IconButton>
                 </span>
-                {/* Always there, folded or not, so nothing beside them moves:
-                    greyed out, with the reason, when they cannot be used, and
-                    an invisible slot on a step with no file. */}
-                <span className="actions open-actions">
-                    <IconButton
-                        label="Open the diff in the editor"
-                        onClick={openDiff}
-                        text="Diff"
-                        absent={!file}
-                        unavailable={code.noDiff}
-                    >
-                        <DiffIcon />
-                    </IconButton>
-                    <IconButton
-                        label="Open the file, with the changes selected"
-                        onClick={openFile}
-                        text="File"
-                        absent={!file}
-                        unavailable={code.noFile}
-                    >
-                        <FileIcon />
-                    </IconButton>
-                </span>
+                {/* Always there on a step with code, folded or not, so nothing
+                    beside them moves: greyed out, with the reason, when they
+                    cannot be used. A text-only step has none. */}
+                {file && (
+                    <span className="actions open-actions">
+                        <IconButton
+                            label="Open the diff in the editor"
+                            onClick={openDiff}
+                            text="Diff"
+                            unavailable={code.noDiff}
+                        >
+                            <DiffIcon />
+                        </IconButton>
+                        <IconButton
+                            label="Open the file, with the changes selected"
+                            onClick={openFile}
+                            text="File"
+                            unavailable={code.noFile}
+                        >
+                            <FileIcon />
+                        </IconButton>
+                    </span>
+                )}
             </header>
             {open && (
                 <>

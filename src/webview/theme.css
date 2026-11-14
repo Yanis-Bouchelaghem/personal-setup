@@ -1108,10 +1108,6 @@ body {
     font-size: 12px;
 }
 
-.icon-btn.absent {
-    visibility: hidden;
-}
-
 /* Too narrow for the folder to read as anything: show only the file name (the full path is in its tooltip). */
 @container card (max-width: 380px) {
     .chip .dir {
