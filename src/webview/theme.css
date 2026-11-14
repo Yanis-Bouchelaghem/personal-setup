@@ -1388,6 +1388,8 @@ body {
  */
 .collapse {
     display: grid;
+    /* Never wider than its place, whatever the content's longest word. */
+    grid-template-columns: minmax(0, 1fr);
     grid-template-rows: 0fr;
     opacity: 0;
     transition:
@@ -1465,4 +1467,51 @@ body {
     .feedback-bar.glow {
         animation: none;
     }
+}
+
+/* Changed, but in no guide: the end of a tab, quieter than the goals. */
+.uncovered {
+    margin-bottom: 20px;
+}
+
+.uncovered-head {
+    margin: 0 0 10px;
+    border: 1px dashed color-mix(in srgb, var(--fg) 28%, transparent);
+    border-radius: var(--radius-lg);
+    color: var(--muted);
+    font-size: 1em;
+    font-weight: 600;
+}
+
+.uncovered.folded .chev svg {
+    transform: rotate(-90deg);
+}
+
+.uncovered-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding-bottom: 2px;
+}
+
+.uncovered-file {
+    padding: 9px 13px 12px;
+    border-radius: var(--radius-lg);
+}
+
+.uncovered-file-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+}
+
+.uncovered-row .goal-no {
+    border-style: dashed;
+    background: transparent;
+    color: var(--muted);
+}
+
+.uncovered-row .overview-goal {
+    color: var(--muted);
 }

@@ -1,6 +1,7 @@
 import {
     type DiffLine,
     type FileDiff,
+    type Hunk,
     type LineRange,
     selectLines,
 } from "./diff";
@@ -35,6 +36,34 @@ function runsOfPositions(positions: number[]): LineRange[] {
     return runs;
 }
 
+/** Every diff line some step of these restitutions shows. */
+function shownLines(
+    restitutions: readonly Restitution[],
+    diffs: Record<string, FileDiff>,
+): Set<DiffLine> {
+    const shown = new Set<DiffLine>();
+    for (const step of restitutions.flatMap((r) =>
+        r.goals.flatMap((goal) => goal.steps),
+    )) {
+        if (step.file && step.lines) {
+            for (const hunk of selectLines(diffs[step.file], step.lines)) {
+                hunk.lines.forEach((line) => shown.add(line));
+            }
+        }
+    }
+    return shown;
+}
+
+/** A file's changed lines that no step shows, as runs of positions. */
+function hiddenRanges(diff: FileDiff, shown: Set<DiffLine>): LineRange[] {
+    return runsOfPositions(
+        diff.hunks
+            .flatMap((hunk) => hunk.lines)
+            .filter((line) => line.kind !== "ctx" && !shown.has(line))
+            .map((line) => line.at),
+    );
+}
+
 /**
  * Compare a restitution's steps with the working-tree diffs, line by line. A
  * changed line counts as shown when any restitution's step shows it (`others`
@@ -46,35 +75,60 @@ export function checkCoverage(
     diffs: Record<string, FileDiff>,
     others: Restitution[] = [],
 ): Coverage {
-    const shown = new Set<DiffLine>();
-    const missing: string[] = [];
+    const missing = restitution.goals
+        .flatMap((goal) => goal.steps)
+        .filter(
+            (step) =>
+                step.file !== undefined &&
+                step.lines !== undefined &&
+                !selectLines(diffs[step.file], step.lines).some((hunk) =>
+                    hunk.lines.some((line) => line.kind !== "ctx"),
+                ),
+        )
+        .map((step) => `${step.file}:${describeRanges(step.lines ?? [])}`);
 
-    for (const candidate of [restitution, ...others]) {
-        for (const step of candidate.goals.flatMap((goal) => goal.steps)) {
-            if (!step.file || !step.lines) {
-                continue;
-            }
-            const lines = selectLines(diffs[step.file], step.lines).flatMap(
-                (hunk) => hunk.lines,
-            );
-            lines.forEach((line) => shown.add(line));
-            const changed = lines.some((line) => line.kind !== "ctx");
-            if (candidate === restitution && !changed) {
-                missing.push(`${step.file}:${describeRanges(step.lines)}`);
-            }
-        }
-    }
-
+    const shown = shownLines([restitution, ...others], diffs);
     const unexplained = Object.values(diffs).flatMap((diff) => {
-        const hidden = diff.hunks
-            .flatMap((hunk) => hunk.lines)
-            .filter((line) => line.kind !== "ctx" && !shown.has(line))
-            .map((line) => line.at);
+        const hidden = hiddenRanges(diff, shown);
         return hidden.length === 0
             ? []
-            : [`${diff.file}:${describeRanges(runsOfPositions(hidden))}`];
+            : [`${diff.file}:${describeRanges(hidden)}`];
     });
     return { missing, unexplained };
+}
+
+/** Changed code that no guide shows, in one file. */
+export type Uncovered = {
+    file: string;
+    status: FileDiff["status"];
+    /** The positions of those lines, for opening the editor on them. */
+    ranges: LineRange[];
+    /** The lines themselves, to display. */
+    hunks: Hunk[];
+};
+
+/**
+ * The changed lines no step of any of these restitutions shows, file by file:
+ * what the reader would miss by reading only the guides. Purely a line diff,
+ * so it works for any language.
+ */
+export function uncoveredChanges(
+    diffs: Record<string, FileDiff>,
+    restitutions: readonly Restitution[],
+): Uncovered[] {
+    const shown = shownLines(restitutions, diffs);
+    return Object.values(diffs)
+        .map((diff) => {
+            const ranges = hiddenRanges(diff, shown);
+            return {
+                file: diff.file,
+                status: diff.status,
+                ranges,
+                hunks: selectLines(diff, ranges),
+            };
+        })
+        .filter((entry) => entry.ranges.length > 0)
+        .toSorted((a, b) => a.file.localeCompare(b.file));
 }
 
 /** What the agent reads back after submitting. Warnings never block. */

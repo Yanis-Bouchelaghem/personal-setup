@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
+import type { Uncovered } from "../core/coverage";
 import type { FileDiff } from "../core/diff";
 import { feedbackPrompt } from "../core/feedback";
 import { goalFingerprints } from "../core/fingerprint";
@@ -12,6 +13,7 @@ import { GoalSection, type StepState } from "./GoalSection";
 import type { Host } from "./host";
 import { Notice } from "./Notice";
 import { Overview } from "./Overview";
+import { countChanged, UncoveredSection } from "./UncoveredSection";
 import { useGoalFolding } from "./useGoalFolding";
 import { useReview } from "./useReview";
 
@@ -40,12 +42,16 @@ function stepStates(
 export function TabContent({
     tab,
     diffs,
+    uncovered,
     host,
 }: {
     tab: Tab;
     diffs: Record<string, FileDiff>;
+    /** Uncommitted changes no guide shows. */
+    uncovered: readonly Uncovered[];
     host: Host;
 }) {
+    const [showUncovered, setShowUncovered] = useState(false);
     const { review, act, copy } = useReview(tab, host);
     const states =
         tab.kind === "ok" ? stepStates(tab.restitution, diffs, review) : [];
@@ -99,6 +105,13 @@ export function TabContent({
                     goals={restitution.goals}
                     states={states}
                     onGoto={folding.reveal}
+                    uncovered={countChanged(uncovered)}
+                    onGotoUncovered={() => {
+                        setShowUncovered(true);
+                        document
+                            .getElementById("uncovered")
+                            ?.scrollIntoView({ behavior: "smooth" });
+                    }}
                 />
             )}
             {restitution.goals.map((goal, index) => (
@@ -120,6 +133,12 @@ export function TabContent({
                     onOpenRequest={(request) => host.send(request)}
                 />
             ))}
+            <UncoveredSection
+                entries={uncovered}
+                open={showUncovered}
+                onToggle={() => setShowUncovered(!showUncovered)}
+                onOpenRequest={(request) => host.send(request)}
+            />
             <FeedbackBar
                 requests={requests}
                 onCopy={() => copy(feedbackPrompt(tab.id, tab.label, requests))}

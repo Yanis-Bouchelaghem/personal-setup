@@ -1,5 +1,6 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
+import { uncoveredChanges } from "../core/coverage";
 import type { FileDiff } from "../core/diff";
 import type { Tab } from "../core/messages";
 import type { Host } from "./host";
@@ -32,6 +33,18 @@ export function Tabs({
         }
     }, [focus]);
 
+    // Covered means shown by any guide, so this is one answer for every tab.
+    const uncovered = useMemo(
+        () =>
+            uncoveredChanges(
+                diffs,
+                tabs.flatMap((tab) =>
+                    tab.kind === "ok" ? [tab.restitution] : [],
+                ),
+            ),
+        [diffs, tabs],
+    );
+
     const active = tabs.find((tab) => tab.id === selected) ?? tabs[0];
     const unread = useUnread(tabs, active?.id);
 
@@ -53,6 +66,7 @@ export function Tabs({
                 key={active.id}
                 tab={active}
                 diffs={diffs}
+                uncovered={uncovered}
                 host={host}
             />
         </>

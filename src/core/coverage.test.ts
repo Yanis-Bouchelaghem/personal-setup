@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { checkCoverage, describeSubmit } from "./coverage";
+import { checkCoverage, describeSubmit, uncoveredChanges } from "./coverage";
 import { parseUnifiedDiff } from "./diff";
 import type { Restitution } from "./restitution";
 
@@ -130,6 +130,40 @@ describe("checkCoverage", () => {
     it("ignores steps without a file", () => {
         const result = checkCoverage(restitution([{}]), {});
         expect(result).toEqual({ missing: [], unexplained: [] });
+    });
+});
+
+describe("uncoveredChanges", () => {
+    it("lists, file by file, the changed lines no guide shows", () => {
+        const shownByOne = restitution([{ file: "src/a.ts", lines: [[1, 2]] }]);
+        const shownByAnother = restitution([]);
+        const result = uncoveredChanges(diffs, [shownByOne, shownByAnother]);
+        expect(result.map((entry) => [entry.file, entry.ranges])).toEqual([
+            // A removed line sits with the line before it (20), so that line
+            // comes along as context.
+            ["src/a.ts", [[20, 21]]],
+            ["src/b.ts", [[5, 5]]],
+        ]);
+        expect(
+            result[0]?.hunks.flatMap((hunk) =>
+                hunk.lines.map((line) => `${line.kind}:${line.text}`),
+            ),
+        ).toEqual(["ctx:keep", "del:old", "add:new"]);
+    });
+
+    it("is empty when every change is shown, or there is no diff", () => {
+        const all = restitution([
+            {
+                file: "src/a.ts",
+                lines: [
+                    [1, 2],
+                    [20, 21],
+                ],
+            },
+            { file: "src/b.ts", lines: [[5, 5]] },
+        ]);
+        expect(uncoveredChanges(diffs, [all])).toEqual([]);
+        expect(uncoveredChanges({}, [all])).toEqual([]);
     });
 });
 

@@ -21,7 +21,7 @@ import { useScrollAnchor } from "./useScrollAnchor";
 import { useSeenOnHover } from "./useSeenOnHover";
 
 /** Folder part fades and truncates first; the file name always stays visible. */
-function FilePath({ path }: { path: string }) {
+export function FilePath({ path }: { path: string }) {
     const split = path.lastIndexOf("/") + 1;
     return (
         <code className="chip" title={path}>
