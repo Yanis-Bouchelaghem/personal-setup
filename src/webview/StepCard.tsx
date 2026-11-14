@@ -44,12 +44,33 @@ function useStepCode(step: Step, diffs: Record<string, FileDiff>) {
         file,
         hunks,
         selection,
-        status,
-        // Nothing to compare for a new file; nothing to open for a deleted one.
-        canDiff: file !== undefined && hunks.length > 0 && status !== "added",
-        canOpenFile:
-            file !== undefined && hunks.length > 0 && status !== "deleted",
+        // Why a button cannot be used here; undefined when it can.
+        noDiff: whyNoDiff(hunks.length, status),
+        noFile: whyNoFile(hunks.length, status),
     };
+}
+
+const NO_CHANGES = "No uncommitted changes in these lines";
+
+/** A diff only makes sense when both sides exist. */
+function whyNoDiff(hunks: number, status: FileDiff["status"] | undefined) {
+    if (hunks === 0) {
+        return NO_CHANGES;
+    }
+    if (status === "added") {
+        return "No diff: this file is new, every line is added";
+    }
+    if (status === "deleted") {
+        return "No diff: this file was deleted, every line is removed";
+    }
+    return undefined;
+}
+
+function whyNoFile(hunks: number, status: FileDiff["status"] | undefined) {
+    if (hunks === 0) {
+        return NO_CHANGES;
+    }
+    return status === "deleted" ? "This file was deleted" : undefined;
 }
 
 export function StepCard({
@@ -109,13 +130,8 @@ export function StepCard({
             type: "openDiff",
             file: file ?? "",
             ranges: code.selection,
-            status: code.status,
         });
-    const openCode = code.canOpenFile
-        ? openFile
-        : code.canDiff
-          ? openDiff
-          : undefined;
+    const openCode = file && !code.noFile ? openFile : undefined;
 
     const classes = [
         "card",
@@ -179,14 +195,16 @@ export function StepCard({
                         <ClarifyIcon />
                     </IconButton>
                 </span>
-                {/* Always there, folded or not, and an absent one keeps its slot:
-                    Viewed sits in the same place on every card. */}
+                {/* Always there, folded or not, so nothing beside them moves:
+                    greyed out, with the reason, when they cannot be used, and
+                    an invisible slot on a step with no file. */}
                 <span className="actions open-actions">
                     <IconButton
                         label="Open the diff in the editor"
                         onClick={openDiff}
                         text="Diff"
-                        absent={!code.canDiff}
+                        absent={!file}
+                        unavailable={code.noDiff}
                     >
                         <DiffIcon />
                     </IconButton>
@@ -194,7 +212,8 @@ export function StepCard({
                         label="Open the file, with the changes selected"
                         onClick={openFile}
                         text="File"
-                        absent={!code.canOpenFile}
+                        absent={!file}
+                        unavailable={code.noFile}
                     >
                         <FileIcon />
                     </IconButton>

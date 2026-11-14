@@ -1118,3 +1118,13 @@ body {
         display: none;
     }
 }
+
+/* A button this step cannot use: greyed out, its tooltip says why. */
+.icon-btn[aria-disabled="true"],
+.icon-btn[aria-disabled="true"]:hover {
+    opacity: 0.4;
+    background: transparent;
+    border-color: transparent;
+    color: var(--muted);
+    cursor: default;
+}

@@ -45,12 +45,11 @@ export type ToWebview =
     /** Switch to this tab (after reopening it). */
     | { type: "select"; id: string };
 
-/** Open a step's change as a diff, selecting `ranges` on the file side. */
+/** Open a step's change as a diff (both sides exist), selecting `ranges` on the file side. */
 export type OpenDiff = {
     type: "openDiff";
     file: string;
     ranges: LineRange[];
-    status?: FileDiff["status"];
 };
 
 /** Open the file itself, selecting `ranges`. */

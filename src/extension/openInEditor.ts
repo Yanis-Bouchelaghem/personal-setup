@@ -44,9 +44,7 @@ export async function openInEditor(
     }
     const uri = vscode.Uri.file(join(root, request.file));
 
-    // An added file has no previous version to compare with.
-    const asFile = request.type === "openFile" || request.status === "added";
-    if (asFile) {
+    if (request.type === "openFile") {
         const editor = await vscode.window.showTextDocument(uri, {
             preview: true,
         });
@@ -66,14 +64,6 @@ async function openDiff(uri: vscode.Uri, request: OpenDiff): Promise<void> {
         return;
     }
     const head = api.toGitUri(uri, "HEAD");
-    if (request.status === "deleted") {
-        // A deleted file only exists at HEAD, and its ranges are old-side.
-        const editor = await vscode.window.showTextDocument(head, {
-            preview: true,
-        });
-        select(editor, request.ranges);
-        return;
-    }
     await vscode.commands.executeCommand(
         "vscode.diff",
         head,
