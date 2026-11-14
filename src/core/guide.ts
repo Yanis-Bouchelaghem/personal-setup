@@ -73,16 +73,15 @@ Goals have no connectors between them: they are independent.
 
 ## Examples (the "examples" field)
 
-An example is anything concrete that helps the reader understand a step and that the diff does not show. It is shown as monospace text, so it can be data, code or a command. Use it most for data that crosses the boundary with something outside this codebase, which the reader cannot see anywhere else:
+An example is anything concrete that helps the reader understand a step, or get their hands on it, and that the diff does not show. It is shown as monospace text, so it can be data, code or a command. Two kinds matter most:
 
-- data from outside: what an external API sends or receives (a Microsoft Graph notification, a webhook body, a gateway error response), a file format, an environment value;
-- how to use what was added: a call to the new function, a config entry that turns the feature on, a command to try it;
-- what it produces: CLI output, a log line, the response of the new endpoint.
+- data from outside, which the reader cannot see anywhere else: what an external API sends or receives (a Microsoft Graph notification, a webhook body, a gateway error response), a file format, an environment value;
+- anything that saves the reader friction in trying the change themselves: the command to run or try it, the request to send to the new endpoint, the config entry that turns the feature on, the command that runs its tests, how to call the new function from outside.
 
-Do not copy code the diff already shows, and do not add an example the step does not need.
+What it produces (CLI output, a log line, the response of the new endpoint) is worth showing too. Be generous with examples that save the reader a search or a guess; do not copy code the diff already shows.
 
 - Put the example on the step it illustrates: the parser of the payload, the schema it is validated against, the function it shows how to call. Its place must make obvious what the example is.
-- "title" is a natural phrase, in the user's language, saying what the example is and where it comes from, so it makes sense on its own: "An example of a plugin the marketplace API could return", "What Microsoft Graph sends us when a new message arrives", "How a route would call withRetry". Not a label like "Gateway: 503 response".
+- "title" is a natural phrase, in the user's language, saying what the example is and where it comes from, so it makes sense on its own: "An example of a plugin the marketplace API could return", "What Microsoft Graph sends us when a new message arrives", "The command to try the new endpoint". Not a label like "Gateway: 503 response".
 - "body" is the example itself, verbatim and realistic but short: cut long lists to one or two items with "…", and replace secrets, tokens and personal data with obvious placeholders.
 - The reader sees the title, folded, between the "why" and the code, and opens it on click.
 
