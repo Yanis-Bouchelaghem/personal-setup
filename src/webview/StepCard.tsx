@@ -194,7 +194,7 @@ export function StepCard({
                 {stale && (
                     <span
                         className="stale-mark"
-                        title="The code changed after this was explained: it may be out of date"
+                        title="This code changed after it was explained: the explanation may be out of date"
                         role="img"
                         aria-label="Code changed since explained"
                     >
@@ -248,8 +248,8 @@ export function StepCard({
                         <p className="stale-note">
                             <WarningIcon />
                             <span>
-                                The code changed after this was explained, so it
-                                may be out of date.
+                                This code changed after it was explained, so the
+                                explanation may be out of date.
                             </span>
                         </p>
                     )}
