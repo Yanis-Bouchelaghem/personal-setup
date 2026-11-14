@@ -112,6 +112,7 @@ All of it lives in `<id>.review.json`, written only by the extension: `viewed`, 
 
 ## Panel layout
 
+- **Narrow side bars** (inspired by GitLens): label rows never wrap. Goal titles, overview rows, file names, connector words and the tab labels stay on one line and end in "…", with the full text on hover. Prose (the explanation, examples, comments) keeps wrapping. Code wraps at spaces, and a word longer than the line scrolls sideways instead of breaking letter by letter. Below about 260px the rail indent shrinks; on a very narrow card the header drops the file name to keep its buttons, and the feedback bar drops its summary.
 - **Tabs** along the top, one per restitution file. When they don't fit (each keeps room for a word or two), arrows on both sides page through them, the strip fades where tabs are hidden, the mouse wheel scrolls it sideways, and the active tab is kept in view. An arrow at its end greys out rather than disappearing.
 - **Overview** (from two goals up): the goals with their progress, and a click jumps to one, unfolding it first.
 - **Goals** are foldable: the whole header is the control. Folding keeps the header where it was, so nothing jumps. A goal whose steps are all viewed folds itself (and starts folded); it unfolds again if the agent changes one of its steps. Folding or unfolding by hand wins until then.

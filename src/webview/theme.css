@@ -136,13 +136,18 @@ body {
     font-variant-numeric: tabular-nums;
 }
 
+/* One line, like every label row: a long title ends in "…" (full text on hover). */
 .goal-title {
     flex: 1;
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .goal-ref {
     flex: none;
+    white-space: nowrap;
     color: var(--muted);
     font-size: 11.5px;
     font-weight: 400;
@@ -191,6 +196,9 @@ body {
  * read a long step, so folding it is always within reach.
  */
 .card-head {
+    /* Too narrow for everything: the end is clipped, nothing wraps. */
+    overflow: clip;
+    overflow-clip-margin: 3px;
     cursor: pointer;
     user-select: none;
     position: sticky;
@@ -293,7 +301,8 @@ body {
 .chip {
     display: flex;
     flex: 0 1 auto;
-    min-width: 0;
+    /* A few letters and "…" at worst, never an empty pill. */
+    min-width: 4.5em;
     overflow: hidden;
     padding: 2px 8px;
     border-radius: var(--radius-sm);
@@ -325,6 +334,8 @@ body {
 /* The explanation is what you read: larger and heavier than the rest. */
 .why {
     margin: 0;
+    /* Prose wraps; a long identifier breaks rather than overflow the card. */
+    overflow-wrap: anywhere;
     font-size: 1.15em;
     font-weight: 600;
     line-height: 1.45;
@@ -352,6 +363,10 @@ body {
 /* One word between two cards: with the card text it reads as a sentence. */
 .connector {
     width: fit-content;
+    max-width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     margin: -2px 0;
     padding: 5px 16px;
     border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
@@ -435,9 +450,11 @@ body {
     outline-offset: 1px;
 }
 
+/* Code wraps at spaces only: a word longer than the line scrolls sideways
+   instead of breaking letter by letter. */
 .diff {
     margin-top: 10px;
-    overflow: hidden;
+    overflow: auto hidden;
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-md);
     background: color-mix(
@@ -448,6 +465,11 @@ body {
     font-family: var(--vscode-editor-font-family, monospace);
     font-size: 11.5px;
     line-height: 1.5;
+}
+
+.hunk {
+    width: fit-content;
+    min-width: 100%;
 }
 
 .hunk + .hunk {
@@ -464,7 +486,6 @@ body {
 .ln {
     display: flex;
     white-space: pre-wrap;
-    overflow-wrap: anywhere;
 }
 
 .ln-add {
@@ -499,13 +520,15 @@ body {
 
 .ln .txt {
     flex: 1;
-    min-width: 0;
     padding-right: 8px;
 }
 
 .more {
     display: block;
     width: 100%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     padding: 5px 10px;
     border: 0;
     border-top: 1px solid var(--glass-border);
@@ -856,11 +879,16 @@ body {
     display: flex;
     align-items: baseline;
     justify-content: space-between;
+    gap: 8px;
     margin: 0 8px 8px;
     font-weight: 600;
+    white-space: nowrap;
 }
 
 .overview-count {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
     color: var(--muted);
     font-size: 11.5px;
     font-weight: 400;
@@ -1015,6 +1043,7 @@ body {
 }
 
 .feedback-bar {
+    container-type: inline-size;
     position: fixed;
     right: 12px;
     bottom: 10px;
@@ -1045,7 +1074,10 @@ body {
 }
 
 .primary-btn {
-    flex: none;
+    flex: 0 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    white-space: nowrap;
     padding: 6px 14px;
     border: 0;
     border-radius: var(--radius-md);
@@ -1254,4 +1286,49 @@ body {
     line-height: 1.5;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
+}
+
+/* A very narrow bar keeps its buttons and drops the summary. */
+@container (max-width: 250px) {
+    .feedback-summary {
+        display: none;
+    }
+
+    .feedback-bar {
+        justify-content: flex-end;
+    }
+}
+
+/* In the Copy button, the label ends in "…" rather than being cut off. */
+.primary-btn .swap {
+    display: grid;
+    grid-template-columns: minmax(0, max-content);
+}
+
+.primary-btn .swap > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* A very narrow side bar: the step header keeps its buttons and drops the file
+   name, and the rail takes less room. */
+@container card (max-width: 230px) {
+    .chip {
+        display: none;
+    }
+}
+
+@media (max-width: 260px) {
+    .card-head {
+        gap: 4px;
+    }
+
+    .steps {
+        margin-left: 6px;
+        padding-left: 12px;
+    }
+
+    .card::before {
+        left: -18px;
+    }
 }

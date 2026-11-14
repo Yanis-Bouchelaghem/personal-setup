@@ -94,7 +94,9 @@ export function GoalSection({
                         <ChevronIcon />
                     </span>
                     <span className="goal-no">{number}</span>
-                    <span className="goal-title">{goal.title}</span>
+                    <span className="goal-title" title={goal.title}>
+                        {goal.title}
+                    </span>
                     <UpdatedTag shown={updated} />
                     <span className="goal-progress" title="Steps viewed">
                         {done}/{goal.steps.length}

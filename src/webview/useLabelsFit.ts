@@ -2,8 +2,8 @@ import { type RefObject, useLayoutEffect, useRef, useState } from "react";
 
 /**
  * Whether a step header has room for its button labels. They stay until the
- * file name would be cut (the folder gives way first), and come back once
- * the header is wide enough again. Checked before paint, so nothing flickers.
+ * file name would be cut (the folder gives way first) or the buttons would
+ * not fit, and come back once the header is wide enough again. Checked before paint, so nothing flickers.
  */
 export function useLabelsFit(head: RefObject<HTMLElement | null>): boolean {
     const [fit, setFit] = useState(true);
@@ -23,7 +23,12 @@ export function useLabelsFit(head: RefObject<HTMLElement | null>): boolean {
                 }
                 return;
             }
-            const cut = nameCut(element);
+            // The name is cut, or the header overflows (on a narrow card
+            // with no file name, the buttons themselves would be clipped).
+            const cut = Math.max(
+                nameCut(element),
+                element.scrollWidth - element.clientWidth,
+            );
             if (cut > 0.01) {
                 needed.current = width + cut;
                 setFit(false);
