@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import type { Uncovered } from "../core/coverage";
 import { changedRanges } from "../core/diff";
 import type { OpenRequest } from "../core/messages";
@@ -82,23 +84,57 @@ function UncoveredFile({
     entry: Uncovered;
     onOpenRequest: (request: OpenRequest) => void;
 }) {
+    const [open, setOpen] = useState(true);
     // Select what was added; a removal only has its position.
     const changed = changedRanges(entry.hunks);
     const ranges = changed.length > 0 ? changed : entry.ranges;
+    const openFile = () =>
+        onOpenRequest({ type: "openFile", file: entry.file, ranges });
+    const openDiff = () =>
+        onOpenRequest({ type: "openDiff", file: entry.file, ranges });
+    const canOpen = entry.status !== "deleted";
+    const classes = [
+        "card",
+        "glass",
+        "uncovered-card",
+        open ? "" : "collapsed",
+        canOpen ? "opens" : "",
+    ];
     return (
-        <article className="uncovered-file glass">
-            <header className="uncovered-file-head">
+        <article
+            className={classes.filter(Boolean).join(" ")}
+            onClick={(event) => {
+                if (canOpen && opensFile(event.target)) {
+                    openFile();
+                }
+            }}
+        >
+            {/* The header folds the card; its buttons keep their jobs. */}
+            <header
+                className="card-head"
+                onClick={(event) => {
+                    const own =
+                        event.target instanceof Element &&
+                        event.target.closest("button, a");
+                    if (!own) {
+                        setOpen(!open);
+                    }
+                }}
+            >
+                <button
+                    className="chev chev-btn"
+                    type="button"
+                    aria-expanded={open}
+                    title={open ? "Fold" : "Unfold"}
+                    onClick={() => setOpen(!open)}
+                >
+                    <ChevronIcon />
+                </button>
                 <FilePath path={entry.file} />
-                <span className="actions">
+                <span className="actions open-actions">
                     <IconButton
                         label="Open the diff in the editor"
-                        onClick={() =>
-                            onOpenRequest({
-                                type: "openDiff",
-                                file: entry.file,
-                                ranges,
-                            })
-                        }
+                        onClick={openDiff}
                         unavailable={
                             entry.status === "modified"
                                 ? undefined
@@ -109,24 +145,34 @@ function UncoveredFile({
                     </IconButton>
                     <IconButton
                         label="Open the file, with these changes selected"
-                        onClick={() =>
-                            onOpenRequest({
-                                type: "openFile",
-                                file: entry.file,
-                                ranges,
-                            })
-                        }
+                        onClick={openFile}
                         unavailable={
-                            entry.status === "deleted"
-                                ? "This file was deleted"
-                                : undefined
+                            canOpen ? undefined : "This file was deleted"
                         }
                     >
                         <FileIcon />
                     </IconButton>
                 </span>
             </header>
-            <DiffView hunks={entry.hunks} />
+            <Collapse open={open}>
+                <div className="card-body">
+                    <DiffView hunks={entry.hunks} />
+                </div>
+            </Collapse>
         </article>
     );
+}
+
+/**
+ * A click on the card opens the file, except on the header and buttons, or
+ * when it ends a text selection. Here the code itself opens it too: there is
+ * no explanation to click.
+ */
+function opensFile(target: EventTarget): boolean {
+    if (!(target instanceof Element)) {
+        return false;
+    }
+    const own = target.closest(".card-head, button, a");
+    const selecting = (window.getSelection()?.toString() ?? "") !== "";
+    return own === null && !selecting;
 }

@@ -1496,16 +1496,32 @@ body {
     padding-bottom: 2px;
 }
 
-.uncovered-file {
-    padding: 9px 13px 12px;
-    border-radius: var(--radius-lg);
+/* Uncovered files are cards like steps; here the code itself opens the file. */
+.uncovered-card.opens .diff {
+    cursor: pointer;
 }
 
-.uncovered-file-head {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
+.uncovered-card.opens:not(.collapsed):hover:not(
+        :has(.card-head:hover, button:hover)
+    ) {
+    background-image: linear-gradient(
+        color-mix(in srgb, var(--fg) 5%, transparent),
+        color-mix(in srgb, var(--fg) 5%, transparent)
+    );
+}
+
+.uncovered-card .card-head {
+    position: static;
+}
+
+/* No Clarify here: Diff and File still sit at the right end. */
+.uncovered-card .card-head .open-actions {
+    margin-left: auto;
+}
+
+/* No explanation above the code, so no gap for one. */
+.uncovered-card .diff {
+    margin-top: 0;
 }
 
 .uncovered-row .goal-no {
