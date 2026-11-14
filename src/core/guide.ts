@@ -16,7 +16,7 @@ A restitution is a reading guide for the human who asked for the change. They re
 ## How to submit
 
 Call restitution_submit with:
-{ id?, label?, request?, goals: [ { title, ref?, steps: [ { file?, lines?, why, link? } ] } ] }
+{ id?, label?, request?, goals: [ { title, ref?, steps: [ { file?, lines?, why, link?, examples?: [ { title, body } ] } ] } ] }
 
 Leave "id" out, except when you update an existing restitution after the user's review (restitution_feedback tells you).
 
@@ -71,6 +71,15 @@ A change that forces another (a new parameter, so the callers change) is worth s
 
 Goals have no connectors between them: they are independent.
 
+## Examples (the "examples" field)
+
+A step can carry examples of concrete data that crosses the boundary with something outside this codebase: what an external API sends or receives (a Microsoft Graph notification, a webhook body, a gateway error response), a file format, a CLI's output, an environment value. The reader sees the data next to the code that handles it. Do not add examples for calls inside the codebase: the code already shows those.
+
+- Put the example on the step whose code reads, writes or defines that data: the parser of the payload, the schema it is validated against, the client that sends it. Its place must make obvious what the example is.
+- "title" says what it is and where it comes from: "Microsoft Graph: change notification body", "Gateway: 503 response".
+- "body" is the data itself, verbatim and realistic but short: cut long lists to one or two items with "…", and replace secrets, tokens and personal data with obvious placeholders.
+- The reader sees the title, folded, between the "why" and the code, and opens it on click.
+
 ## Teaching well
 
 Teach it the way you would to a colleague who has not seen the change: foundations first, then what builds on them, then proof (tests) and docs. Explain as much as the user asked for: if they want more or less detail, give more or fewer steps and longer or shorter sentences. Do not narrate the code line by line; say what to look at and why it is there.
@@ -83,7 +92,8 @@ Teach it the way you would to a colleague who has not seen the change: foundatio
     {
       "title": "Retry transient gateway failures",
       "steps": [
-        { "file": "src/errors.ts", "lines": [[11, 23]], "why": "Add a GatewayError that carries the upstream status, so callers can tell a 5xx from a 4xx." },
+        { "file": "src/errors.ts", "lines": [[11, 23]], "why": "Add a GatewayError that carries the upstream status, so callers can tell a 5xx from a 4xx.",
+          "examples": [ { "title": "Gateway: 503 response", "body": "HTTP/1.1 503 Service Unavailable\\n\\n{ \\"error\\": \\"upstream_unavailable\\", \\"retryAfter\\": 2 }" } ] },
         { "file": "src/gateway/retry.ts", "lines": [[1, 35]], "link": "then", "why": "build withRetry on top of it, retrying only 5xx responses with exponential backoff." },
         { "file": "src/gateway/client.ts", "lines": [[1, 10], [15, 38]], "link": "then", "why": "run json() through withRetry, so every JSON call benefits." },
         { "link": "which means", "why": "a call that fails with a 5xx now takes up to 7 seconds before the error reaches the caller." },

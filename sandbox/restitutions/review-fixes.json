@@ -88,7 +88,13 @@
                             43
                         ]
                     ],
-                    "why": "Parse each plugin on its own, so one bad entry can't fail the catalog."
+                    "why": "Parse each plugin on its own, so one bad entry can't fail the catalog.",
+                    "examples": [
+                        {
+                            "title": "Marketplace API: a catalog with one broken plugin",
+                            "body": "[\n  {\n    \"name\": \"lint-helper\",\n    \"version\": \"1.4.0\",\n    \"archiveUrl\": \"https://plugins.example.com/lint-helper-1.4.0.tgz\",\n    \"description\": \"Runs the team's lint rules\"\n  },\n  { \"name\": \"broken-plugin\", \"version\": 2 },\n  …\n]"
+                        }
+                    ]
                 },
                 {
                     "file": "src/marketplace/rewriter.ts",

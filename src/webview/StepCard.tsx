@@ -5,6 +5,7 @@ import type { OpenRequest } from "../core/messages";
 import type { Step } from "../core/restitution";
 import type { ReviewRequest } from "../core/review";
 import { DiffView } from "./DiffView";
+import { Example } from "./Example";
 import {
     ChevronIcon,
     ClarifyIcon,
@@ -222,6 +223,9 @@ export function StepCard({
             {open && (
                 <>
                     <p className="why">{step.why}</p>
+                    {step.examples?.map((example, index) => (
+                        <Example key={index} example={example} />
+                    ))}
                     {code.hunks.length > 0 && <DiffView hunks={code.hunks} />}
                     {file && code.hunks.length === 0 && (
                         <p className="no-diff">
@@ -257,14 +261,16 @@ export function StepCard({
 
 /**
  * A click on the card opens its code, except on the parts with a job of
- * their own (the header, the inline diff, buttons, the comment) or when it
+ * their own (the header, examples, the inline diff, buttons, the comment) or when it
  * ends a text selection.
  */
 function opensCode(target: EventTarget) {
     if (!(target instanceof Element)) {
         return false;
     }
-    const own = target.closest(".card-head, .diff, button, textarea, a");
+    const own = target.closest(
+        ".card-head, .example, .diff, button, textarea, a",
+    );
     const selecting = (window.getSelection()?.toString() ?? "") !== "";
     return own === null && !selecting;
 }

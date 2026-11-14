@@ -8,6 +8,18 @@ const LineRangeSchema = z
     .tuple([z.number().int().positive(), z.number().int().positive()])
     .refine(([from, to]) => from <= to, "a range must be [from, to]");
 
+/**
+ * Concrete data that crosses the boundary with something outside the
+ * codebase (an API payload, a file format, CLI output), shown folded in the
+ * step whose code handles it.
+ */
+const ExampleSchema = z.object({
+    /** What it is and where it comes from: "Microsoft Graph: change notification body". */
+    title: z.string().min(1),
+    /** The data itself, shown verbatim in monospace. */
+    body: z.string().min(1),
+});
+
 export const StepSchema = z
     .object({
         why: z.string().min(1),
@@ -26,6 +38,7 @@ export const StepSchema = z
          * no word anywhere else shows "then".
          */
         link: z.string().min(1).optional(),
+        examples: z.array(ExampleSchema).min(1).optional(),
     })
     .refine(
         (step) => (step.file === undefined) === (step.lines === undefined),
@@ -50,6 +63,7 @@ export const RestitutionSchema = z.object({
 });
 
 export type Step = z.infer<typeof StepSchema>;
+export type StepExample = z.infer<typeof ExampleSchema>;
 export type Goal = z.infer<typeof GoalSchema>;
 export type Restitution = z.infer<typeof RestitutionSchema>;
 

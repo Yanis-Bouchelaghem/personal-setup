@@ -12,8 +12,8 @@ function fnv1a(text: string): string {
 }
 
 /**
- * Identity of a step as the reader saw it: its words, its connector, its file
- * and the lines it changed. Anything the agent changes in a step changes its
+ * Identity of a step as the reader saw it: its words, its connector, its file,
+ * the lines it changed and its examples. Anything the agent changes in a step changes its
  * fingerprint, so the step comes back unviewed and marked as updated; a step
  * the agent leaves alone keeps it. Line numbers and context are left out, so
  * an edit elsewhere in the file doesn't count as a change to this step.
@@ -24,9 +24,12 @@ export function stepFingerprint(step: Step, hunks: Hunk[]): string {
         .filter((line) => line.kind !== "ctx")
         .map((line) => `${line.kind}${line.text}`)
         .join("\n");
-    return fnv1a(
-        [step.file ?? "", changes, step.why, step.link ?? "then"].join("\0"),
-    );
+    const parts = [step.file ?? "", changes, step.why, step.link ?? "then"];
+    // Only when there are examples, so steps without any keep their fingerprint.
+    if (step.examples) {
+        parts.push(JSON.stringify(step.examples));
+    }
+    return fnv1a(parts.join("\0"));
 }
 
 /** The fingerprint of every step, goal by goal, against the current diffs. */

@@ -28,13 +28,18 @@ describe("stepFingerprint", () => {
         );
     });
 
-    it("changes when the agent rewords the step or changes its connector", () => {
+    it("changes when the agent rewords the step, changes its connector or its examples", () => {
         const reworded = { ...step, why: "Do it differently, so it works." };
         expect(stepFingerprint(reworded, diff("ctx"))).not.toBe(
             stepFingerprint(step, diff("ctx")),
         );
         const relinked = { ...step, link: "so" as const };
         expect(stepFingerprint(relinked, diff("ctx"))).not.toBe(
+            stepFingerprint(step, diff("ctx")),
+        );
+        const example = { title: "Gateway: 503 body", body: '{"error":1}' };
+        const withExample = { ...step, examples: [example] };
+        expect(stepFingerprint(withExample, diff("ctx"))).not.toBe(
             stepFingerprint(step, diff("ctx")),
         );
         // "then" is the default, so writing it out changes nothing.
