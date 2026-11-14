@@ -4,8 +4,9 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import * as z from "zod";
 
+import { applyEdits, EditSchema, outline } from "../core/edit";
 import { FEEDBACK_GUIDE, GUIDE, SERVER_INSTRUCTIONS } from "../core/guide";
-import { RestitutionSchema } from "../core/restitution";
+import { parseRestitution, RestitutionSchema } from "../core/restitution";
 import { findGitRoot } from "../node/gitRoot";
 import { newTabId, tabFile } from "../node/store/paths";
 import { submitRestitution } from "../node/submit";
@@ -66,6 +67,61 @@ server.registerTool(
         tabId = id ?? tabId ?? newTabId();
         return text(
             await submitRestitution(root, tabId, { version: 1, ...input }),
+        );
+    },
+);
+
+server.registerTool(
+    "restitution_edit",
+    {
+        description:
+            "Change part of a restitution you already submitted: change, split, add or remove steps and goals, without resubmitting the rest. Steps you don't mention stay exactly as they were. Reports coverage like restitution_submit, and the new step labels.",
+        inputSchema: {
+            id: TAB_ID.optional().describe(
+                "The restitution to edit. Leave it out for the one you submitted in this session; after the user's review, use the id given there.",
+            ),
+            edits: z
+                .array(EditSchema)
+                .min(1)
+                .describe(
+                    "Applied together; every label and goal number refers to the restitution as it was before these edits.",
+                ),
+        },
+    },
+    async ({ id, edits }) => {
+        const root = repoRoot();
+        if (!root) {
+            return text("Not inside a git repository.", true);
+        }
+        const target = id ?? tabId;
+        if (!target) {
+            return text(
+                "There is no restitution to edit in this session: call restitution_submit first, or give the id of the one to edit.",
+                true,
+            );
+        }
+        const current = await readFile(tabFile(root, target), "utf8").catch(
+            () => undefined,
+        );
+        const parsed =
+            current === undefined ? undefined : parseRestitution(current);
+        if (!parsed?.ok) {
+            return text(
+                `There is no readable restitution "${target}" (it may have been closed). Submit it again with restitution_submit.`,
+                true,
+            );
+        }
+        const result = applyEdits(parsed.value, edits);
+        if (!result.ok) {
+            return text(
+                `Nothing was changed:\n${result.errors.map((error) => `- ${error}`).join("\n")}`,
+                true,
+            );
+        }
+        tabId = target;
+        const report = await submitRestitution(root, target, result.value);
+        return text(
+            `${report}\n\nThe steps are now:\n${outline(result.value)}`,
         );
     },
 );

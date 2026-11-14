@@ -183,7 +183,7 @@ describe("describeSubmit", () => {
         });
         expect(text).toMatch(/src\/x\.ts:1-2/);
         expect(text).toMatch(/src\/b\.ts:5/);
-        expect(text).toMatch(/call restitution_submit again/);
+        expect(text).toMatch(/Fix these with restitution_edit/);
     });
 
     it("says when coverage could not be checked", () => {

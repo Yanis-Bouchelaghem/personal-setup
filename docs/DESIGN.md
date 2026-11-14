@@ -85,7 +85,8 @@ A step that points at code gives both `file` (relative to the git root) and `lin
 `src/mcp/server.ts` is a stdio server bundled to `dist/mcp-server.js`. The extension copies it to its global storage (a path that survives updates) and "Restitution: Connect agents" registers it with Claude Code (all projects, or this workspace only) and Codex. Copilot finds it through VS Code's MCP provider API. Tools:
 
 - `restitution_guide`: the rules and format.
-- `restitution_submit`: saves `.restitution/working.json` atomically, then reports changed hunks no step explains and steps pointing at unchanged code. It never blocks.
+- `restitution_submit`: saves `.restitution/<id>.json` atomically (one tab per agent session), then reports changed hunks no step explains and steps pointing at unchanged code. It never blocks.
+- `restitution_edit`: partial updates, so a guide is never rewritten whole for a small change. A list of edits applied together (`set` some fields of a step, `replace` a step with several, one or none, `insert` steps before or after one, `setGoal`, `removeGoal`, `addGoal`); every label refers to the numbering before the edit. Nothing applies if any edit is wrong. It reports coverage like submit, plus the new outline with fresh labels. Untouched steps keep their fingerprint, so the reader's Viewed marks survive.
 
 ## Trying it
 
@@ -103,7 +104,7 @@ My review of the restitution "Review fixes" (id: review-fixes):
 - 3.1: clarify
 ```
 
-How to handle it lives with the agent, not in the prompt: the `restitution_feedback` tool ("call this first when the user pastes their review") returns the rules and the restitution. The agent answers questions in its reply, makes requested code changes, splits steps to clarify, keeps every other step word for word, and resubmits with `"id"` so the same tab updates. MCP gives no way for the panel to make an agent act, so pasting is the trigger.
+How to handle it lives with the agent, not in the prompt: the `restitution_feedback` tool ("call this first when the user pastes their review") returns the rules and the restitution. The agent answers questions in its reply, makes requested code changes, and uses `restitution_edit` with the review's `"id"`: it replaces each clarified step with smaller ones and changes only the steps the comments are about, so everything else stays read. MCP gives no way for the panel to make an agent act, so pasting is the trigger.
 
 All of it lives in `<id>.review.json`, written only by the extension: `viewed`, `known` (steps the reader was already shown) and `requests`.
 

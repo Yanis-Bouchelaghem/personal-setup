@@ -6,6 +6,7 @@
 
 export const SERVER_INSTRUCTIONS = `Restitution gives the human a short reading guide to the code changes you just made, shown in their editor.
 After you finish a code change the user asked for, call restitution_guide once, then restitution_submit with your steps. Skip it for answers that changed no code.
+To change part of it later, call restitution_edit instead of resubmitting it whole.
 If the user pastes their review of a restitution (steps to clarify, comments), call restitution_feedback with its id first.
 It is optional for the user and must never block your work.`;
 
@@ -25,10 +26,19 @@ Leave "id" out, except when you update an existing restitution after the user's 
   - "lines" is a list of [from, to] ranges: EXACTLY the lines of that file the step shows the reader, nothing more. Use the line numbers of the file as it is now, after your edits.
   - Choose what the reader needs to follow the step: the changed lines and the few lines of unchanged code around them that make them readable. Use several ranges when a step touches separate places, and keep each range as small as it can be.
   - A removed line has no number any more: it sits with the line just before it, so include that line. For a deleted file, use the line numbers it had before.
-- Every changed line must be shown by some step. The tool saves your restitution, then lists the changed lines no step shows and the steps whose lines hold no change. Treat that as a hint, not a verdict: fix what is really wrong and submit again.
+- Every changed line must be shown by some step. The tool saves your restitution, then lists the changed lines no step shows and the steps whose lines hold no change. Treat that as a hint, not a verdict: fix what is really wrong with restitution_edit.
 - The card shows exactly those lines. When the reader opens the step in their editor, the changed lines among them are selected (the unchanged context around them is not), so show enough context to be readable and let the selection point at what changed.
 - Your restitution is one tab in the user's panel (label names it, otherwise the request does). Submitting again in this session replaces your tab; other agents' tabs are never touched.
-- Submit when the change is complete, and again when the code changes after feedback. Rewrite the story so it matches the current code instead of appending "then I fixed ...".
+- Submit when the change is complete. When the code or the guide changes afterwards, fix only the steps concerned with restitution_edit (below). Make the story match the current code instead of appending "then I fixed ...".
+
+## Changing it: restitution_edit
+
+restitution_edit changes part of your restitution and leaves every other step exactly as it was, so the user keeps what they already read. It takes a list of edits, applied together; labels ("2.1") and goal numbers refer to the restitution as it was before these edits:
+- { "op": "set", "step": "2.1", "fields": { "why": "...", "lines": [[12, 20]] } }: change some fields of a step.
+- { "op": "replace", "step": "2.1", "steps": [ ... ] }: several steps to split it, one to rewrite it, none to remove it.
+- { "op": "insert", "after": "2.1", "steps": [ ... ] } (or "before"): add steps.
+- { "op": "setGoal", "goal": 2, "title": "..." }, { "op": "removeGoal", "goal": 2 }, { "op": "addGoal", "goal": { ... }, "after": 1 }.
+If any edit is wrong, nothing is changed and the reply says why. The reply also lists the steps with their new labels. Resubmit the whole restitution only when most of it changes.
 
 ## Goals
 
@@ -119,7 +129,7 @@ The user read the restitution below and pasted their review: a list of steps by 
 - A comment: the user's question or request about that step. Answer questions in your reply. If it asks for a change to the code, make the change, then make the step (or new steps) match it.
 
 Then:
-1. Keep every step you did not touch exactly as it was, word for word: unchanged steps stay read for the user, while any step you change or add is shown to them as updated.
-2. Call restitution_submit with the whole restitution and "id" set to the id below, so the same tab is updated instead of a new one appearing.
+1. Change only what the review is about: any step you change or add is shown to the user as updated, so leave the others alone.
+2. Call restitution_edit with "id" set to the id below: "replace" each clarified step with its smaller steps, and "set" or "replace" the steps a comment made you change. Steps you do not mention stay as they were, and stay read for the user.
 3. In your reply, answer the comments that were questions, briefly.
 `;

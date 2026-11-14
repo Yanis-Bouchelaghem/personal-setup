@@ -20,33 +20,34 @@ const ExampleSchema = z.object({
     body: z.string().min(1),
 });
 
-export const StepSchema = z
-    .object({
-        why: z.string().min(1),
-        /** Path relative to the git root. */
-        file: z.string().min(1).optional(),
-        /**
-         * Exactly the lines of `file` this step shows, as ranges: the new side,
-         * or the old side for a deleted file. Required with `file`.
-         */
-        lines: z.array(LineRangeSchema).min(1).optional(),
-        /**
-         * The connector word shown before this step, in the reader's
-         * language: the page reads as one sentence, the step's text
-         * continuing after it. Free text, so the agent can translate it;
-         * the guide defines the meanings. Left out on a goal's first step;
-         * no word anywhere else shows "then".
-         */
-        link: z.string().min(1).optional(),
-        examples: z.array(ExampleSchema).min(1).optional(),
-    })
-    .refine(
-        (step) => (step.file === undefined) === (step.lines === undefined),
-        {
-            message: "file and lines go together: give both, or neither",
-            path: ["lines"],
-        },
-    );
+/** A step's fields, before the rule that ties `file` and `lines` together. */
+export const StepFieldsSchema = z.object({
+    why: z.string().min(1),
+    /** Path relative to the git root. */
+    file: z.string().min(1).optional(),
+    /**
+     * Exactly the lines of `file` this step shows, as ranges: the new side,
+     * or the old side for a deleted file. Required with `file`.
+     */
+    lines: z.array(LineRangeSchema).min(1).optional(),
+    /**
+     * The connector word shown before this step, in the reader's
+     * language: the page reads as one sentence, the step's text
+     * continuing after it. Free text, so the agent can translate it;
+     * the guide defines the meanings. Left out on a goal's first step;
+     * no word anywhere else shows "then".
+     */
+    link: z.string().min(1).optional(),
+    examples: z.array(ExampleSchema).min(1).optional(),
+});
+
+export const StepSchema = StepFieldsSchema.refine(
+    (step) => (step.file === undefined) === (step.lines === undefined),
+    {
+        message: "file and lines go together: give both, or neither",
+        path: ["lines"],
+    },
+);
 
 export const GoalSchema = z.object({
     title: z.string().min(1),

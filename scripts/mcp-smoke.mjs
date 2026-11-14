@@ -82,5 +82,38 @@ show(
         ],
     }),
 );
+// Partial updates: split a step, then try an edit that names a missing step.
+const edit = (edits) =>
+    client.callTool({ name: "restitution_edit", arguments: { edits } });
+show(
+    "edit (split 1.1, add a goal)",
+    await edit([
+        {
+            op: "replace",
+            step: "1.1",
+            steps: [
+                {
+                    file: "src/config.ts",
+                    lines: [[1, 6]],
+                    why: "Parse the URL first.",
+                },
+                {
+                    file: "src/config.ts",
+                    lines: [[7, 12]],
+                    link: "then",
+                    why: "reject anything but https.",
+                },
+            ],
+        },
+        {
+            op: "addGoal",
+            goal: { title: "Docs", steps: [{ why: "Say it in the README." }] },
+        },
+    ]),
+);
+show(
+    "edit (a step that does not exist)",
+    await edit([{ op: "set", step: "4.2", fields: { why: "nope." } }]),
+);
 console.log("files:", readdirSync(join(repo, ".restitution")).join(", "));
 await client.close();

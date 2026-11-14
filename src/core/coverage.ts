@@ -155,7 +155,7 @@ export function describeSubmit(
         );
     }
     if (lines.length > 1) {
-        lines.push("Fix these and call restitution_submit again.");
+        lines.push("Fix these with restitution_edit.");
     } else {
         lines.push("Every changed line is shown by a step.");
     }
