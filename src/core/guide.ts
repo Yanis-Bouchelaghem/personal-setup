@@ -17,7 +17,7 @@ A restitution is a reading guide for the human who asked for the change. They re
 ## How to submit
 
 Call restitution_submit with:
-{ id?, label?, request?, goals: [ { title, ref?, steps: [ { file?, lines?, why, link?, examples?: [ { title, body } ] } ] } ] }
+{ id?, label?, request?, goals: [ { title, ref?, steps: [ { file?, lines?, why, link?, examples?: [ { title, body } ], docs?: [ { title, url } ] } ] } ] }
 
 Leave "id" out, except when you update an existing restitution after the user's review (restitution_feedback tells you).
 
@@ -95,6 +95,15 @@ What it produces (CLI output, a log line, the response of the new endpoint) is w
 - "body" is the example itself, verbatim and realistic but short: cut long lists to one or two items with "…", and replace secrets, tokens and personal data with obvious placeholders.
 - The reader sees the title, folded, between the "why" and the code, and opens it on click.
 
+## Documentation references (the "docs" field)
+
+When a step relies on something specific about how a library, an API, a protocol or a tool behaves, something the reader may not know and the code depends on, point them to the exact place in its documentation where they can read it for themselves. They see the link right under the step's "why", and it opens in their browser.
+
+- Put it on the step whose code relies on that behaviour.
+- "title" is a natural phrase, in the user's language, saying what they will learn there and where: "How Headers.set replaces a header that is already there, whatever its case (MDN)", "Why Graph sends a validation token before the first notification (Microsoft Graph docs)". Not a bare page name.
+- "url" goes straight to the section: the page and its anchor, never the site's home page. Prefer the official documentation. Only give an address you are sure exists; if you are unsure of the anchor, link the page.
+- Use it for behaviour worth checking, not for every library call.
+
 ## Teaching well
 
 Teach it the way you would to a colleague who has not seen the change: foundations first, then what builds on them, then proof (tests) and docs. Explain as much as the user asked for: if they want more or less detail, give more or fewer steps and longer or shorter sentences. Do not narrate the code line by line; say what to look at and why it is there.
@@ -109,7 +118,8 @@ Teach it the way you would to a colleague who has not seen the change: foundatio
       "steps": [
         { "file": "src/errors.ts", "lines": [[11, 23]], "why": "Add a GatewayError that carries the upstream status, so callers can tell a 5xx from a 4xx.",
           "examples": [ { "title": "The answer the gateway gives when it is overloaded", "body": "HTTP/1.1 503 Service Unavailable\\n\\n{ \\"error\\": \\"upstream_unavailable\\", \\"retryAfter\\": 2 }" } ] },
-        { "file": "src/gateway/retry.ts", "lines": [[1, 35]], "link": "then", "why": "build withRetry on top of it, retrying only 5xx responses with exponential backoff." },
+        { "file": "src/gateway/retry.ts", "lines": [[1, 35]], "link": "then", "why": "build withRetry on top of it, retrying only 5xx responses with exponential backoff.",
+          "docs": [ { "title": "Which status codes mean a retry may succeed, and how Retry-After says when (MDN)", "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After" } ] },
         { "file": "src/gateway/client.ts", "lines": [[1, 10], [15, 38]], "link": "then", "why": "run json() through withRetry, so every JSON call benefits." },
         { "link": "which means", "why": "a call that fails with a 5xx now takes up to 7 seconds before the error reaches the caller." },
         { "file": "src/server.ts", "lines": [[40, 44]], "link": "so", "why": "raise the request timeout to 10 seconds, so the retries can finish." },

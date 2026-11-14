@@ -9,6 +9,7 @@ import type {
     ToWebview,
     ViewState,
 } from "../core/messages";
+import { isWebUrl } from "../core/restitution";
 
 /** The side-panel webview. It only forwards the current ViewState. */
 export class PlanViewProvider implements vscode.WebviewViewProvider {
@@ -54,6 +55,11 @@ export class PlanViewProvider implements vscode.WebviewViewProvider {
                 this.handlers.onCopyFeedback(message.tabId, message.text);
             } else if (message.type === "initRepo") {
                 this.handlers.onInitRepo();
+            } else if (message.type === "openUrl") {
+                // Only web pages: the address comes from the agent's file.
+                if (isWebUrl(message.url)) {
+                    void vscode.env.openExternal(vscode.Uri.parse(message.url));
+                }
             } else {
                 this.handlers.onOpen(message);
             }

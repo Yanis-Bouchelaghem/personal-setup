@@ -42,6 +42,12 @@ const many: Restitution = {
                     file: "src/gateway/btapGatewayClient.ts",
                     lines: [[22, 29]],
                     why: "Set Authorization through Headers, because a plain object kept both casings.",
+                    docs: [
+                        {
+                            title: "How Headers.set replaces a header that is already there, whatever its case (MDN)",
+                            url: "https://developer.mozilla.org/en-US/docs/Web/API/Headers/set",
+                        },
+                    ],
                 },
                 {
                     file: "test/gateway/btapGatewayClient.test.ts",

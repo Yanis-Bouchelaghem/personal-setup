@@ -88,4 +88,6 @@ export type FromWebview =
     | ReopenTab
     | ReviewMessage
     | CopyFeedback
-    | { type: "initRepo" };
+    | { type: "initRepo" }
+    /** Open a documentation link in the browser. */
+    | { type: "openUrl"; url: string };

@@ -20,6 +20,27 @@ const ExampleSchema = z.object({
     body: z.string().min(1),
 });
 
+/** A web address the reader can open: http or https, nothing else. */
+export function isWebUrl(url: string): boolean {
+    try {
+        const { protocol } = new URL(url);
+        return protocol === "https:" || protocol === "http:";
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * The exact place in a library's or an API's documentation that backs what
+ * a step relies on, so the reader can check it for themselves.
+ */
+const DocSchema = z.object({
+    /** A natural phrase saying what the reader learns there: "How Headers.set replaces a header that is already there (MDN)". */
+    title: z.string().min(1),
+    /** A deep link to that section, not the site's home page. */
+    url: z.string().refine(isWebUrl, "an http or https address"),
+});
+
 /** A step's fields, before the rule that ties `file` and `lines` together. */
 export const StepFieldsSchema = z.object({
     why: z.string().min(1),
@@ -39,6 +60,7 @@ export const StepFieldsSchema = z.object({
      */
     link: z.string().min(1).optional(),
     examples: z.array(ExampleSchema).min(1).optional(),
+    docs: z.array(DocSchema).min(1).optional(),
 });
 
 export const StepSchema = StepFieldsSchema.refine(
@@ -65,6 +87,7 @@ export const RestitutionSchema = z.object({
 
 export type Step = z.infer<typeof StepSchema>;
 export type StepExample = z.infer<typeof ExampleSchema>;
+export type StepDoc = z.infer<typeof DocSchema>;
 export type Goal = z.infer<typeof GoalSchema>;
 export type Restitution = z.infer<typeof RestitutionSchema>;
 

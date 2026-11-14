@@ -6,6 +6,7 @@ import type { Step } from "../core/restitution";
 import type { ReviewRequest } from "../core/review";
 import { Collapse } from "./Collapse";
 import { DiffView } from "./DiffView";
+import { DocLinks } from "./DocLinks";
 import { Example } from "./Example";
 import {
     ChevronIcon,
@@ -86,6 +87,7 @@ export function StepCard({
     onViewedChange,
     onSeen,
     onOpenRequest,
+    onOpenUrl,
     onRequestChange,
 }: {
     step: Step;
@@ -100,6 +102,8 @@ export function StepCard({
     /** The reader has looked at this updated step: clear its mark. */
     onSeen: () => void;
     onOpenRequest: (request: OpenRequest) => void;
+    /** Open a documentation link in the browser. */
+    onOpenUrl: (url: string) => void;
     onRequestChange: (clarify: boolean, comment: string | undefined) => void;
 }) {
     const code = useStepCode(step, diffs);
@@ -227,6 +231,9 @@ export function StepCard({
             <Collapse open={open} snap={snap}>
                 <div className="card-body">
                     <p className="why">{step.why}</p>
+                    {step.docs && (
+                        <DocLinks docs={step.docs} onOpen={onOpenUrl} />
+                    )}
                     {step.examples?.map((example, index) => (
                         <Example key={index} example={example} />
                     ))}

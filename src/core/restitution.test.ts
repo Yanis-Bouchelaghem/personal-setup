@@ -42,6 +42,11 @@ function withLinks(...links: (string | undefined)[]) {
     return parseRestitution(JSON.stringify(restitution));
 }
 
+/** Is a step with one documentation link to `url` valid? */
+function doc(url: string): boolean {
+    return accepts({ docs: [{ title: "How it works (MDN)", url }] });
+}
+
 function withLines(lines: unknown): boolean {
     return accepts({ file: "a.ts", lines });
 }
@@ -112,5 +117,15 @@ describe("parseRestitution", () => {
         expect(withLinks(undefined, "so").ok).toBe(true);
         expect(withLinks(undefined, "ce qui veut dire", "donc").ok).toBe(true);
         expect(withLinks(undefined, "").ok).toBe(false);
+    });
+
+    it("takes documentation links to web pages only", () => {
+        expect(
+            doc("https://developer.mozilla.org/en-US/docs/Web/API/Headers/set"),
+        ).toBe(true);
+        expect(doc("http://example.com/docs#section")).toBe(true);
+        expect(doc("javascript:alert(1)")).toBe(false);
+        expect(doc("file:///etc/passwd")).toBe(false);
+        expect(doc("not a url")).toBe(false);
     });
 });

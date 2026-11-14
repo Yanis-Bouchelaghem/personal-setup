@@ -30,6 +30,7 @@ export function GoalSection({
     onSeen,
     onRequestChange,
     onOpenRequest,
+    onOpenUrl,
 }: {
     goal: Goal;
     number: number;
@@ -47,6 +48,7 @@ export function GoalSection({
         comment: string | undefined,
     ) => void;
     onOpenRequest: (request: OpenRequest) => void;
+    onOpenUrl: (url: string) => void;
 }) {
     const { box, head, remember, snap } = useScrollAnchor<
         HTMLElement,
@@ -144,6 +146,7 @@ export function GoalSection({
                                         )
                                     }
                                     onOpenRequest={onOpenRequest}
+                                    onOpenUrl={onOpenUrl}
                                 />
                             </Fragment>
                         );

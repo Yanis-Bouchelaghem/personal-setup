@@ -131,6 +131,7 @@ export function TabContent({
                         act({ type: "request", step, label, clarify, comment })
                     }
                     onOpenRequest={(request) => host.send(request)}
+                    onOpenUrl={(url) => host.send({ type: "openUrl", url })}
                 />
             ))}
             <UncoveredSection
