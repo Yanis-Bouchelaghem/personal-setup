@@ -112,7 +112,7 @@ All of it lives in `<id>.review.json`, written only by the extension: `viewed`, 
 
 ## Panel layout
 
-- **Tabs** along the top, one per restitution file.
+- **Tabs** along the top, one per restitution file. When they don't fit (each keeps room for a word or two), arrows on both sides page through them, the strip fades where tabs are hidden, the mouse wheel scrolls it sideways, and the active tab is kept in view. An arrow at its end greys out rather than disappearing.
 - **Overview** (from two goals up): the goals with their progress, and a click jumps to one, unfolding it first.
 - **Goals** are foldable: the whole header is the control. Folding keeps the header where it was, so nothing jumps. A goal whose steps are all viewed folds itself (and starts folded); it unfolds again if the agent changes one of its steps. Folding or unfolding by hand wins until then.
 - **Steps** hang on a rail inside their goal. Between two cards sits one prominent connector word, so the goal reads as a sentence.

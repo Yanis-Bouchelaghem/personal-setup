@@ -603,7 +603,8 @@ body {
     display: flex;
     flex: 0 1 170px;
     align-items: center;
-    min-width: 76px;
+    /* Enough for a word or two: past that the strip scrolls, with arrows. */
+    min-width: 110px;
     max-width: 200px;
     border-radius: 7px 7px 0 0;
     color: var(--vscode-tab-inactiveForeground, var(--muted));
@@ -744,6 +745,55 @@ body {
         backdrop-filter: none;
         background: var(--bg);
     }
+}
+
+/* Where tabs are hidden, the strip fades out instead of cutting one in half. */
+.tabs.more-left {
+    -webkit-mask-image: linear-gradient(to right, transparent, #000 28px);
+    mask-image: linear-gradient(to right, transparent, #000 28px);
+}
+
+.tabs.more-right {
+    -webkit-mask-image: linear-gradient(to left, transparent, #000 28px);
+    mask-image: linear-gradient(to left, transparent, #000 28px);
+}
+
+.tabs.more-left.more-right {
+    -webkit-mask-image: linear-gradient(
+        to right,
+        transparent,
+        #000 28px,
+        #000 calc(100% - 28px),
+        transparent
+    );
+    mask-image: linear-gradient(
+        to right,
+        transparent,
+        #000 28px,
+        #000 calc(100% - 28px),
+        transparent
+    );
+}
+
+/* Arrows on both sides of the strip when the tabs do not fit. */
+.tab-scroll {
+    position: relative;
+    flex: none;
+    width: 22px;
+    min-width: 22px;
+    padding: 0;
+}
+
+.tab-scroll.left {
+    margin-left: 6px;
+}
+
+.tab-scroll.left svg {
+    transform: rotate(90deg);
+}
+
+.tab-scroll.right svg {
+    transform: rotate(-90deg);
 }
 
 /* The clock at the end of the strip: reopen a closed tab. */

@@ -1,9 +1,13 @@
+import { useRef } from "react";
+
 import type { Tab } from "../core/messages";
-import { CloseIcon, HistoryIcon } from "./Icons";
+import { ChevronIcon, CloseIcon, HistoryIcon } from "./Icons";
+import { useTabStrip } from "./useTabStrip";
 
 /**
  * One tab per restitution. A dot marks a tab that changed while you were
- * elsewhere; the clock button at the end brings back a closed one.
+ * elsewhere; the clock button at the end brings back a closed one. When
+ * the tabs do not fit, arrows on both sides page through them.
  */
 export function TabBar({
     tabs,
@@ -22,9 +26,29 @@ export function TabBar({
     onClose: (id: string) => void;
     onReopen: () => void;
 }) {
+    const strip = useRef<HTMLDivElement>(null);
+    const scroll = useTabStrip(strip, tabs.length, activeId);
+
     return (
         <div className="tabbar">
-            <div className="tabs" role="tablist">
+            {scroll.overflow && (
+                <ScrollArrow
+                    direction={-1}
+                    disabled={scroll.atStart}
+                    onClick={() => scroll.page(-1)}
+                />
+            )}
+            <div
+                className={[
+                    "tabs",
+                    scroll.atStart ? "" : "more-left",
+                    scroll.atEnd ? "" : "more-right",
+                ]
+                    .filter(Boolean)
+                    .join(" ")}
+                role="tablist"
+                ref={strip}
+            >
                 {tabs.map((tab) => (
                     <div
                         key={tab.id}
@@ -55,6 +79,13 @@ export function TabBar({
                     </div>
                 ))}
             </div>
+            {scroll.overflow && (
+                <ScrollArrow
+                    direction={1}
+                    disabled={scroll.atEnd}
+                    onClick={() => scroll.page(1)}
+                />
+            )}
             {closed > 0 && (
                 <button
                     className="icon-btn tabbar-action"
@@ -67,5 +98,33 @@ export function TabBar({
                 </button>
             )}
         </div>
+    );
+}
+
+/** Pages the tab strip; greyed out, not removed, at its end so nothing moves. */
+function ScrollArrow({
+    direction,
+    disabled,
+    onClick,
+}: {
+    direction: -1 | 1;
+    disabled: boolean;
+    onClick: () => void;
+}) {
+    const label =
+        direction < 0
+            ? "Show the tabs to the left"
+            : "Show the tabs to the right";
+    return (
+        <button
+            className={`icon-btn tab-scroll ${direction < 0 ? "left" : "right"}`}
+            type="button"
+            aria-label={label}
+            title={label}
+            aria-disabled={disabled}
+            onClick={disabled ? undefined : onClick}
+        >
+            <ChevronIcon />
+        </button>
     );
 }
