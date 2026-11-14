@@ -17,16 +17,20 @@ const many: Restitution = {
                     why: "Require https for ADAPTER_APIGEE_URL, so bearer tokens never leave in clear text.",
                 },
                 {
-                    file: "test/config.test.ts",
-                    lines: [[1, 9]],
-                    link: "then",
-                    why: "write the test that rejects an http URL, to catch a regression early.",
+                    link: "which means",
+                    why: "any environment still set to an http:// URL now fails at startup, and must switch before this ships.",
                 },
                 {
                     file: "src/swagger.js",
                     lines: [[1, 6]],
+                    link: "so",
+                    why: "say in the API description that the URL must be https, so operators switch first.",
+                },
+                {
+                    file: "test/config.test.ts",
+                    lines: [[1, 9]],
                     link: "then",
-                    why: "say in the API description that the URL must be https, so the docs match.",
+                    why: "write the test that rejects an http URL, to catch a regression early.",
                 },
             ],
         },
@@ -159,12 +163,12 @@ const diffs = Object.fromEntries(
     parseUnifiedDiff(SAMPLE_DIFFS).map((diff) => [diff.file, diff]),
 );
 
-// The review on the main fixture: 1.2 viewed (folded), 3.2 just updated by
+// The review on the main fixture: 1.4 viewed (folded), 3.2 just updated by
 // the agent, 2.1 marked to clarify with a comment, and a question on 3.3.
 const PRINTS = goalFingerprints(many, diffs);
 const print = (goal: number, step: number) => PRINTS[goal]?.[step] ?? "";
 const REVIEW = {
-    viewed: [print(0, 1)],
+    viewed: [print(0, 3)],
     known: PRINTS.flat().filter((fingerprint) => fingerprint !== print(2, 1)),
     requests: [
         {

@@ -12,7 +12,7 @@ const LineRangeSchema = z
  * How a step follows the previous one in its goal. The page reads as one
  * sentence: the step's text continues after the connector word.
  */
-export const LINKS = ["then", "so", "in parallel"] as const;
+export const LINKS = ["then", "so", "in parallel", "which means"] as const;
 export type Link = (typeof LINKS)[number];
 
 export const StepSchema = z

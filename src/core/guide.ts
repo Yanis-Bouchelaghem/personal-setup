@@ -20,7 +20,7 @@ Call restitution_submit with:
 
 Leave "id" out, except when you update an existing restitution after the user's review (restitution_feedback tells you).
 
-- A step that points at code gives BOTH "file" and "lines" (a step that only explains something gives neither).
+- A step that points at code gives BOTH "file" and "lines" (a "which means" step, which only explains, gives neither).
   - "file" is the path relative to the git root.
   - "lines" is a list of [from, to] ranges: EXACTLY the lines of that file the step shows the reader, nothing more. Use the line numbers of the file as it is now, after your edits.
   - Choose what the reader needs to follow the step: the changed lines and the few lines of unchanged code around them that make them readable. Use several ranges when a step touches separate places, and keep each range as small as it can be.
@@ -41,13 +41,15 @@ Goals come from the request, in its words. A goal stands on its own: it could be
 
 Each step is a card. Between two cards of the same goal sits one connector word, and the next card's "why" continues after it, so the whole goal reads top to bottom as a single sentence:
 
-  Require https for ADAPTER_APIGEE_URL, so bearer tokens never leave in clear text.     <- step 1, no connector
+  Require https for ADAPTER_APIGEE_URL, so bearer tokens never leave in clear text.       <- step 1, no connector
+  Which means
+  any environment still set to an http:// URL now fails at startup.                       <- step 2, link "which means", no code
+  So
+  say in the README that the URL must be https, so operators switch before deploying.     <- step 3, link "so"
   Then
-  write the test that rejects an http URL, to catch a regression early.                 <- step 2, link "then"
-  Then
-  note in the README that the URL must be https, so operators know before deploying.    <- step 3, link "then"
+  write the test that rejects an http URL, to catch a regression early.                   <- step 4, link "then"
 
-- "why" is ONE sentence of about 15 words or fewer, shaped action then reason: what was done, then why. Never "Before it did X, now it does Y".
+- "why" is ONE sentence of about 15 words or fewer, shaped action then reason: what was done, then why. Never "Before it did X, now it does Y". A "which means" step states a consequence instead, in one or two short sentences.
 - The first step of a goal starts the sentence: capitalised, imperative ("Require https ...").
 - Every other step continues after its connector: start with a lowercase verb ("write the test ...") unless it begins with a name ("GatewayClient now ..."). Read the goal aloud, connector words included. If it does not sound like a normal sentence, rewrite it.
 - No background and no "what to check": the reader knows the codebase and the request. Leave out dead ends and your own history.
@@ -56,12 +58,16 @@ Each step is a card. Between two cards of the same goal sits one connector word,
 
 "link" says how this step follows the previous step of the same goal. Leave it out on the first step of a goal. Leave it out anywhere else and the connector is "then".
 
-- "then" (the default). This step comes after the previous one and builds on it, but does not have to follow from it. Use it when in doubt.
+To choose between the first three, imagine the work stopped right before this step:
+
+- "then" (the default). Stopping here leaves code that works but is not finished: the helper exists and nothing uses it yet, the tests are not written. Use it when in doubt.
   Reads as: "Then / write the unit tests to cover what was added."
-- "so". The previous step forces this one: it changed something (a signature, a type, a schema, an error class) and this step exists because of that.
-  Reads as: "So / update the call sites to the new signature."
-- "in parallel". This step and the previous one do not depend on each other: the reader could read them in either order. Use it only when nothing in this step needs the previous one (it does not import from it, call it or test it).
+- "so". Stopping here leaves something broken: the build, the tests, or the consequence a "which means" step just described. The previous step forces this one.
+  Reads as: "So / update the three call sites to pass the new timeout."
+- "in parallel". Leave this step out entirely and no other step would notice: the reader could read it before or after the previous one.
   Reads as: "In parallel / update the README row for the new setting."
+- "which means". This step changes no code: it says what the previous step implies outside the code, that the reader must know. Behaviour that changes for users, operators or callers; something that now has to happen. Give it no file and no lines. When some code deals with that consequence, the next step follows with "so".
+  Reads as: "Which means / any environment still set to an http:// URL now fails at startup. So / say in the README that the URL must be https."
 
 Goals have no connectors between them: they are independent.
 
@@ -78,8 +84,10 @@ Teach it the way you would to a colleague who has not seen the change: foundatio
       "title": "Retry transient gateway failures",
       "steps": [
         { "file": "src/errors.ts", "lines": [[11, 23]], "why": "Add a GatewayError that carries the upstream status, so callers can tell a 5xx from a 4xx." },
-        { "file": "src/gateway/retry.ts", "lines": [[1, 35]], "link": "so", "why": "build withRetry on top of it, retrying only 5xx responses with exponential backoff." },
+        { "file": "src/gateway/retry.ts", "lines": [[1, 35]], "link": "then", "why": "build withRetry on top of it, retrying only 5xx responses with exponential backoff." },
         { "file": "src/gateway/client.ts", "lines": [[1, 10], [15, 38]], "link": "then", "why": "run json() through withRetry, so every JSON call benefits." },
+        { "link": "which means", "why": "a call that fails with a 5xx now takes up to 7 seconds before the error reaches the caller." },
+        { "file": "src/server.ts", "lines": [[40, 44]], "link": "so", "why": "raise the request timeout to 10 seconds, so the retries can finish." },
         { "file": "test/retry.test.ts", "lines": [[1, 57]], "link": "then", "why": "write the unit tests to cover what was added." },
         { "file": "README.md", "lines": [[15, 26]], "link": "then", "why": "describe the retry behaviour, so operators know what to expect." }
       ]

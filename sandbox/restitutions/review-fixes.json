@@ -18,15 +18,8 @@
                     "why": "Require https for ADAPTER_APIGEE_URL, so bearer tokens never leave in clear text."
                 },
                 {
-                    "file": "test/config.test.ts",
-                    "lines": [
-                        [
-                            1,
-                            18
-                        ]
-                    ],
-                    "link": "then",
-                    "why": "write the test that rejects an http URL, to catch a regression early."
+                    "link": "which means",
+                    "why": "any environment still set to an http:// URL now fails at startup, and must switch before this ships."
                 },
                 {
                     "file": "README.md",
@@ -36,8 +29,19 @@
                             13
                         ]
                     ],
+                    "link": "so",
+                    "why": "say in the README that the URL must be https, so operators switch before deploying."
+                },
+                {
+                    "file": "test/config.test.ts",
+                    "lines": [
+                        [
+                            1,
+                            18
+                        ]
+                    ],
                     "link": "then",
-                    "why": "note in the README that the URL must be https, so operators know before deploying."
+                    "why": "write the test that rejects an http URL, to catch a regression early."
                 }
             ]
         },
