@@ -95,7 +95,7 @@ A step that points at code gives both `file` (relative to the git root) and `lin
 
 ## Reviewing: comments, clarify, and what changed
 
-Each step has two ways to ask: **Clarify** in its header (ask the agent to explain this step in smaller steps) and **Comment** under its code (a question or change request, typed in a box that takes the button's place). While anything is asked, a bar pinned to the bottom sums it up ("1 step to clarify · 2 comments") with **Copy for agent** and **Reset**. The copied text is short, only what is asked:
+Each step has two ways to ask: **Clarify** in its header (ask the agent to explain this step in smaller steps) and **Comment** under its code (a question or change request, typed in a box that takes the button's place). While anything is asked, a bar pinned to the bottom (it slides up with a short blue glow when the first thing is asked, and back down when nothing is left) sums it up ("1 step to clarify · 2 comments") with **Copy for agent** and **Reset**. The copied text is short, only what is asked:
 
 ```
 My review of the restitution "Review fixes" (id: review-fixes):

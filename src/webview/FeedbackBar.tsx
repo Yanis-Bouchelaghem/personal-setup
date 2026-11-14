@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import type { ReviewRequest } from "../core/review";
 import { SwapLabel } from "./SwapLabel";
@@ -9,7 +9,9 @@ function plural(count: number, word: string): string {
 
 /**
  * Pinned to the bottom while anything is asked: what you are about to send,
- * a button to copy it for your agent, and one to start over.
+ * a button to copy it for your agent, and one to start over. It slides up
+ * when the first thing is asked, with a short glow, and back down when
+ * nothing is left.
  */
 export function FeedbackBar({
     requests,
@@ -29,25 +31,42 @@ export function FeedbackBar({
         return () => clearTimeout(timer);
     }, [copied]);
 
-    if (requests.length === 0) {
-        return null;
-    }
+    const shown = requests.length > 0;
+    const glow = useGlowOnAppear(shown);
+
+    // While the bar slides away it keeps saying what it said.
     const clarify = requests.filter((request) => request.clarify).length;
     const comments = requests.filter((request) => request.comment).length;
     const summary = [
         ...(clarify ? [plural(clarify, "step") + " to clarify"] : []),
         ...(comments ? [plural(comments, "comment")] : []),
     ].join(" · ");
+    const lastSummary = useRef(summary);
+    if (summary) {
+        lastSummary.current = summary;
+    }
 
+    const classes = [
+        "feedback-bar",
+        "glass",
+        shown ? "shown" : "",
+        glow.on ? "glow" : "",
+    ];
     return (
         <>
-            <div className="feedback-spacer" aria-hidden="true" />
             <div
-                className="feedback-bar glass"
+                className={shown ? "feedback-spacer shown" : "feedback-spacer"}
+                aria-hidden="true"
+            />
+            <div
+                className={classes.filter(Boolean).join(" ")}
                 role="region"
                 aria-label="Review"
+                aria-hidden={!shown}
+                inert={!shown}
+                onAnimationEnd={glow.end}
             >
-                <span className="feedback-summary">{summary}</span>
+                <span className="feedback-summary">{lastSummary.current}</span>
                 <button className="text-btn" type="button" onClick={onReset}>
                     Reset
                 </button>
@@ -67,4 +86,20 @@ export function FeedbackBar({
             </div>
         </>
     );
+}
+
+/**
+ * A glow when the bar comes up, fading away: only when it appears, not when
+ * a tab that already has requests is opened.
+ */
+function useGlowOnAppear(shown: boolean) {
+    const [on, setOn] = useState(false);
+    const before = useRef(shown);
+    useEffect(() => {
+        if (shown && !before.current) {
+            setOn(true);
+        }
+        before.current = shown;
+    }, [shown]);
+    return { on, end: () => setOn(false) };
 }

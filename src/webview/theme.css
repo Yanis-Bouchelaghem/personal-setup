@@ -1072,6 +1072,11 @@ body {
 
 /* Pinned to the bottom while anything is asked. */
 .feedback-spacer {
+    height: 0;
+    transition: height 0.28s cubic-bezier(0.2, 0, 0, 1);
+}
+
+.feedback-spacer.shown {
     height: 64px;
 }
 
@@ -1411,5 +1416,53 @@ body {
 @media (prefers-reduced-motion: reduce) {
     .collapse {
         transition: none;
+    }
+}
+
+/* The bar slides up from below the panel, and back down. */
+.feedback-bar {
+    opacity: 0;
+    transform: translateY(calc(100% + 16px));
+    transition:
+        transform 0.28s cubic-bezier(0.2, 0, 0, 1),
+        opacity 0.2s ease;
+}
+
+.feedback-bar.shown {
+    opacity: 1;
+    transform: none;
+}
+
+/* As it arrives, a soft blue glow that fades away. */
+.feedback-bar.glow {
+    animation: feedback-glow 1.6s ease-out;
+}
+
+@keyframes feedback-glow {
+    from {
+        box-shadow:
+            inset 0 1px 0 var(--glass-highlight),
+            0 0 0 1px color-mix(in srgb, var(--accent) 60%, transparent),
+            0 0 24px 3px color-mix(in srgb, var(--accent) 45%, transparent),
+            var(--glass-shadow);
+    }
+
+    to {
+        box-shadow:
+            inset 0 1px 0 var(--glass-highlight),
+            0 0 0 1px transparent,
+            0 0 24px 3px transparent,
+            var(--glass-shadow);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .feedback-bar,
+    .feedback-spacer {
+        transition: none;
+    }
+
+    .feedback-bar.glow {
+        animation: none;
     }
 }
