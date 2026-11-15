@@ -2,7 +2,7 @@
 
 A **restitution** is a short, ordered reading guide that the agent which made a change writes for the human who asked for it. The human reads it right after the turn, in a side panel, then reads the real code in the editor. It tells them **what to read, in what order, and why**. It never replaces reading the code.
 
-Plan and milestones: `~/.claude/plans/eager-sauteeing-treehouse.md`. Architecture visualization is out of scope: it belongs in its own extension, so Restitution stays a reading guide.
+Plan and milestones: `~/.claude/plans/eager-sauteeing-treehouse.md`. Architecture visualization was considered and dropped: Restitution stays a reading guide.
 
 ## Decisions
 
