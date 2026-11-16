@@ -77,6 +77,8 @@ The rules agents follow live in `src/core/guide.ts`: it is both what the MCP ser
 
 A step that points at code gives both `file` (relative to the git root) and `lines`, a list of `[from, to]` ranges. `lines` is required with `file`, and is **exactly what the card shows**: the panel cuts the step's diff down to those lines and nothing around them, so the model chooses what the reader sees. The editor, on the other hand, selects only what changed: the added or changed lines inside the shown ranges, one selection per contiguous run, so unchanged code between two changes stays unselected. A step that only removes code has nothing to select on the new side, so it selects its range.
 
+A step can also point at **code that did not change**: existing code the change relies on, or code the user asked to have explained. When its lines hold no change, the extension reads exactly those lines from the file as it is now (only inside the repository, files up to 2 MB) and the card shows them as plain lines under an "Unchanged code" label. File opens them with the range selected; Diff is greyed out ("No diff: this code is unchanged"). Steps on changes and on existing code mix freely in a goal. They never get a drift warning (there is no change to compare). Lines that don't exist show "These lines are not in the file".
+
 - Ranges are on the new side of the file; for a deleted file, on the old side, the only one that exists.
 - A removed line has no new-side number, so it sits with the line just before it (or at the start of its hunk). A range that includes that line shows the removal.
 - Coverage is per changed line: `restitution_submit` lists the changed lines no step shows (any tab counts) and the steps whose lines hold no change. It's a hint, never a block.
@@ -86,7 +88,7 @@ A step that points at code gives both `file` (relative to the git root) and `lin
 `src/mcp/server.ts` is a stdio server bundled to `dist/mcp-server.js`. The extension copies it to its global storage (a path that survives updates) and "Restitution: Connect agents" registers it with Claude Code (all projects, or this workspace only) and Codex. Copilot finds it through VS Code's MCP provider API. Tools:
 
 - `restitution_guide`: the rules and format.
-- `restitution_submit`: saves `.restitution/<id>.json` atomically (one tab per agent session), then reports changed hunks no step explains and steps pointing at unchanged code. It never blocks.
+- `restitution_submit`: saves `.restitution/<id>.json` atomically (one tab per agent session), then reports changed hunks no step explains, steps pointing at lines that don't exist (wrong file or numbers: fix these), and steps showing only unchanged code (a note: fine when they explain existing code). It never blocks.
 - `restitution_edit`: partial updates, so a guide is never rewritten whole for a small change. A list of edits applied together (`set` some fields of a step, `replace` a step with several, one or none, `insert` steps before or after one, `setGoal`, `removeGoal`, `addGoal`); every label refers to the numbering before the edit. Nothing applies if any edit is wrong. It reports coverage like submit, plus the new outline with fresh labels. Untouched steps keep their fingerprint, so the reader's Viewed marks survive.
 
 ## Trying it

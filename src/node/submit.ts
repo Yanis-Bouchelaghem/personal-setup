@@ -2,6 +2,7 @@ import { checkCoverage, describeSubmit } from "../core/coverage";
 import { codeSnapshot, staleLabels } from "../core/fingerprint";
 import type { Restitution } from "../core/restitution";
 import { readAllDiffs } from "./git";
+import { unchangedLineCounts } from "./source";
 import { readCodeSnapshot, writeCodeSnapshot } from "./store/code";
 import { readTabs, writeRestitution } from "./store/tabs";
 
@@ -21,6 +22,7 @@ export async function submitRestitution(
             readTabs(gitRoot),
             readCodeSnapshot(gitRoot, id),
         ]);
+        const counts = await unchangedLineCounts(gitRoot, restitution, diffs);
         const others = tabs.flatMap((tab) =>
             tab.kind === "ok" && tab.id !== id ? [tab.restitution] : [],
         );
@@ -30,7 +32,7 @@ export async function submitRestitution(
         await writeCodeSnapshot(gitRoot, id, codeSnapshot(restitution, diffs));
         return describeSubmit(
             restitution,
-            checkCoverage(restitution, diffs, others),
+            checkCoverage(restitution, diffs, others, counts),
             stale,
         );
     } catch {

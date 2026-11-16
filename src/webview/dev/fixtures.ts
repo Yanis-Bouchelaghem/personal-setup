@@ -50,6 +50,12 @@ const many: Restitution = {
                     ],
                 },
                 {
+                    file: "src/gateway/tokenCache.ts",
+                    lines: [[8, 15]],
+                    link: "and since",
+                    why: "the token is already cached per audience, setting it on every call costs nothing.",
+                },
+                {
                     file: "test/gateway/btapGatewayClient.test.ts",
                     lines: [[1, 12]],
                     link: "then",
@@ -200,6 +206,20 @@ const REVIEW = {
     ],
 };
 
+/** Existing code a step explains: read from the file, not the diff. */
+const sources = {
+    "src/gateway/tokenCache.ts": {
+        8: "export async function tokenFor(audience: string): Promise<string> {",
+        9: "    const cached = cache.get(audience);",
+        10: "    if (cached && cached.expiresAt > Date.now() + SKEW_MS) {",
+        11: "        return cached.token;",
+        12: "    }",
+        13: "    const fresh = await fetchToken(audience);",
+        14: "    cache.set(audience, fresh);",
+        15: "    return fresh.token;",
+    },
+};
+
 const ago = (minutes: number) => Date.now() - minutes * 60_000;
 
 const small: Restitution = {
@@ -254,6 +274,7 @@ export const fixtures: Record<string, ViewState> = {
             },
         ],
         diffs,
+        sources,
     },
     one: {
         status: "ok",
@@ -269,6 +290,7 @@ export const fixtures: Record<string, ViewState> = {
             },
         ],
         diffs,
+        sources,
     },
     long: {
         status: "ok",
@@ -296,6 +318,7 @@ export const fixtures: Record<string, ViewState> = {
             },
         ],
         diffs: {},
+        sources: {},
     },
     // More tabs than fit: the strip shows its arrows.
     tabs: {
@@ -321,6 +344,7 @@ export const fixtures: Record<string, ViewState> = {
             requests: [],
         })),
         diffs,
+        sources,
     },
     empty: { status: "empty", closed: 0 },
     emptyClosed: { status: "empty", closed: 2 },

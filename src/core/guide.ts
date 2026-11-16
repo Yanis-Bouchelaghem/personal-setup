@@ -5,7 +5,7 @@
  */
 
 export const SERVER_INSTRUCTIONS = `Restitution gives the human a short reading guide to the code changes you just made, shown in their editor.
-After you finish a code change the user asked for, call restitution_guide once, then restitution_submit with your steps. Skip it for answers that changed no code.
+After you finish a code change the user asked for, call restitution_guide once, then restitution_submit with your steps. Use it too when the user asks you to explain existing code: point the steps at that code. Skip it for other answers.
 To change part of it later, call restitution_edit instead of resubmitting it whole.
 If the user pastes their review of a restitution (steps to clarify, comments), call restitution_feedback with its id first.
 It is optional for the user and must never block your work.`;
@@ -26,6 +26,8 @@ Leave "id" out, except when you update an existing restitution after the user's 
   - "lines" is a list of [from, to] ranges: EXACTLY the lines of that file the step shows the reader, nothing more. Use the line numbers of the file as it is now, after your edits.
   - Choose what the reader needs to follow the step: the changed lines and the few lines of unchanged code around them that make them readable. Use several ranges when a step touches separate places, and keep each range as small as it can be.
   - A removed line has no number any more: it sits with the line just before it, so include that line. For a deleted file, use the line numbers it had before.
+- A step can also point at code that did not change: existing code the change relies on, or that the reader must see to follow it. The card shows those lines as they are now, labelled "Unchanged code". Mix both freely: put a step on existing code in the middle of a goal, right where the reader needs it (the function a new call goes through, the type a change must fit).
+- When the user asks you to explain existing code rather than a change of yours, the restitution IS the explanation: one goal per question they asked, steps that walk through the code in the order it runs. The changed-lines report doesn't apply then.
 - Every changed line must be shown by some step. The tool saves your restitution, then lists the changed lines no step shows and the steps whose lines hold no change. Treat that as a hint, not a verdict: fix what is really wrong with restitution_edit.
 - The card shows exactly those lines. When the reader opens the step in their editor, the changed lines among them are selected (the unchanged context around them is not), so show enough context to be readable and let the selection point at what changed.
 - Your restitution is one tab in the user's panel (label names it, otherwise the request does). Submitting again in this session replaces your tab; other agents' tabs are never touched.

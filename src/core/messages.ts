@@ -1,6 +1,7 @@
 import type { FileDiff, LineRange } from "./diff";
 import type { Restitution } from "./restitution";
 import type { ReviewAction, ReviewRequest } from "./review";
+import type { SourceLines } from "./source";
 
 /** One restitution file, shown as a tab. A broken file only breaks its own tab. */
 export type Tab =
@@ -41,6 +42,8 @@ export type ViewState =
           closed: number;
           /** Working-tree diffs for the files any step points at, by path. */
           diffs: Record<string, FileDiff>;
+          /** Unchanged code steps point at, by path: only the lines asked for. */
+          sources: Record<string, SourceLines>;
       };
 
 export type ToWebview =

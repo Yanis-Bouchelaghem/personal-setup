@@ -56,7 +56,7 @@ describe("checkCoverage", () => {
             ]),
             diffs,
         );
-        expect(result).toEqual({ missing: [], unexplained: [] });
+        expect(result).toEqual({ unchanged: [], nowhere: [], unexplained: [] });
     });
 
     it("lists the changed lines no step shows, per file", () => {
@@ -85,7 +85,7 @@ describe("checkCoverage", () => {
         expect(result.unexplained).toEqual(["src/a.ts:1"]);
     });
 
-    it("lists steps whose lines hold no change", () => {
+    it("splits steps whose lines hold no change: existing code, or nowhere", () => {
         const result = checkCoverage(
             restitution([
                 {
@@ -101,12 +101,11 @@ describe("checkCoverage", () => {
                 { file: "src/a.ts", lines: [[2, 2]] },
             ]),
             diffs,
+            [],
+            { "src/a.ts": 30 },
         );
-        expect(result.missing).toEqual([
-            "src/gone.ts:1-3",
-            "src/a.ts:100-110",
-            "src/a.ts:2",
-        ]);
+        expect(result.nowhere).toEqual(["src/gone.ts:1-3", "src/a.ts:100-110"]);
+        expect(result.unchanged).toEqual(["src/a.ts:2"]);
     });
 
     it("counts lines other tabs show, and flags only the current tab's steps", () => {
@@ -124,12 +123,12 @@ describe("checkCoverage", () => {
             { file: "src/ghost.ts", lines: [[1, 1]] },
         ]);
         const result = checkCoverage(current, diffs, [other]);
-        expect(result).toEqual({ missing: [], unexplained: [] });
+        expect(result).toEqual({ unchanged: [], nowhere: [], unexplained: [] });
     });
 
     it("ignores steps without a file", () => {
         const result = checkCoverage(restitution([{}]), {});
-        expect(result).toEqual({ missing: [], unexplained: [] });
+        expect(result).toEqual({ unchanged: [], nowhere: [], unexplained: [] });
     });
 });
 
@@ -171,7 +170,7 @@ describe("describeSubmit", () => {
     const r = restitution([{ file: "src/a.ts", lines: [[1, 2]] }]);
 
     it("points at steps whose code changed since they were explained", () => {
-        const clean = { missing: [], unexplained: [] };
+        const clean = { unchanged: [], nowhere: [], unexplained: [] };
         expect(describeSubmit(r, clean, ["1.1"])).toMatch(
             /The code of step 1\.1 changed since you explained it/,
         );
@@ -181,19 +180,34 @@ describe("describeSubmit", () => {
     });
 
     it("confirms a clean submission", () => {
-        const text = describeSubmit(r, { missing: [], unexplained: [] });
+        const text = describeSubmit(r, {
+            unchanged: [],
+            nowhere: [],
+            unexplained: [],
+        });
         expect(text).toMatch(/Saved: 1 goals, 1 steps/);
         expect(text).toMatch(/Every changed line is shown by a step/);
     });
 
     it("asks for a fix when something is off", () => {
         const text = describeSubmit(r, {
-            missing: ["src/x.ts:1-2"],
+            unchanged: [],
+            nowhere: ["src/x.ts:1-2"],
             unexplained: ["src/b.ts:5"],
         });
         expect(text).toMatch(/src\/x\.ts:1-2/);
         expect(text).toMatch(/src\/b\.ts:5/);
         expect(text).toMatch(/Fix these with restitution_edit/);
+    });
+
+    it("notes unchanged code without asking for a fix", () => {
+        const text = describeSubmit(r, {
+            unchanged: ["src/a.ts:3-9"],
+            nowhere: [],
+            unexplained: [],
+        });
+        expect(text).toMatch(/only unchanged code: src\/a\.ts:3-9/);
+        expect(text).not.toMatch(/Fix these/);
     });
 
     it("says when coverage could not be checked", () => {

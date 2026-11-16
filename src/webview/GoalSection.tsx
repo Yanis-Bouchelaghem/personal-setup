@@ -4,6 +4,7 @@ import type { FileDiff } from "../core/diff";
 import type { OpenRequest } from "../core/messages";
 import type { Goal } from "../core/restitution";
 import type { ReviewRequest } from "../core/review";
+import type { SourceLines } from "../core/source";
 import { Collapse } from "./Collapse";
 import { Connector } from "./Connector";
 import { ChevronIcon } from "./Icons";
@@ -27,6 +28,7 @@ export function GoalSection({
     number,
     steps,
     diffs,
+    sources,
     folded,
     onToggleFold,
     onViewedChange,
@@ -40,6 +42,7 @@ export function GoalSection({
     /** One per step, in order. */
     steps: StepState[];
     diffs: Record<string, FileDiff>;
+    sources: Record<string, SourceLines>;
     folded: boolean;
     onToggleFold: () => void;
     onViewedChange: (fingerprint: string, viewed: boolean) => void;
@@ -137,6 +140,7 @@ export function GoalSection({
                                     step={step}
                                     label={label}
                                     diffs={diffs}
+                                    sources={sources}
                                     viewed={state?.viewed ?? false}
                                     updated={state?.updated ?? false}
                                     stale={state?.stale ?? false}

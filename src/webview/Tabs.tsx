@@ -3,6 +3,7 @@ import { useEffect, useMemo, useState } from "react";
 import { uncoveredChanges } from "../core/coverage";
 import type { FileDiff } from "../core/diff";
 import type { Tab } from "../core/messages";
+import type { SourceLines } from "../core/source";
 import type { Host } from "./host";
 import { TabBar } from "./TabBar";
 import { TabContent } from "./TabContent";
@@ -17,12 +18,14 @@ import { useUnread } from "./useUnread";
 export function Tabs({
     tabs,
     diffs,
+    sources,
     closed,
     focus,
     host,
 }: {
     tabs: Tab[];
     diffs: Record<string, FileDiff>;
+    sources: Record<string, SourceLines>;
     closed: number;
     focus: { id: string } | undefined;
     host: Host;
@@ -67,6 +70,7 @@ export function Tabs({
                 key={active.id}
                 tab={active}
                 diffs={diffs}
+                sources={sources}
                 uncovered={uncovered}
                 host={host}
                 onCycleTab={(by) => {

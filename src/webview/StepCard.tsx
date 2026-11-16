@@ -4,6 +4,7 @@ import { changedRanges, type FileDiff, selectLines } from "../core/diff";
 import type { OpenRequest } from "../core/messages";
 import type { Step } from "../core/restitution";
 import type { ReviewRequest } from "../core/review";
+import { type SourceLines, sourceHunks } from "../core/source";
 import { Collapse } from "./Collapse";
 import { DiffView } from "./DiffView";
 import { DocLinks } from "./DocLinks";
@@ -34,34 +35,50 @@ export function FilePath({ path }: { path: string }) {
     );
 }
 
-/** What a step shows and where the editor should land when it is opened. */
-function useStepCode(step: Step, diffs: Record<string, FileDiff>) {
+/**
+ * What a step shows and where the editor should land when it is opened: the
+ * changed lines it chose, or, when it chose no change, that code as it is
+ * now (existing code it explains).
+ */
+function useStepCode(
+    step: Step,
+    diffs: Record<string, FileDiff>,
+    sources: Record<string, SourceLines>,
+) {
     const file = step.file;
     const diff = file ? diffs[file] : undefined;
     // Exactly the lines the step chose, nothing around them.
     const ranges = step.lines ?? [];
-    const hunks = selectLines(diff, ranges);
+    const changes = selectLines(diff, ranges);
+    const changed = changes.some((hunk) =>
+        hunk.lines.some((line) => line.kind !== "ctx"),
+    );
+    const existing = !changed && file ? sourceHunks(sources[file], ranges) : [];
+    const unchanged = existing.length > 0;
+    const hunks = unchanged ? existing : changes;
     // The editor selects only what changed, not the context shown around it;
     // a step that only removes code has no new-side lines, so it selects its range.
-    const changed = changedRanges(hunks);
-    const selection = changed.length > 0 ? changed : ranges;
+    const added = changedRanges(hunks);
+    const selection = added.length > 0 ? added : ranges;
     const status = diff?.status;
     return {
         file,
         hunks,
         selection,
+        unchanged,
         // Why a button cannot be used here; undefined when it can.
-        noDiff: whyNoDiff(hunks.length, status),
-        noFile: whyNoFile(hunks.length, status),
+        noDiff: unchanged ? UNCHANGED : whyNoDiff(hunks.length, status),
+        noFile: unchanged ? undefined : whyNoFile(hunks.length, status),
     };
 }
 
-const NO_CHANGES = "No uncommitted changes in these lines";
+const NO_CODE = "These lines are not in the file";
+const UNCHANGED = "No diff: this code is unchanged";
 
 /** A diff only makes sense when both sides exist. */
 function whyNoDiff(hunks: number, status: FileDiff["status"] | undefined) {
     if (hunks === 0) {
-        return NO_CHANGES;
+        return NO_CODE;
     }
     if (status === "added") {
         return "No diff: this file is new, every line is added";
@@ -74,7 +91,7 @@ function whyNoDiff(hunks: number, status: FileDiff["status"] | undefined) {
 
 function whyNoFile(hunks: number, status: FileDiff["status"] | undefined) {
     if (hunks === 0) {
-        return NO_CHANGES;
+        return NO_CODE;
     }
     return status === "deleted" ? "This file was deleted" : undefined;
 }
@@ -83,6 +100,7 @@ export function StepCard({
     step,
     label,
     diffs,
+    sources,
     viewed,
     updated,
     stale,
@@ -96,6 +114,8 @@ export function StepCard({
     step: Step;
     label: string;
     diffs: Record<string, FileDiff>;
+    /** Unchanged code steps point at. */
+    sources: Record<string, SourceLines>;
     viewed: boolean;
     /** New or changed since the reader last looked. */
     updated: boolean;
@@ -111,7 +131,7 @@ export function StepCard({
     onOpenUrl: (url: string) => void;
     onRequestChange: (clarify: boolean, comment: string | undefined) => void;
 }) {
-    const code = useStepCode(step, diffs);
+    const code = useStepCode(step, diffs, sources);
     const { file } = code;
     const clarify = request?.clarify ?? false;
     const comment = request?.comment ?? "";
@@ -246,7 +266,11 @@ export function StepCard({
                             <DiffIcon />
                         </IconButton>
                         <IconButton
-                            label="Open the file, with the changes selected · gf"
+                            label={
+                                code.unchanged
+                                    ? "Open the file at these lines · gf"
+                                    : "Open the file, with the changes selected · gf"
+                            }
                             onClick={openFile}
                             text="File"
                             unavailable={code.noFile}
@@ -274,11 +298,14 @@ export function StepCard({
                     {step.examples?.map((example, index) => (
                         <Example key={index} example={example} />
                     ))}
-                    {code.hunks.length > 0 && <DiffView hunks={code.hunks} />}
+                    {code.hunks.length > 0 && (
+                        <DiffView
+                            hunks={code.hunks}
+                            unchanged={code.unchanged}
+                        />
+                    )}
                     {file && code.hunks.length === 0 && (
-                        <p className="no-diff">
-                            No uncommitted changes in these lines.
-                        </p>
+                        <p className="no-diff">{NO_CODE}.</p>
                     )}
                     {!writing && !comment && (
                         <button

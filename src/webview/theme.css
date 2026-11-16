@@ -1735,3 +1735,16 @@ body {
 .uncovered-head {
     scroll-margin-top: calc(var(--tabs-h) + 8px);
 }
+
+/* Existing code a step explains: plain lines, no signs, labelled as unchanged. */
+.diff-label {
+    padding: 3px 10px;
+    color: var(--muted);
+    font-family: var(--vscode-font-family, sans-serif);
+    font-size: 11px;
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.diff.unchanged .sign {
+    display: none;
+}

@@ -2,6 +2,7 @@ import type { FileDiff } from "../../core/diff";
 import { codeSnapshot } from "../../core/fingerprint";
 import type { Tab, ViewState } from "../../core/messages";
 import { readAllDiffs } from "../git";
+import { readSources } from "../source";
 import { countClosed } from "./archive";
 import { writeCodeSnapshot } from "./code";
 import { readTabs } from "./tabs";
@@ -19,10 +20,15 @@ export async function readViewState(gitRoot: string): Promise<ViewState> {
     // also shows what no guide covers. A git hiccup must not hide the
     // explanations: show them without hunks.
     const diffs = await readAllDiffs(gitRoot).catch(() => ({}));
-    const withBaselines = await Promise.all(
-        tabs.map((tab) => addBaselines(gitRoot, tab, diffs)),
-    );
-    return { status: "ok", tabs: withBaselines, closed, diffs };
+    const [withBaselines, sources] = await Promise.all([
+        Promise.all(tabs.map((tab) => addBaselines(gitRoot, tab, diffs))),
+        readSources(
+            gitRoot,
+            tabs.flatMap((tab) => (tab.kind === "ok" ? [tab.restitution] : [])),
+            diffs,
+        ),
+    ]);
+    return { status: "ok", tabs: withBaselines, closed, diffs, sources };
 }
 
 /**

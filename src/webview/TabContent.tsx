@@ -12,6 +12,7 @@ import {
 import type { Tab } from "../core/messages";
 import type { Restitution } from "../core/restitution";
 import type { Review } from "../core/review";
+import type { SourceLines } from "../core/source";
 import { ErrorList } from "./ErrorList";
 import { FeedbackBar, useCopied } from "./FeedbackBar";
 import { GoalSection, type StepState } from "./GoalSection";
@@ -60,12 +61,15 @@ function stepStates(
 export function TabContent({
     tab,
     diffs,
+    sources,
     uncovered,
     host,
     onCycleTab,
 }: {
     tab: Tab;
     diffs: Record<string, FileDiff>;
+    /** Unchanged code steps point at. */
+    sources: Record<string, SourceLines>;
     /** Uncommitted changes no guide shows. */
     uncovered: readonly Uncovered[];
     host: Host;
@@ -170,6 +174,7 @@ export function TabContent({
                     number={index + 1}
                     steps={states[index] ?? []}
                     diffs={diffs}
+                    sources={sources}
                     folded={folding.isFolded(index)}
                     onToggleFold={() => folding.toggle(index)}
                     onViewedChange={(step, on) =>

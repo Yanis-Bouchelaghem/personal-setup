@@ -93,6 +93,7 @@ function Body({
         <Tabs
             tabs={state.tabs}
             diffs={state.diffs}
+            sources={state.sources}
             closed={state.closed}
             focus={focus}
             host={host}
