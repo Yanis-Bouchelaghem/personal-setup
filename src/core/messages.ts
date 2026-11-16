@@ -92,4 +92,6 @@ export type FromWebview =
     | CopyFeedback
     | { type: "initRepo" }
     /** Open a documentation link in the browser. */
-    | { type: "openUrl"; url: string };
+    | { type: "openUrl"; url: string }
+    /** Escape in the panel: the keyboard goes back to the editor. */
+    | { type: "focusEditor" };

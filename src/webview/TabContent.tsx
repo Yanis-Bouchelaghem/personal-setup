@@ -13,14 +13,16 @@ import type { Tab } from "../core/messages";
 import type { Restitution } from "../core/restitution";
 import type { Review } from "../core/review";
 import { ErrorList } from "./ErrorList";
-import { FeedbackBar } from "./FeedbackBar";
+import { FeedbackBar, useCopied } from "./FeedbackBar";
 import { GoalSection, type StepState } from "./GoalSection";
 import type { Host } from "./host";
+import { KeyHelp } from "./KeyHelp";
 import { Notice } from "./Notice";
 import { Overview } from "./Overview";
 import { scrollToElement } from "./scrollTo";
 import { countChanged, UncoveredSection } from "./UncoveredSection";
 import { useGoalFolding } from "./useGoalFolding";
+import { useKeyboard } from "./useKeyboard";
 import { useReview } from "./useReview";
 
 /** Where every step stands for the reader, goal by goal. */
@@ -60,12 +62,15 @@ export function TabContent({
     diffs,
     uncovered,
     host,
+    onCycleTab,
 }: {
     tab: Tab;
     diffs: Record<string, FileDiff>;
     /** Uncommitted changes no guide shows. */
     uncovered: readonly Uncovered[];
     host: Host;
+    /** Go to the next (1) or previous (-1) tab. */
+    onCycleTab: (by: number) => void;
 }) {
     const [showUncovered, setShowUncovered] = useState(false);
     const { review, act, copy } = useReview(tab, host);
@@ -88,14 +93,6 @@ export function TabContent({
         }
     }, [firstLook]);
 
-    if (tab.kind === "error") {
-        return (
-            <Notice title="This restitution can't be shown" tone="error">
-                <ErrorList errors={tab.errors} />
-            </Notice>
-        );
-    }
-    const { restitution } = tab;
     // A request keeps the label it was written with, unless its step moved.
     const labels = new Map(
         states.flatMap((goal, goalIndex) =>
@@ -112,6 +109,39 @@ export function TabContent({
         ...request,
         label: labels.get(request.step) ?? request.label,
     }));
+
+    const copied = useCopied();
+    const copyFeedback = () => {
+        copy(feedbackPrompt(tab.id, tab.label, requests));
+        copied.flash();
+    };
+    const [help, setHelp] = useState(false);
+    useKeyboard({
+        copy: requests.length > 0 ? copyFeedback : undefined,
+        foldAll: () => {
+            // The cursor moves up to its goal's header, which stays visible.
+            document.activeElement
+                ?.closest(".goal")
+                ?.querySelector<HTMLElement>('[data-nav="goal"]')
+                ?.focus({ preventScroll: true });
+            folding.setAll(true);
+        },
+        unfoldAll: () => folding.setAll(false),
+        nextTab: () => onCycleTab(1),
+        prevTab: () => onCycleTab(-1),
+        help: () => setHelp(!help),
+        leave: () =>
+            help ? setHelp(false) : host.send({ type: "focusEditor" }),
+    });
+
+    if (tab.kind === "error") {
+        return (
+            <Notice title="This restitution can't be shown" tone="error">
+                <ErrorList errors={tab.errors} />
+            </Notice>
+        );
+    }
+    const { restitution } = tab;
 
     return (
         <>
@@ -161,9 +191,11 @@ export function TabContent({
             />
             <FeedbackBar
                 requests={requests}
-                onCopy={() => copy(feedbackPrompt(tab.id, tab.label, requests))}
+                copied={copied.copied}
+                onCopy={copyFeedback}
                 onReset={() => act({ type: "reset" })}
             />
+            <KeyHelp shown={help} />
         </>
     );
 }

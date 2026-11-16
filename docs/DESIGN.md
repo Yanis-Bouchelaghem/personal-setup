@@ -126,3 +126,14 @@ All of it lives in `<id>.review.json`, written only by the extension: `viewed`, 
 - **Viewed** folds a step to its header; the whole step header toggles it (its chevron is the keyboard control). There is no checkbox: a viewed step shows as folded, its number struck through and its rail node filled.
 - **Clicking a step** anywhere but its header, its inline diff, a button or the comment opens the file with the changes selected (nothing, for a deleted file). Ending a text selection does not count. Those parts glow on hover, with the same tint as the header, so it is clear what a click will do.
 - **Header**: chevron, number, file, Clarify, then Diff and File at the right end. Diff and File stay on folded steps; a text-only step has neither, so Clarify ends its header. One a step cannot use is greyed out, and its tooltip says why: Diff for a new or deleted file (there is only one side to compare), File for a deleted file, both when the lines have no uncommitted changes. Nothing moves from card to card. Buttons show a one-word label next to their icon for as long as the file name still fits whole: as the card narrows, the folder gives way first, then the labels, and the name last (on a narrow card the chip drops its folder altogether).
+
+## Keyboard
+
+Everything works without the mouse, with vim-style keys (the panel is a webview, so vscode-neovim never sees its keys and nothing clashes). `?` shows the list; `src/webview/keys.ts` is the single source of it.
+
+- **The cursor is the focus.** Goal headers and cards (`data-nav`) take real focus as you move, so the cursor is the focus ring (keyboard only, never after a click), and Tab still reaches the buttons and links inside a card.
+- **Move**: `j`/`k` (and `ctrl+j`/`ctrl+k`) next and previous place, `}`/`{` next and previous goal (it lands at the top, like the overview's links), `gg` back to the top, `G` the last place, `ctrl+d`/`ctrl+u` half a page, `gt`/`gT` the tabs. A step scrolls only as much as it must, its top winning when it can't fit.
+- **Act** on the place under the cursor: `Enter` or `gf` open the file, `gd` the diff, `za`/`zc`/`zo` toggle, fold (mark viewed) and unfold, `zC`/`zM` and `zO`/`zR` every goal. Folding the goal the cursor is in keeps the cursor on its header.
+- **Ask**: `i` or `c` opens the comment box at the end of its text, `m` marks for clarification, `Y` copies for the agent. In the box, Escape, `jj` or Cmd+Enter keep what you wrote and give the keyboard back to the card, like leaving insert mode.
+- **In and out**: Cmd+arrows (VS Code's `navigateLeft/Right`) move between the editor and the side bar; `Esc` in the panel goes back to the editor; the built-in `restitution.plan.focus` command opens and focuses the panel. Coming back, the cursor is where you left it. Keys with Cmd or Alt are always left to VS Code.
+- Button tooltips name their key ("Clarify … · m").

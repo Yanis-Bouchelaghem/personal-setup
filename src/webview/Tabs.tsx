@@ -6,6 +6,7 @@ import type { Tab } from "../core/messages";
 import type { Host } from "./host";
 import { TabBar } from "./TabBar";
 import { TabContent } from "./TabContent";
+import { focusFirstInView } from "./useKeyboard";
 import { useUnread } from "./useUnread";
 
 /**
@@ -68,6 +69,15 @@ export function Tabs({
                 diffs={diffs}
                 uncovered={uncovered}
                 host={host}
+                onCycleTab={(by) => {
+                    const at = tabs.indexOf(active);
+                    const next = tabs[(at + by + tabs.length) % tabs.length];
+                    setSelected(next?.id);
+                    // The new tab is drawn on the next frame: keep the cursor.
+                    requestAnimationFrame(() =>
+                        requestAnimationFrame(focusFirstInView),
+                    );
+                }}
             />
         </>
     );

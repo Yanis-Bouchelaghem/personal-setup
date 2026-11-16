@@ -15,22 +15,16 @@ function plural(count: number, word: string): string {
  */
 export function FeedbackBar({
     requests,
+    copied,
     onCopy,
     onReset,
 }: {
     requests: ReviewRequest[];
+    /** It was just copied: the button says so for a moment. */
+    copied: boolean;
     onCopy: () => void;
     onReset: () => void;
 }) {
-    const [copied, setCopied] = useState(false);
-    useEffect(() => {
-        if (!copied) {
-            return undefined;
-        }
-        const timer = setTimeout(() => setCopied(false), 1500);
-        return () => clearTimeout(timer);
-    }, [copied]);
-
     const shown = requests.length > 0;
     const clarify = requests.filter((request) => request.clarify).length;
     const comments = requests.filter((request) => request.comment).length;
@@ -73,10 +67,8 @@ export function FeedbackBar({
                 <button
                     className={`primary-btn${copied ? " copied" : ""}`}
                     type="button"
-                    onClick={() => {
-                        onCopy();
-                        setCopied(true);
-                    }}
+                    title="Copy for agent · Y"
+                    onClick={onCopy}
                 >
                     <SwapLabel
                         texts={["Copy for agent", "Copied!"]}
@@ -86,6 +78,19 @@ export function FeedbackBar({
             </div>
         </>
     );
+}
+
+/** "Copied!" for a moment after copying, by click or by key. */
+export function useCopied() {
+    const [copied, setCopied] = useState(false);
+    useEffect(() => {
+        if (!copied) {
+            return undefined;
+        }
+        const timer = setTimeout(() => setCopied(false), 1500);
+        return () => clearTimeout(timer);
+    }, [copied]);
+    return { copied, flash: () => setCopied(true) };
 }
 
 /**

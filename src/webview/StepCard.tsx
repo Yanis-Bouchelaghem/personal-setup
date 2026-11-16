@@ -18,6 +18,7 @@ import {
     WarningIcon,
 } from "./Icons";
 import { Note } from "./Note";
+import { useKeyCommands } from "./useKeyboard";
 import { useLabelsFit } from "./useLabelsFit";
 import { useScrollAnchor } from "./useScrollAnchor";
 import { useSeenOnHover } from "./useSeenOnHover";
@@ -145,6 +146,17 @@ export function StepCard({
             ranges: code.selection,
         });
     const openCode = file && !code.noFile ? openFile : undefined;
+    const toggleClarify = () => onRequestChange(!clarify, comment || undefined);
+
+    useKeyCommands(box, {
+        open: openCode,
+        diff: file && !code.noDiff ? openDiff : undefined,
+        toggle: toggleViewed,
+        fold: viewed ? undefined : toggleViewed,
+        unfold: viewed ? toggleViewed : undefined,
+        clarify: toggleClarify,
+        comment: () => setWriting(true),
+    });
 
     const classes = [
         "card",
@@ -157,6 +169,8 @@ export function StepCard({
         <article
             className={classes.filter(Boolean).join(" ")}
             data-step={label}
+            data-nav="card"
+            tabIndex={-1}
             ref={box}
             {...hover}
             onClick={(event) => {
@@ -184,7 +198,9 @@ export function StepCard({
                     type="button"
                     aria-expanded={open}
                     title={
-                        viewed ? "Viewed (click to unfold)" : "Mark as viewed"
+                        viewed
+                            ? "Viewed (click to unfold) · za"
+                            : "Mark as viewed · zc"
                     }
                     onClick={toggleViewed}
                 >
@@ -206,13 +222,11 @@ export function StepCard({
                     <IconButton
                         label={
                             clarify
-                                ? "Marked for clarification (click to unmark)"
-                                : "Clarify: ask the agent to explain this step in smaller steps"
+                                ? "Marked for clarification (click to unmark) · m"
+                                : "Clarify: ask the agent to explain this step in smaller steps · m"
                         }
                         pressed={clarify}
-                        onClick={() =>
-                            onRequestChange(!clarify, comment || undefined)
-                        }
+                        onClick={toggleClarify}
                         text="Clarify"
                     >
                         <ClarifyIcon />
@@ -224,7 +238,7 @@ export function StepCard({
                 {file && (
                     <span className="actions open-actions">
                         <IconButton
-                            label="Open the diff in the editor"
+                            label="Open the diff in the editor · gd"
                             onClick={openDiff}
                             text="Diff"
                             unavailable={code.noDiff}
@@ -232,7 +246,7 @@ export function StepCard({
                             <DiffIcon />
                         </IconButton>
                         <IconButton
-                            label="Open the file, with the changes selected"
+                            label="Open the file, with the changes selected · gf"
                             onClick={openFile}
                             text="File"
                             unavailable={code.noFile}
@@ -270,7 +284,7 @@ export function StepCard({
                         <button
                             className="icon-btn comment-btn"
                             type="button"
-                            title="Ask a question, or request a change"
+                            title="Ask a question, or request a change · i"
                             onClick={() => setWriting(true)}
                         >
                             <CommentIcon />
@@ -287,6 +301,9 @@ export function StepCard({
                         focus={writing}
                         onSave={(text) => onRequestChange(clarify, text)}
                         onDone={() => setWriting(false)}
+                        onLeave={() =>
+                            box.current?.focus({ preventScroll: true })
+                        }
                     />
                 </div>
             )}

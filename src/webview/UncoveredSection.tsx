@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import type { Uncovered } from "../core/coverage";
 import { changedRanges } from "../core/diff";
@@ -7,6 +7,7 @@ import { Collapse } from "./Collapse";
 import { DiffView } from "./DiffView";
 import { ChevronIcon, DiffIcon, FileIcon, IconButton } from "./Icons";
 import { FilePath } from "./StepCard";
+import { useKeyCommands } from "./useKeyboard";
 
 /** How many changed lines (added or removed) these entries hold. */
 export function countChanged(entries: readonly Uncovered[]): number {
@@ -35,6 +36,12 @@ export function UncoveredSection({
     onToggle: () => void;
     onOpenRequest: (request: OpenRequest) => void;
 }) {
+    const toggle = useRef<HTMLButtonElement>(null);
+    useKeyCommands(toggle, {
+        toggle: onToggle,
+        fold: open ? onToggle : undefined,
+        unfold: open ? undefined : onToggle,
+    });
     if (entries.length === 0) {
         return null;
     }
@@ -48,6 +55,8 @@ export function UncoveredSection({
                 <button
                     className="goal-toggle"
                     type="button"
+                    data-nav="goal"
+                    ref={toggle}
                     aria-expanded={open}
                     onClick={onToggle}
                 >
@@ -93,6 +102,14 @@ function UncoveredFile({
     const openDiff = () =>
         onOpenRequest({ type: "openDiff", file: entry.file, ranges });
     const canOpen = entry.status !== "deleted";
+    const card = useRef<HTMLElement>(null);
+    useKeyCommands(card, {
+        open: canOpen ? openFile : undefined,
+        diff: entry.status === "modified" ? openDiff : undefined,
+        toggle: () => setOpen(!open),
+        fold: () => setOpen(false),
+        unfold: () => setOpen(true),
+    });
     const classes = [
         "card",
         "glass",
@@ -103,6 +120,9 @@ function UncoveredFile({
     return (
         <article
             className={classes.filter(Boolean).join(" ")}
+            data-nav="card"
+            tabIndex={-1}
+            ref={card}
             onClick={(event) => {
                 if (canOpen && opensFile(event.target)) {
                     openFile();
@@ -133,7 +153,7 @@ function UncoveredFile({
                 <FilePath path={entry.file} />
                 <span className="actions open-actions">
                     <IconButton
-                        label="Open the diff in the editor"
+                        label="Open the diff in the editor · gd"
                         onClick={openDiff}
                         unavailable={
                             entry.status === "modified"
@@ -144,7 +164,7 @@ function UncoveredFile({
                         <DiffIcon />
                     </IconButton>
                     <IconButton
-                        label="Open the file, with these changes selected"
+                        label="Open the file, with these changes selected · gf"
                         onClick={openFile}
                         unavailable={
                             canOpen ? undefined : "This file was deleted"

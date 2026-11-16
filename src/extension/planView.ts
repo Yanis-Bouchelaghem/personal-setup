@@ -55,6 +55,10 @@ export class PlanViewProvider implements vscode.WebviewViewProvider {
                 this.handlers.onCopyFeedback(message.tabId, message.text);
             } else if (message.type === "initRepo") {
                 this.handlers.onInitRepo();
+            } else if (message.type === "focusEditor") {
+                void vscode.commands.executeCommand(
+                    "workbench.action.focusActiveEditorGroup",
+                );
             } else if (message.type === "openUrl") {
                 // Only web pages: the address comes from the agent's file.
                 if (isWebUrl(message.url)) {

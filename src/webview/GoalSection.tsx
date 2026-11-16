@@ -1,4 +1,4 @@
-import { Fragment, useLayoutEffect } from "react";
+import { Fragment, useLayoutEffect, useRef } from "react";
 
 import type { FileDiff } from "../core/diff";
 import type { OpenRequest } from "../core/messages";
@@ -9,6 +9,7 @@ import { Connector } from "./Connector";
 import { ChevronIcon } from "./Icons";
 import { StepCard } from "./StepCard";
 import { UpdatedTag } from "./UpdatedTag";
+import { useKeyCommands } from "./useKeyboard";
 import { useScrollAnchor } from "./useScrollAnchor";
 
 /** Where a step stands for the reader. */
@@ -75,6 +76,17 @@ export function GoalSection({
         return () => observer.disconnect();
     }, [box, head]);
 
+    const toggle = useRef<HTMLButtonElement>(null);
+    const toggleFold = () => {
+        remember();
+        onToggleFold();
+    };
+    useKeyCommands(toggle, {
+        toggle: toggleFold,
+        fold: folded ? undefined : toggleFold,
+        unfold: folded ? toggleFold : undefined,
+    });
+
     const done = steps.filter((state) => state.viewed).length;
     const updated = steps.some((state) => state.updated);
 
@@ -88,12 +100,13 @@ export function GoalSection({
                 <button
                     className="goal-toggle"
                     type="button"
+                    data-nav="goal"
+                    ref={toggle}
                     aria-expanded={!folded}
-                    title={folded ? "Unfold this goal" : "Fold this goal"}
-                    onClick={() => {
-                        remember();
-                        onToggleFold();
-                    }}
+                    title={
+                        folded ? "Unfold this goal · zo" : "Fold this goal · zc"
+                    }
+                    onClick={toggleFold}
                 >
                     <span className="chev" aria-hidden="true">
                         <ChevronIcon />
@@ -136,6 +149,16 @@ export function GoalSection({
                                         );
                                         if (on && others) {
                                             remember();
+                                            // The cursor was in the goal: it stays on its header.
+                                            if (
+                                                box.current?.contains(
+                                                    document.activeElement,
+                                                )
+                                            ) {
+                                                toggle.current?.focus({
+                                                    preventScroll: true,
+                                                });
+                                            }
                                         }
                                         onViewedChange(fingerprint, on);
                                     }}

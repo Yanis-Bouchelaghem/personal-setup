@@ -36,6 +36,10 @@ export function useGoalFolding(allViewed: boolean[]) {
     const toggle = (goal: number) =>
         setManual((current) => new Map(current).set(goal, !isFolded(goal)));
 
+    /** Fold or unfold every goal (zC, zO). */
+    const setAll = (folded: boolean) =>
+        setManual(new Map(allViewed.map((_, goal) => [goal, folded])));
+
     /** Scroll to a goal once it is drawn, and flash it so the eye lands. */
     const reveal = (goal: number) => {
         setManual((current) => new Map(current).set(goal, false));
@@ -53,5 +57,5 @@ export function useGoalFolding(allViewed: boolean[]) {
         );
     };
 
-    return { isFolded, toggle, reveal };
+    return { isFolded, toggle, setAll, reveal };
 }

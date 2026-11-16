@@ -1618,3 +1618,120 @@ body {
     margin-top: 1px;
     color: var(--stale);
 }
+
+/*
+ * Keyboard. The cursor is the focus ring: cards and goal headers take focus
+ * as you move with j/k. Only for the keyboard (:focus-visible), never after
+ * a click.
+ */
+.card:focus {
+    outline: none;
+}
+
+.card:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: 1px;
+}
+
+/* The key list from `?`: rises from the bottom like the feedback bar, over it. */
+.key-help {
+    position: fixed;
+    right: 12px;
+    bottom: 10px;
+    left: 12px;
+    z-index: 5;
+    max-height: calc(100vh - var(--tabs-h) - 24px);
+    overflow-y: auto;
+    padding: 10px 14px;
+    border-radius: var(--radius-lg);
+    background: var(--glass-fill-strong);
+    -webkit-backdrop-filter: blur(16px) saturate(150%);
+    backdrop-filter: blur(16px) saturate(150%);
+    font-size: 12px;
+    opacity: 0;
+    transform: translateY(12px);
+    visibility: hidden;
+    transition:
+        opacity 0.16s ease,
+        transform 0.16s ease,
+        visibility 0s linear 0.16s;
+}
+
+.key-help.shown {
+    opacity: 1;
+    transform: none;
+    visibility: visible;
+    transition:
+        opacity 0.16s ease,
+        transform 0.16s ease;
+}
+
+.key-help h3 {
+    margin: 6px 0 4px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+}
+
+.key-help dl {
+    margin: 0;
+}
+
+.key-row {
+    display: flex;
+    align-items: baseline;
+    gap: 10px;
+    padding: 2px 0;
+}
+
+.key-row dt {
+    display: flex;
+    flex: none;
+    gap: 4px;
+    width: 96px;
+}
+
+.key-row dd {
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.key-help kbd {
+    padding: 0 5px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    background: color-mix(in srgb, var(--fg) 6%, transparent);
+    font-family: var(--vscode-editor-font-family, monospace);
+    font-size: 11px;
+    line-height: 17px;
+}
+
+.key-help-foot {
+    margin: 8px 0 2px;
+    color: var(--muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .key-help {
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+    .key-help {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        background: var(--bg);
+    }
+}
+
+/* Where a goal header lands when the cursor scrolls to it. */
+.goal-head,
+.uncovered-head {
+    scroll-margin-top: calc(var(--tabs-h) + 8px);
+}
