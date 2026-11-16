@@ -1196,32 +1196,6 @@ body {
     line-height: 1.5;
 }
 
-/* A click on the card body opens its code; the diff keeps a normal cursor for selecting. */
-.card.opens {
-    cursor: pointer;
-}
-
-.card.opens .diff {
-    cursor: auto;
-}
-
-/* The same glow as the header's, on the parts of the card a click opens:
-   not over the header, the diff, a button or the comment, which do their own job. */
-.card.opens:not(.collapsed):hover:not(
-        :has(
-            .card-head:hover,
-            .example:hover,
-            .diff:hover,
-            button:hover,
-            .note:hover
-        )
-    ) {
-    background-image: linear-gradient(
-        color-mix(in srgb, var(--fg) 5%, transparent),
-        color-mix(in srgb, var(--fg) 5%, transparent)
-    );
-}
-
 /* Diff and File, at the right end of the header. */
 .card-head .open-actions {
     margin-left: 0;
@@ -1497,20 +1471,6 @@ body {
     padding-bottom: 2px;
 }
 
-/* Uncovered files are cards like steps; here the code itself opens the file. */
-.uncovered-card.opens .diff {
-    cursor: pointer;
-}
-
-.uncovered-card.opens:not(.collapsed):hover:not(
-        :has(.card-head:hover, button:hover)
-    ) {
-    background-image: linear-gradient(
-        color-mix(in srgb, var(--fg) 5%, transparent),
-        color-mix(in srgb, var(--fg) 5%, transparent)
-    );
-}
-
 .uncovered-card .card-head {
     position: static;
 }
@@ -1747,4 +1707,16 @@ body {
 
 .diff.unchanged .sign {
     display: none;
+}
+
+/*
+ * Each block of code is a link to its place in the editor: a pointer, and on
+ * hover the same tint as a header's, over the line colours.
+ */
+.hunk.opens {
+    cursor: pointer;
+}
+
+.hunk.opens:hover .ln {
+    box-shadow: inset 0 0 0 999px color-mix(in srgb, var(--fg) 7%, transparent);
 }

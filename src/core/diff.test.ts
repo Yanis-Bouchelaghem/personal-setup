@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
     changedRanges,
     countLines,
+    hunkSelection,
     parseUnifiedDiff,
     selectLines,
     takeLines,
@@ -184,5 +185,43 @@ describe("changedRanges", () => {
 
     it("has nothing for a step that only removes code", () => {
         expect(changedRanges(selectLines(deleted, [[1, 2]]))).toEqual([]);
+    });
+});
+
+const line = (kind: "add" | "del" | "ctx", at: number) => ({
+    kind,
+    text: "",
+    at,
+    ...(kind === "del" ? { oldNo: at } : { newNo: at }),
+});
+
+const hunk = (lines: ReturnType<typeof line>[]) => ({
+    oldStart: 1,
+    newStart: lines[0]?.at ?? 0,
+    newLines: lines.length,
+    lines,
+});
+
+describe("hunkSelection", () => {
+    it("selects only the changed lines of a block", () => {
+        expect(
+            hunkSelection(
+                hunk([
+                    line("ctx", 4),
+                    line("add", 5),
+                    line("add", 6),
+                    line("ctx", 7),
+                ]),
+            ),
+        ).toEqual([[5, 6]]);
+    });
+
+    it("selects the whole block when nothing new is in it", () => {
+        expect(hunkSelection(hunk([line("ctx", 8), line("ctx", 9)]))).toEqual([
+            [8, 9],
+        ]);
+        expect(hunkSelection(hunk([line("ctx", 3), line("del", 3)]))).toEqual([
+            [3, 3],
+        ]);
     });
 });

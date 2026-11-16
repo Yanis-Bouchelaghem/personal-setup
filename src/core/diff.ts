@@ -215,6 +215,22 @@ export function changedRanges(hunks: Hunk[]): LineRange[] {
     return runs;
 }
 
+/**
+ * What opening one block of code selects: its changed lines, or, when it
+ * changes none on the new side (unchanged code, or only removals), the whole
+ * block.
+ */
+export function hunkSelection(hunk: Hunk): LineRange[] {
+    const changed = changedRanges([hunk]);
+    if (changed.length > 0) {
+        return changed;
+    }
+    const positions = hunk.lines.map((line) => line.at);
+    return positions.length > 0
+        ? [[Math.min(...positions), Math.max(...positions)]]
+        : [];
+}
+
 /** The first `max` lines across hunks, keeping hunk boundaries. */
 export function takeLines(hunks: Hunk[], max: number): Hunk[] {
     const out: Hunk[] = [];

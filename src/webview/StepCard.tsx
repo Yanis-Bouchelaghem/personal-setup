@@ -1,6 +1,11 @@
 import { useState } from "react";
 
-import { changedRanges, type FileDiff, selectLines } from "../core/diff";
+import {
+    changedRanges,
+    type FileDiff,
+    hunkSelection,
+    selectLines,
+} from "../core/diff";
 import type { OpenRequest } from "../core/messages";
 import type { Step } from "../core/restitution";
 import type { ReviewRequest } from "../core/review";
@@ -183,7 +188,6 @@ export function StepCard({
         "glass",
         open ? "" : "collapsed viewed-card",
         updated ? "updated" : "",
-        openCode ? "opens" : "",
     ];
     return (
         <article
@@ -193,11 +197,6 @@ export function StepCard({
             tabIndex={-1}
             ref={box}
             {...hover}
-            onClick={(event) => {
-                if (openCode && opensCode(event.target)) {
-                    openCode();
-                }
-            }}
         >
             {/* The whole header toggles Viewed; its own controls keep their jobs. */}
             <header
@@ -302,6 +301,16 @@ export function StepCard({
                         <DiffView
                             hunks={code.hunks}
                             unchanged={code.unchanged}
+                            onOpen={
+                                openCode
+                                    ? (hunk) =>
+                                          onOpenRequest({
+                                              type: "openFile",
+                                              file: file ?? "",
+                                              ranges: hunkSelection(hunk),
+                                          })
+                                    : undefined
+                            }
                         />
                     )}
                     {file && code.hunks.length === 0 && (
@@ -336,20 +345,4 @@ export function StepCard({
             )}
         </article>
     );
-}
-
-/**
- * A click on the card opens its code, except on the parts with a job of
- * their own (the header, examples, the inline diff, buttons, the comment) or when it
- * ends a text selection.
- */
-function opensCode(target: EventTarget) {
-    if (!(target instanceof Element)) {
-        return false;
-    }
-    const own = target.closest(
-        ".card-head, .example, .diff, button, textarea, a",
-    );
-    const selecting = (window.getSelection()?.toString() ?? "") !== "";
-    return own === null && !selecting;
 }

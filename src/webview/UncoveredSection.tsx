@@ -1,7 +1,7 @@
 import { useRef, useState } from "react";
 
 import type { Uncovered } from "../core/coverage";
-import { changedRanges } from "../core/diff";
+import { changedRanges, hunkSelection } from "../core/diff";
 import type { OpenRequest } from "../core/messages";
 import { Collapse } from "./Collapse";
 import { DiffView } from "./DiffView";
@@ -115,7 +115,6 @@ function UncoveredFile({
         "glass",
         "uncovered-card",
         open ? "" : "collapsed",
-        canOpen ? "opens" : "",
     ];
     return (
         <article
@@ -123,11 +122,6 @@ function UncoveredFile({
             data-nav="card"
             tabIndex={-1}
             ref={card}
-            onClick={(event) => {
-                if (canOpen && opensFile(event.target)) {
-                    openFile();
-                }
-            }}
         >
             {/* The header folds the card; its buttons keep their jobs. */}
             <header
@@ -176,23 +170,21 @@ function UncoveredFile({
             </header>
             <Collapse open={open}>
                 <div className="card-body">
-                    <DiffView hunks={entry.hunks} />
+                    <DiffView
+                        hunks={entry.hunks}
+                        onOpen={
+                            canOpen
+                                ? (hunk) =>
+                                      onOpenRequest({
+                                          type: "openFile",
+                                          file: entry.file,
+                                          ranges: hunkSelection(hunk),
+                                      })
+                                : undefined
+                        }
+                    />
                 </div>
             </Collapse>
         </article>
     );
-}
-
-/**
- * A click on the card opens the file, except on the header and buttons, or
- * when it ends a text selection. Here the code itself opens it too: there is
- * no explanation to click.
- */
-function opensFile(target: EventTarget): boolean {
-    if (!(target instanceof Element)) {
-        return false;
-    }
-    const own = target.closest(".card-head, button, a");
-    const selecting = (window.getSelection()?.toString() ?? "") !== "";
-    return own === null && !selecting;
 }
