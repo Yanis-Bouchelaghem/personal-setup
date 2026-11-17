@@ -18,6 +18,7 @@ describe("parsing", () => {
             viewed: ["a"],
             known: ["a", "b"],
             requests: [{ step: "b", label: "1.2", clarify: true }],
+            resolved: ["x"],
         };
         expect(parseReview(serializeReview(review))).toEqual(review);
     });

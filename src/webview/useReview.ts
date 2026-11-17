@@ -17,7 +17,12 @@ import type { Host } from "./host";
 export function useReview(tab: Tab, host: Host) {
     const saved: Review =
         tab.kind === "ok"
-            ? { viewed: tab.viewed, known: tab.known, requests: tab.requests }
+            ? {
+                  viewed: tab.viewed,
+                  known: tab.known,
+                  requests: tab.requests,
+                  resolved: tab.resolved,
+              }
             : EMPTY_REVIEW;
     const [review, setReview] = useState<Review>(saved);
     const savedKey = JSON.stringify(saved);

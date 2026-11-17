@@ -1,5 +1,6 @@
 import { Fragment, useLayoutEffect, useRef } from "react";
 
+import { type Answer, answersOn } from "../core/answers";
 import type { FileDiff } from "../core/diff";
 import type { OpenRequest } from "../core/messages";
 import type { Goal } from "../core/restitution";
@@ -36,6 +37,10 @@ export function GoalSection({
     onRequestChange,
     onOpenRequest,
     onOpenUrl,
+    answers,
+    fingerprints,
+    resolved,
+    onResolve,
 }: {
     goal: Goal;
     number: number;
@@ -55,6 +60,12 @@ export function GoalSection({
     ) => void;
     onOpenRequest: (request: OpenRequest) => void;
     onOpenUrl: (url: string) => void;
+    /** Every answer on this tab; each step shows its own. */
+    answers: readonly Answer[];
+    /** Every step's fingerprint on this tab, to find answers whose step changed. */
+    fingerprints: ReadonlySet<string>;
+    resolved: ReadonlySet<string>;
+    onResolve: (answer: string, on: boolean) => void;
 }) {
     const { box, head, remember, snap } = useScrollAnchor<
         HTMLElement,
@@ -145,6 +156,14 @@ export function GoalSection({
                                     updated={state?.updated ?? false}
                                     stale={state?.stale ?? false}
                                     request={state?.request}
+                                    answers={answersOn(
+                                        answers,
+                                        fingerprint,
+                                        label,
+                                        fingerprints,
+                                    )}
+                                    resolved={resolved}
+                                    onResolve={onResolve}
                                     onViewedChange={(on) => {
                                         // The last step viewed folds the goal: keep its header where it is.
                                         const others = steps.every(

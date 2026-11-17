@@ -20,6 +20,7 @@ export type KeyCommand =
     | "unfoldAll"
     | "clarify"
     | "comment"
+    | "resolve"
     | "copy"
     | "nextTab"
     | "prevTab"
@@ -75,6 +76,11 @@ export const KEYMAP: readonly {
         rows: [
             { keys: ["i", "c"], command: "comment", does: "Write a comment" },
             { keys: ["m"], command: "clarify", does: "Mark for clarification" },
+            {
+                keys: ["r"],
+                command: "resolve",
+                does: "Resolve the agent's answers",
+            },
             { keys: ["Y"], command: "copy", does: "Copy for agent" },
         ],
     },

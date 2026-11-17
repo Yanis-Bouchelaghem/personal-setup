@@ -23,6 +23,7 @@ describe("tabIds", () => {
             tabIds([
                 "a.json",
                 "a.review.json",
+                "a.answers.json",
                 "b.json.123.tmp",
                 ".c.json",
                 "notes.txt",

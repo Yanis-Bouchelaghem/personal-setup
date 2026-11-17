@@ -138,10 +138,10 @@ export const FEEDBACK_GUIDE = `# Handling the user's review
 The user read the restitution below and pasted their review: a list of steps by label ("3.1"), each with "clarify", a comment in quotes, or both. Labels refer to the restitution as it is below.
 
 - "clarify": the user did not follow that step at its current grain. Replace it with several smaller steps, in the same place in the same goal, split by change: each smaller step shows only the lines of its own change (with a little context), says what that change does and why, and continues the sentence after a connector word. The first of them keeps the original step's connector.
-- A comment: the user's question or request about that step. Answer questions in your reply. If it asks for a change to the code, make the change, then make the step (or new steps) match it.
+- A comment: the user's question or request about that step. If it asks for a change to the code, make the change, then make the step (or new steps) match it.
 
 Then:
 1. Change only what the review is about: any step you change or add is shown to the user as updated, so leave the others alone.
 2. Call restitution_edit with "id" set to the id below: "replace" each clarified step with its smaller steps, and "set" or "replace" the steps a comment made you change. Steps you do not mention stay as they were, and stay read for the user.
-3. In your reply, answer the comments that were questions, briefly.
+3. Answer EVERY comment with restitution_answer (same "id"): the user's comment word for word, the label of the step it is about as it is after your edits, and your answer. A question gets its answer; a change request gets what you changed and where. It shows under their comment in the panel, so they never lose track of it. Your chat reply then only needs a one-line summary.
 `;

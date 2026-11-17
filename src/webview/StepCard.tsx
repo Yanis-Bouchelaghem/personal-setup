@@ -1,5 +1,6 @@
 import { useState } from "react";
 
+import type { Answer } from "../core/answers";
 import {
     changedRanges,
     type FileDiff,
@@ -24,6 +25,7 @@ import {
     WarningIcon,
 } from "./Icons";
 import { Note } from "./Note";
+import { Thread } from "./Thread";
 import { useKeyCommands } from "./useKeyboard";
 import { useLabelsFit } from "./useLabelsFit";
 import { useScrollAnchor } from "./useScrollAnchor";
@@ -110,6 +112,9 @@ export function StepCard({
     updated,
     stale,
     request,
+    answers,
+    resolved,
+    onResolve,
     onViewedChange,
     onSeen,
     onOpenRequest,
@@ -128,6 +133,11 @@ export function StepCard({
     stale: boolean;
     /** What the reader asks the agent about this step, if anything. */
     request: ReviewRequest | undefined;
+    /** The agent's answers to comments on this step. */
+    answers: readonly Answer[];
+    /** Which answers the reader resolved (by id). */
+    resolved: ReadonlySet<string>;
+    onResolve: (answer: string, on: boolean) => void;
     onViewedChange: (viewed: boolean) => void;
     /** The reader has looked at this updated step: clear its mark. */
     onSeen: () => void;
@@ -181,7 +191,16 @@ export function StepCard({
         unfold: viewed ? toggleViewed : undefined,
         clarify: toggleClarify,
         comment: () => setWriting(true),
+        resolve: () =>
+            answers
+                .filter((answer) => !resolved.has(answer.id))
+                .forEach((answer) => onResolve(answer.id, true)),
     });
+    // Open answers show even on a folded step, like a comment; resolved
+    // ones only when it is open.
+    const threads = answers.filter(
+        (answer) => open || !resolved.has(answer.id),
+    );
 
     const classes = [
         "card",
@@ -329,6 +348,18 @@ export function StepCard({
                     )}
                 </div>
             </Collapse>
+            {threads.length > 0 && (
+                <div className="card-threads">
+                    {threads.map((answer) => (
+                        <Thread
+                            key={answer.id}
+                            answer={answer}
+                            resolved={resolved.has(answer.id)}
+                            onResolve={(on) => onResolve(answer.id, on)}
+                        />
+                    ))}
+                </div>
+            )}
             {/* A comment stays visible even on a folded step, without its code. */}
             {(writing || comment) && (
                 <div className="card-note">

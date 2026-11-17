@@ -1,3 +1,4 @@
+import type { Answer } from "./answers";
 import type { FileDiff, LineRange } from "./diff";
 import type { Restitution } from "./restitution";
 import type { ReviewAction, ReviewRequest } from "./review";
@@ -19,6 +20,10 @@ export type Tab =
           known?: string[];
           /** What the reader asks the agent, still open. */
           requests: ReviewRequest[];
+          /** The agent's answers to the reader's comments. */
+          answers: Answer[];
+          /** The answers the reader resolved (by id). */
+          resolved: string[];
       }
     | {
           kind: "error";

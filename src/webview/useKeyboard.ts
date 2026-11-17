@@ -23,6 +23,7 @@ const PLACE_COMMANDS: ReadonlySet<string> = new Set<KeyCommand>([
     "unfold",
     "clarify",
     "comment",
+    "resolve",
 ]);
 
 const MODIFIERS = new Set(["Shift", "Control", "Meta", "Alt"]);

@@ -4,10 +4,16 @@ import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
 import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
 import * as z from "zod";
 
+import { pinAnswers } from "../core/answers";
 import { applyEdits, EditSchema, outline } from "../core/edit";
 import { FEEDBACK_GUIDE, GUIDE, SERVER_INSTRUCTIONS } from "../core/guide";
-import { parseRestitution, RestitutionSchema } from "../core/restitution";
+import {
+    parseRestitution,
+    type Restitution,
+    RestitutionSchema,
+} from "../core/restitution";
 import { findGitRoot } from "../node/gitRoot";
+import { addAnswers } from "../node/store/answers";
 import { newTabId, tabFile } from "../node/store/paths";
 import { submitRestitution } from "../node/submit";
 
@@ -32,6 +38,24 @@ const text = (message: string, isError = false) => ({
     content: [{ type: "text" as const, text: message }],
     isError,
 });
+
+/** The restitution `id` as saved, or why it can't be read. */
+async function readSaved(
+    root: string,
+    id: string,
+): Promise<{ ok: true; value: Restitution } | { ok: false }> {
+    const saved = await readFile(tabFile(root, id), "utf8").catch(
+        () => undefined,
+    );
+    const parsed = saved === undefined ? undefined : parseRestitution(saved);
+    return parsed?.ok ? parsed : { ok: false };
+}
+
+const unreadable = (id: string) =>
+    text(
+        `There is no readable restitution "${id}" (it may have been closed). Submit it again with restitution_submit.`,
+        true,
+    );
 
 server.registerTool(
     "restitution_guide",
@@ -100,16 +124,9 @@ server.registerTool(
                 true,
             );
         }
-        const current = await readFile(tabFile(root, target), "utf8").catch(
-            () => undefined,
-        );
-        const parsed =
-            current === undefined ? undefined : parseRestitution(current);
-        if (!parsed?.ok) {
-            return text(
-                `There is no readable restitution "${target}" (it may have been closed). Submit it again with restitution_submit.`,
-                true,
-            );
+        const parsed = await readSaved(root, target);
+        if (!parsed.ok) {
+            return unreadable(target);
         }
         const result = applyEdits(parsed.value, edits);
         if (!result.ok) {
@@ -122,6 +139,69 @@ server.registerTool(
         const report = await submitRestitution(root, target, result.value);
         return text(
             `${report}\n\nThe steps are now:\n${outline(result.value)}`,
+        );
+    },
+);
+
+server.registerTool(
+    "restitution_answer",
+    {
+        description:
+            "Answer the user's comments from their review in their Restitution panel: each answer shows under the comment it answers, on its step, until the user resolves it. Call it after any restitution_edit, with step labels as they are then.",
+        inputSchema: {
+            id: TAB_ID.optional().describe(
+                "The restitution the review is about: the id given in the review.",
+            ),
+            answers: z
+                .array(
+                    z.object({
+                        step: z
+                            .string()
+                            .regex(/^\d+\.\d+$/)
+                            .describe(
+                                'The step to show the answer on, by its label now (after your edits), like "2.1".',
+                            ),
+                        comment: z
+                            .string()
+                            .min(1)
+                            .describe("The user's comment, word for word."),
+                        answer: z
+                            .string()
+                            .min(1)
+                            .describe(
+                                "Your answer: short and plain, in the user's language.",
+                            ),
+                    }),
+                )
+                .min(1),
+        },
+    },
+    async ({ id, answers }) => {
+        const root = repoRoot();
+        if (!root) {
+            return text("Not inside a git repository.", true);
+        }
+        const target = id ?? tabId;
+        if (!target) {
+            return text(
+                "Give the id of the restitution the review is about.",
+                true,
+            );
+        }
+        const parsed = await readSaved(root, target);
+        if (!parsed.ok) {
+            return unreadable(target);
+        }
+        const pinned = pinAnswers(parsed.value, answers, Date.now(), newTabId);
+        if (!pinned.ok) {
+            return text(
+                `Nothing was saved:\n${pinned.errors.map((error) => `- ${error}`).join("\n")}\nThe steps are:\n${outline(parsed.value)}`,
+                true,
+            );
+        }
+        await addAnswers(root, target, pinned.answers);
+        return text(
+            `Shown in the user's panel, under their comments on ${pinned.answers.map((answer) => answer.label).join(", ")}. No need to repeat them in your reply.`,
         );
     },
 );

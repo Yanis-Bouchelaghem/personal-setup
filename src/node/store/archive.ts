@@ -3,7 +3,9 @@ import { mkdir, readFile, stat } from "node:fs/promises";
 import { parseRestitution, tabLabel } from "../../core/restitution";
 import { listNames, moveIfExists, orMissing } from "./files";
 import {
+    answersFile,
     archiveDir,
+    archivedAnswersFile,
     archivedCodeFile,
     archivedReviewFile,
     archivedTabFile,
@@ -25,6 +27,10 @@ export async function archiveTab(gitRoot: string, id: string): Promise<void> {
         archivedReviewFile(gitRoot, id),
     );
     await moveIfExists(codeFile(gitRoot, id), archivedCodeFile(gitRoot, id));
+    await moveIfExists(
+        answersFile(gitRoot, id),
+        archivedAnswersFile(gitRoot, id),
+    );
 }
 
 export async function countClosed(gitRoot: string): Promise<number> {
@@ -80,6 +86,10 @@ export async function restoreTab(gitRoot: string, id: string): Promise<string> {
     await moveIfExists(
         archivedCodeFile(gitRoot, id),
         codeFile(gitRoot, target),
+    );
+    await moveIfExists(
+        archivedAnswersFile(gitRoot, id),
+        answersFile(gitRoot, target),
     );
     return target;
 }

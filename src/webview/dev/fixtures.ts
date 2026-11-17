@@ -208,6 +208,27 @@ const REVIEW = {
             comment: "Does this cover a plugin with no version at all?",
         },
     ],
+    // One answer still open, one the reader resolved (folded).
+    answers: [
+        {
+            id: "ans-1",
+            step: print(0, 0),
+            label: "1.1",
+            comment:
+                "Does this also reject HTTPS URLs with a port, like :8443?",
+            answer: "No: only the protocol is checked, so https://host:8443 is accepted. The port stays whatever the URL says.",
+            at: Date.now() - 60_000,
+        },
+        {
+            id: "ans-2",
+            step: print(1, 1),
+            label: "2.2",
+            comment: "Is the cache shared between gateway clients?",
+            answer: "Yes, it is module-level, so every client in the process reuses the same tokens.",
+            at: Date.now() - 120_000,
+        },
+    ],
+    resolved: ["ans-2"],
 };
 
 /** Existing code a step explains: read from the file, not the diff. */
@@ -266,6 +287,8 @@ export const fixtures: Record<string, ViewState> = {
                 code: {},
                 viewed: [],
                 requests: [],
+                answers: [],
+                resolved: [],
             },
             {
                 kind: "error",
@@ -309,6 +332,8 @@ export const fixtures: Record<string, ViewState> = {
                 code: {},
                 viewed: [],
                 requests: [],
+                answers: [],
+                resolved: [],
             },
             {
                 kind: "ok",
@@ -319,6 +344,8 @@ export const fixtures: Record<string, ViewState> = {
                 code: {},
                 viewed: [],
                 requests: [],
+                answers: [],
+                resolved: [],
             },
         ],
         diffs: {},
@@ -346,6 +373,8 @@ export const fixtures: Record<string, ViewState> = {
             code: {},
             viewed: [],
             requests: [],
+            answers: [],
+            resolved: [],
         })),
         diffs,
         sources,

@@ -1,12 +1,14 @@
 import { readFile, stat } from "node:fs/promises";
 
+import { type Answer, isAnswered } from "../../core/answers";
 import type { Tab } from "../../core/messages";
 import {
     parseRestitution,
     type Restitution,
     tabLabel,
 } from "../../core/restitution";
-import { pendingRequests } from "../../core/review";
+import { pendingRequests, type ReviewRequest } from "../../core/review";
+import { readAnswers } from "./answers";
 import { readCodeSnapshot } from "./code";
 import { ensureRestitutionDir } from "./exclude";
 import { listNames, orMissing, writeAtomically } from "./files";
@@ -32,9 +34,10 @@ async function readTab(gitRoot: string, id: string): Promise<Tab | undefined> {
                 errors: parsed.errors,
             } satisfies Tab;
         }
-        const [review, code] = await Promise.all([
+        const [review, code, answers] = await Promise.all([
             readReview(gitRoot, id),
             readCodeSnapshot(gitRoot, id),
+            readAnswers(gitRoot, id),
         ]);
         return {
             kind: "ok",
@@ -44,9 +47,27 @@ async function readTab(gitRoot: string, id: string): Promise<Tab | undefined> {
             restitution: parsed.value,
             viewed: review.viewed,
             ...(review.known ? { known: review.known } : {}),
-            requests: pendingRequests(review, updatedAt),
+            requests: openRequests(pendingRequests(review, updatedAt), answers),
             code,
+            answers,
+            resolved: review.resolved,
         } satisfies Tab;
+    });
+}
+
+/**
+ * An answered comment moves to its answer, under which the reader sees it;
+ * a "clarify" sent with it stays open until the agent rewrites the step.
+ */
+function openRequests(
+    requests: ReviewRequest[],
+    answers: Answer[],
+): ReviewRequest[] {
+    return requests.flatMap((request) => {
+        if (!isAnswered(request, answers)) {
+            return [request];
+        }
+        return request.clarify ? [{ ...request, comment: undefined }] : [];
     });
 }
 

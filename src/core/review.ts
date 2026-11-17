@@ -24,6 +24,8 @@ const ReviewSchema = z.object({
     known: z.array(z.string()).optional(),
     /** Questions, change requests and steps to clarify, for the agent. */
     requests: z.array(RequestSchema).default([]),
+    /** The agent's answers the reader has resolved (by answer id): folded. */
+    resolved: z.array(z.string()).default([]),
 });
 
 export type ReviewRequest = z.infer<typeof RequestSchema>;
@@ -33,9 +35,10 @@ export type Review = {
     /** `undefined` until the first look: then everything there counts as known. */
     known?: string[];
     requests: ReviewRequest[];
+    resolved: string[];
 };
 
-export const EMPTY_REVIEW: Review = { viewed: [], requests: [] };
+export const EMPTY_REVIEW: Review = { viewed: [], requests: [], resolved: [] };
 
 /** Tolerant: a missing or damaged file is an empty review. */
 export function parseReview(text: string): Review {
@@ -44,8 +47,10 @@ export function parseReview(text: string): Review {
         if (!parsed.success) {
             return EMPTY_REVIEW;
         }
-        const { viewed, known, requests } = parsed.data;
-        return known ? { viewed, known, requests } : { viewed, requests };
+        const { viewed, known, requests, resolved } = parsed.data;
+        return known
+            ? { viewed, known, requests, resolved }
+            : { viewed, requests, resolved };
     } catch {
         return EMPTY_REVIEW;
     }
@@ -71,6 +76,8 @@ export type ReviewAction =
       }
     /** The requests were copied for the agent at `at`. */
     | { type: "sent"; at: number }
+    /** Resolve an answer (fold it away), or open it again. */
+    | { type: "resolve"; answer: string; on: boolean }
     /** Drop every request. */
     | { type: "reset" };
 
@@ -121,6 +128,13 @@ export function applyReviewAction(
     }
     if (action.type === "request") {
         return { ...review, requests: withRequest(review.requests, action) };
+    }
+    if (action.type === "resolve") {
+        const resolved = review.resolved.filter((id) => id !== action.answer);
+        return {
+            ...review,
+            resolved: action.on ? [...resolved, action.answer] : resolved,
+        };
     }
     if (action.type === "sent") {
         const sentAt = action.at;

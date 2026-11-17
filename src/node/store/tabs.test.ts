@@ -3,7 +3,10 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
+import { stepFingerprint } from "../../core/fingerprint";
+import { addAnswers } from "./answers";
 import { restitutionDir } from "./paths";
+import { updateReview } from "./review";
 import { readTabs, writeRestitution } from "./tabs";
 import { restitutionFor, testRepo } from "./testRepo";
 
@@ -50,5 +53,41 @@ describe("tabs", () => {
         await expect(
             writeRestitution(testRepo(), "../evil", restitutionFor("a.ts")),
         ).rejects.toThrow();
+    });
+
+    it("moves an answered comment to its answer, keeping a clarify open", async () => {
+        const dir = testRepo();
+        const restitution = restitutionFor("a.ts");
+        await writeRestitution(dir, "t", restitution);
+        const step = stepFingerprint(restitution.goals[0]!.steps[0]!);
+        await updateReview(dir, "t", {
+            type: "request",
+            step,
+            label: "1.1",
+            clarify: true,
+            comment: "Why here?",
+        });
+        await updateReview(dir, "t", { type: "sent", at: Date.now() + 1000 });
+        await addAnswers(dir, "t", [
+            {
+                id: "a1",
+                step,
+                label: "1.1",
+                comment: "Why here?",
+                answer: "Because.",
+                at: Date.now() + 2000,
+            },
+        ]);
+
+        const [tab] = await readTabs(dir);
+        if (tab?.kind !== "ok") {
+            throw new Error("expected a tab");
+        }
+        expect(tab.answers.map((answer) => answer.answer)).toEqual([
+            "Because.",
+        ]);
+        expect(tab.requests).toEqual([
+            expect.objectContaining({ clarify: true, comment: undefined }),
+        ]);
     });
 });

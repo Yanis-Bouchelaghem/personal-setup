@@ -1720,3 +1720,92 @@ body {
 .hunk.opens:hover .ln {
     box-shadow: inset 0 0 0 999px color-mix(in srgb, var(--fg) 7%, transparent);
 }
+
+/*
+ * The agent's answers, under the comment they answer: a quiet block with
+ * "You" and "Answer", resolved with a click; resolved ones fold to a line.
+ */
+.card-threads {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding-bottom: 12px;
+}
+
+.thread {
+    padding: 8px 10px 4px;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    background: color-mix(in srgb, var(--fg) 4%, transparent);
+}
+
+.thread p {
+    margin: 0 0 6px;
+    line-height: 1.45;
+    overflow-wrap: anywhere;
+}
+
+.thread .who {
+    display: block;
+    margin-bottom: 1px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.thread-q {
+    color: var(--muted);
+}
+
+.thread-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 4px;
+}
+
+.thread-actions .text-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    margin: 0 -6px 0 0;
+    font-size: 12px;
+}
+
+.thread-actions svg,
+.thread-folded svg {
+    flex: none;
+    width: 14px;
+    height: 14px;
+}
+
+.thread-folded {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
+    min-width: 0;
+    padding: 4px 8px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
+    color: var(--muted);
+    font: inherit;
+    font-size: 12px;
+    text-align: left;
+    cursor: pointer;
+}
+
+.thread-folded:hover {
+    background: color-mix(in srgb, var(--fg) 5%, transparent);
+}
+
+.thread-folded:focus-visible {
+    outline: 1px solid var(--accent);
+}
+
+.thread-folded-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}

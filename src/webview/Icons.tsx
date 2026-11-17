@@ -159,3 +159,12 @@ export function WarningIcon() {
         </Icon>
     );
 }
+
+/** A check mark: resolved. */
+export function CheckIcon() {
+    return (
+        <Icon>
+            <path d="M3 8.5 6.5 12 13 4.5" />
+        </Icon>
+    );
+}

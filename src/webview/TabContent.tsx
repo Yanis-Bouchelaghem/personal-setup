@@ -146,6 +146,10 @@ export function TabContent({
         );
     }
     const { restitution } = tab;
+    const fingerprints = new Set(
+        states.flat().map((state) => state.fingerprint),
+    );
+    const resolved = new Set(review.resolved);
 
     return (
         <>
@@ -186,6 +190,12 @@ export function TabContent({
                     }
                     onOpenRequest={(request) => host.send(request)}
                     onOpenUrl={(url) => host.send({ type: "openUrl", url })}
+                    answers={tab.answers}
+                    fingerprints={fingerprints}
+                    resolved={resolved}
+                    onResolve={(answer, on) =>
+                        act({ type: "resolve", answer, on })
+                    }
                 />
             ))}
             <UncoveredSection
