@@ -27,7 +27,7 @@ Leave "id" out, except when you update an existing restitution after the user's 
   - Choose what the reader needs to follow the step: the changed lines and the few lines of unchanged code around them that make them readable. Use several ranges when a step touches separate places, and keep each range as small as it can be.
   - A removed line has no number any more: it sits with the line just before it, so include that line. For a deleted file, use the line numbers it had before.
 - A step can also point at code that did not change: existing code the change relies on, or that the reader must see to follow it. The card shows those lines as they are now, labelled "Unchanged code". Mix both freely: put a step on existing code in the middle of a goal, right where the reader needs it (the function a new call goes through, the type a change must fit).
-- When the user asks you to explain existing code rather than a change of yours, the restitution IS the explanation: one goal per question they asked, steps that walk through the code in the order it runs. The changed-lines report doesn't apply then.
+- When the user's request is to explain existing code (not a change of yours), the restitution IS the explanation: goals come from what they asked to understand, in their words, like any request, and steps walk through the code in the order it runs. The changed-lines report doesn't apply then. This is about their request only: a review of your restitution is handled with restitution_feedback, never by restructuring.
 - Every changed line must be shown by some step. The tool saves your restitution, then lists the changed lines no step shows and the steps whose lines hold no change. Treat that as a hint, not a verdict: fix what is really wrong with restitution_edit.
 - The card shows exactly those lines. When the reader opens the step in their editor, the changed lines among them are selected (the unchanged context around them is not), so show enough context to be readable and let the selection point at what changed.
 - Your restitution is one tab in the user's panel (label names it, otherwise the request does). Submitting again in this session replaces your tab; other agents' tabs are never touched.
@@ -139,6 +139,8 @@ The user read the restitution below and pasted their review: a list of steps by 
 
 - "clarify": the user did not follow that step at its current grain. Replace it with several smaller steps, in the same place in the same goal, split by change: each smaller step shows only the lines of its own change (with a little context), says what that change does and why, and continues the sentence after a connector word. The first of them keeps the original step's connector.
 - A comment: the user's question or request about that step. If it asks for a change to the code, make the change, then make the step (or new steps) match it.
+
+Comments are not a new outline: never add goals for them or reorganise the restitution around them. Each one gets an answer, and changes only the step it is about (when it asks for a change).
 
 Then:
 1. Change only what the review is about: any step you change or add is shown to the user as updated, so leave the others alone.
