@@ -30,6 +30,14 @@ const AnswersSchema = z.object({
 
 export type Answer = z.infer<typeof AnswerSchema>;
 
+/**
+ * How an answer goes in the review's `known` list, beside step fingerprints:
+ * one the reader has seen is no longer new.
+ */
+export function answerKey(id: string): string {
+    return `answer:${id}`;
+}
+
 /** Tolerant: a missing or damaged file is no answers. */
 export function parseAnswers(text: string): Answer[] {
     try {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 
+import { type Answer, answerKey, answersOn } from "../core/answers";
 import type { Uncovered } from "../core/coverage";
 import type { FileDiff } from "../core/diff";
 import { feedbackPrompt } from "../core/feedback";
@@ -13,6 +14,7 @@ import type { Tab } from "../core/messages";
 import type { Restitution } from "../core/restitution";
 import type { Review } from "../core/review";
 import type { SourceLines } from "../core/source";
+import { ChangesPill } from "./ChangesPill";
 import { ErrorList } from "./ErrorList";
 import { FeedbackBar, useCopied } from "./FeedbackBar";
 import { GoalSection, type StepState } from "./GoalSection";
@@ -23,7 +25,7 @@ import { Overview } from "./Overview";
 import { scrollToElement } from "./scrollTo";
 import { countChanged, UncoveredSection } from "./UncoveredSection";
 import { useGoalFolding } from "./useGoalFolding";
-import { useKeyboard } from "./useKeyboard";
+import { jumpToChange, useKeyboard } from "./useKeyboard";
 import { useReview } from "./useReview";
 
 /** Where every step stands for the reader, goal by goal. */
@@ -32,28 +34,50 @@ function stepStates(
     diffs: Record<string, FileDiff>,
     review: Review,
     code: Record<string, string>,
+    answers: readonly Answer[],
 ): StepState[][] {
     const viewed = new Set(review.viewed);
     // Before the first look nothing is "updated": it is all new.
     const known = review.known && new Set(review.known);
-    return restitution.goals.map((goal) =>
+    const isNew = (key: string) => known !== undefined && !known.has(key);
+    // Resolving an answer means you read it.
+    const resolved = new Set(review.resolved);
+    const fingerprints = new Set(
+        restitution.goals.flatMap((goal) => goal.steps.map(stepFingerprint)),
+    );
+    return restitution.goals.map((goal, g) =>
         goal.steps
-            .map((step) => ({
+            .map((step, s) => ({
                 step,
                 fingerprint: stepFingerprint(step),
+                label: `${g + 1}.${s + 1}`,
             }))
-            .map(({ step, fingerprint }) => ({
-                fingerprint,
-                viewed: viewed.has(fingerprint),
-                updated: known !== undefined && !known.has(fingerprint),
-                stale: isStale(
-                    code[fingerprint],
-                    codeDigest(stepHunks(step, diffs)),
-                ),
-                request: review.requests.find(
-                    (request) => request.step === fingerprint,
-                ),
-            })),
+            .map(({ step, fingerprint, label }) => {
+                const on = answersOn(answers, fingerprint, label, fingerprints);
+                const newAnswers = on
+                    .filter(
+                        (answer) =>
+                            !resolved.has(answer.id) &&
+                            isNew(answerKey(answer.id)),
+                    )
+                    .map((answer) => answer.id);
+                const changed = isNew(fingerprint);
+                return {
+                    fingerprint,
+                    viewed: viewed.has(fingerprint),
+                    updated: changed || newAnswers.length > 0,
+                    changed,
+                    answers: on,
+                    newAnswers,
+                    stale: isStale(
+                        code[fingerprint],
+                        codeDigest(stepHunks(step, diffs)),
+                    ),
+                    request: review.requests.find(
+                        (request) => request.step === fingerprint,
+                    ),
+                };
+            }),
     );
 }
 
@@ -80,7 +104,7 @@ export function TabContent({
     const { review, act, copy } = useReview(tab, host);
     const states =
         tab.kind === "ok"
-            ? stepStates(tab.restitution, diffs, review, tab.code)
+            ? stepStates(tab.restitution, diffs, review, tab.code, tab.answers)
             : [];
     const folding = useGoalFolding(
         states.map((goal) => goal.every((state) => state.viewed)),
@@ -92,7 +116,10 @@ export function TabContent({
         if (firstLook) {
             act({
                 type: "known",
-                steps: states.flat().map((state) => state.fingerprint),
+                steps: [
+                    ...states.flat().map((state) => state.fingerprint),
+                    ...tab.answers.map((answer) => answerKey(answer.id)),
+                ],
             });
         }
     }, [firstLook]);
@@ -146,10 +173,25 @@ export function TabContent({
         );
     }
     const { restitution } = tab;
-    const fingerprints = new Set(
-        states.flat().map((state) => state.fingerprint),
-    );
     const resolved = new Set(review.resolved);
+    // Seeing a step sees what is new on it: the step and its answers.
+    const byPrint = new Map(
+        states.flat().map((state) => [state.fingerprint, state]),
+    );
+    const seen = (fingerprint: string) =>
+        act({
+            type: "known",
+            steps: [
+                fingerprint,
+                ...(byPrint.get(fingerprint)?.newAnswers.map(answerKey) ?? []),
+            ],
+        });
+    const flat = states.flat();
+    const changedSteps = flat.filter((state) => state.changed).length;
+    const newAnswers = flat.reduce(
+        (n, state) => n + state.newAnswers.length,
+        0,
+    );
 
     return (
         <>
@@ -181,17 +223,18 @@ export function TabContent({
                     sources={sources}
                     folded={folding.isFolded(index)}
                     onToggleFold={() => folding.toggle(index)}
-                    onViewedChange={(step, on) =>
-                        act({ type: "viewed", step, on })
-                    }
-                    onSeen={(step) => act({ type: "known", steps: [step] })}
+                    onViewedChange={(step, on) => {
+                        act({ type: "viewed", step, on });
+                        if (on) {
+                            seen(step);
+                        }
+                    }}
+                    onSeen={seen}
                     onRequestChange={(step, label, clarify, comment) =>
                         act({ type: "request", step, label, clarify, comment })
                     }
                     onOpenRequest={(request) => host.send(request)}
                     onOpenUrl={(url) => host.send({ type: "openUrl", url })}
-                    answers={tab.answers}
-                    fingerprints={fingerprints}
                     resolved={resolved}
                     onResolve={(answer, on) =>
                         act({ type: "resolve", answer, on })
@@ -209,6 +252,11 @@ export function TabContent({
                 copied={copied.copied}
                 onCopy={copyFeedback}
                 onReset={() => act({ type: "reset" })}
+            />
+            <ChangesPill
+                steps={changedSteps}
+                answers={newAnswers}
+                onNext={() => jumpToChange(1)}
             />
             <KeyHelp shown={help} />
         </>

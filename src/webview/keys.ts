@@ -22,6 +22,8 @@ export type KeyCommand =
     | "comment"
     | "resolve"
     | "copy"
+    | "nextChange"
+    | "prevChange"
     | "nextTab"
     | "prevTab"
     | "help"
@@ -47,6 +49,16 @@ export const KEYMAP: readonly {
             { keys: ["G"], command: "last", does: "Last" },
             { keys: ["ctrl+d"], command: "halfDown", does: "Half a page down" },
             { keys: ["ctrl+u"], command: "halfUp", does: "Half a page up" },
+            {
+                keys: ["]c"],
+                command: "nextChange",
+                does: "Next change or answer",
+            },
+            {
+                keys: ["[c"],
+                command: "prevChange",
+                does: "Previous change or answer",
+            },
             { keys: ["gt"], command: "nextTab", does: "Next tab" },
             { keys: ["gT"], command: "prevTab", does: "Previous tab" },
         ],

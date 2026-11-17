@@ -1,6 +1,6 @@
 import { Fragment, useLayoutEffect, useRef } from "react";
 
-import { type Answer, answersOn } from "../core/answers";
+import type { Answer } from "../core/answers";
 import type { FileDiff } from "../core/diff";
 import type { OpenRequest } from "../core/messages";
 import type { Goal } from "../core/restitution";
@@ -18,7 +18,13 @@ import { useScrollAnchor } from "./useScrollAnchor";
 export type StepState = {
     fingerprint: string;
     viewed: boolean;
+    /** Something on it is new to the reader: the step itself, or an answer. */
     updated: boolean;
+    /** The agent changed (or added) the step since the reader last looked. */
+    changed: boolean;
+    /** The agent's answers on it, and those the reader hasn't seen (ids). */
+    answers: Answer[];
+    newAnswers: string[];
     /** Its code changed after it was explained. */
     stale: boolean;
     request: ReviewRequest | undefined;
@@ -37,8 +43,6 @@ export function GoalSection({
     onRequestChange,
     onOpenRequest,
     onOpenUrl,
-    answers,
-    fingerprints,
     resolved,
     onResolve,
 }: {
@@ -60,10 +64,6 @@ export function GoalSection({
     ) => void;
     onOpenRequest: (request: OpenRequest) => void;
     onOpenUrl: (url: string) => void;
-    /** Every answer on this tab; each step shows its own. */
-    answers: readonly Answer[];
-    /** Every step's fingerprint on this tab, to find answers whose step changed. */
-    fingerprints: ReadonlySet<string>;
     resolved: ReadonlySet<string>;
     onResolve: (answer: string, on: boolean) => void;
 }) {
@@ -156,12 +156,7 @@ export function GoalSection({
                                     updated={state?.updated ?? false}
                                     stale={state?.stale ?? false}
                                     request={state?.request}
-                                    answers={answersOn(
-                                        answers,
-                                        fingerprint,
-                                        label,
-                                        fingerprints,
-                                    )}
+                                    answers={state?.answers ?? []}
                                     resolved={resolved}
                                     onResolve={onResolve}
                                     onViewedChange={(on) => {

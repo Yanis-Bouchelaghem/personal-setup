@@ -54,6 +54,10 @@ export function useKeyboard(handlers: Handlers): void {
             if (command === "pending") {
                 return;
             }
+            if (command === "nextChange" || command === "prevChange") {
+                jumpToChange(command === "nextChange" ? 1 : -1);
+                return;
+            }
             const target = destination(command, current(place.last));
             if (target) {
                 place.last = target;
@@ -93,6 +97,37 @@ export function useKeyboard(handlers: Handlers): void {
             document.removeEventListener("focusin", onFocusIn);
         };
     }, []);
+}
+
+/**
+ * Move the cursor to the next (1) or previous (-1) card with something new on
+ * it, wrapping around; one in a folded goal unfolds it first.
+ */
+export function jumpToChange(direction: 1 | -1): void {
+    const list = [
+        ...document.querySelectorAll<HTMLElement>(".card.updated[data-nav]"),
+    ];
+    const from = document.activeElement?.closest<HTMLElement>("[data-nav]");
+    const target =
+        direction === 1
+            ? ((from && after(list, from)) ?? list[0])
+            : ((from && before(list, from)) ?? list.at(-1));
+    if (!target) {
+        return;
+    }
+    const go = () => {
+        target.focus({ preventScroll: true });
+        follow(target);
+    };
+    const toggle = target
+        .closest(".goal.folded")
+        ?.querySelector<HTMLElement>('[data-nav="goal"]');
+    if (toggle) {
+        toggle.click();
+        requestAnimationFrame(() => requestAnimationFrame(go));
+    } else {
+        go();
+    }
 }
 
 /** Let a place hear the keys meant for it while it has the cursor. */
