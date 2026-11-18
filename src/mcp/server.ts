@@ -13,7 +13,7 @@ import {
     RestitutionSchema,
 } from "../core/restitution";
 import { findGitRoot } from "../node/gitRoot";
-import { addAnswers } from "../node/store/answers";
+import { addAnswers, readAnswers } from "../node/store/answers";
 import { newTabId, tabFile } from "../node/store/paths";
 import { submitRestitution } from "../node/submit";
 
@@ -229,8 +229,19 @@ server.registerTool(
                 true,
             );
         }
+        // A comment can follow up an earlier answer: give the agent those.
+        const earlier = await readAnswers(root, id);
+        const history =
+            earlier.length === 0
+                ? ""
+                : `\n\nYour earlier answers on this restitution (a comment may follow up one of them):\n${earlier
+                      .map(
+                          (answer) =>
+                              `- ${answer.label}: "${answer.comment}" -> "${answer.answer}"`,
+                      )
+                      .join("\n")}`;
         return text(
-            `${FEEDBACK_GUIDE}\nThe id: ${id}\n\nThe restitution:\n${restitution}`,
+            `${FEEDBACK_GUIDE}\nThe id: ${id}\n\nThe restitution:\n${restitution}${history}`,
         );
     },
 );

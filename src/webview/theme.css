@@ -1894,3 +1894,43 @@ body {
         transform: translate(-50%, 0);
     }
 }
+
+/* A conversation: turns one after another, your reply box at the end. */
+.thread-turn + .thread-turn {
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px solid var(--glass-border);
+}
+
+.thread-reply {
+    margin: 2px 0 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--glass-border);
+}
+
+.thread-reply .who {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.thread-reply .note {
+    margin: 0;
+}
+
+.thread-spacer {
+    flex: 1;
+}
+
+.thread-actions .text-btn:first-child {
+    margin-left: -8px;
+}
+
+.thread-count {
+    flex: none;
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 11px;
+}

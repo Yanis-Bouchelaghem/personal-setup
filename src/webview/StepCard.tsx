@@ -12,6 +12,7 @@ import type { Step } from "../core/restitution";
 import type { ReviewRequest } from "../core/review";
 import { type SourceLines, sourceHunks } from "../core/source";
 import { Collapse } from "./Collapse";
+import { Conversation } from "./Conversation";
 import { DiffView } from "./DiffView";
 import { DocLinks } from "./DocLinks";
 import { Example } from "./Example";
@@ -25,7 +26,6 @@ import {
     WarningIcon,
 } from "./Icons";
 import { Note } from "./Note";
-import { Thread } from "./Thread";
 import { useKeyCommands } from "./useKeyboard";
 import { useLabelsFit } from "./useLabelsFit";
 import { useScrollAnchor } from "./useScrollAnchor";
@@ -191,16 +191,29 @@ export function StepCard({
         unfold: viewed ? toggleViewed : undefined,
         clarify: toggleClarify,
         comment: () => setWriting(true),
-        resolve: () =>
-            answers
-                .filter((answer) => !resolved.has(answer.id))
-                .forEach((answer) => onResolve(answer.id, true)),
+        resolve: () => resolveAll(true),
     });
-    // Open answers show even on a folded step, like a comment; resolved
-    // ones only when it is open.
-    const threads = answers.filter(
-        (answer) => open || !resolved.has(answer.id),
-    );
+    const resolveAll = (on: boolean) =>
+        answers
+            .filter((answer) => resolved.has(answer.id) !== on)
+            .forEach((answer) => onResolve(answer.id, on));
+
+    // Once the agent has answered, comments carry on in the conversation.
+    const talking = answers.length > 0;
+    const replying = writing || comment !== "";
+    const note = replying ? (
+        <Note
+            comment={comment}
+            focus={writing}
+            onSave={(text) => onRequestChange(clarify, text)}
+            onDone={() => setWriting(false)}
+            onLeave={() => box.current?.focus({ preventScroll: true })}
+        />
+    ) : undefined;
+    // An open conversation shows even on a folded step, like a comment; a
+    // resolved one only when the step is open.
+    const unresolved = answers.some((answer) => !resolved.has(answer.id));
+    const showTalk = talking && (open || unresolved || replying);
 
     const classes = [
         "card",
@@ -335,7 +348,7 @@ export function StepCard({
                     {file && code.hunks.length === 0 && (
                         <p className="no-diff">{NO_CODE}.</p>
                     )}
-                    {!writing && !comment && (
+                    {!talking && !replying && (
                         <button
                             className="icon-btn comment-btn"
                             type="button"
@@ -348,32 +361,19 @@ export function StepCard({
                     )}
                 </div>
             </Collapse>
-            {threads.length > 0 && (
+            {showTalk && (
                 <div className="card-threads">
-                    {threads.map((answer) => (
-                        <Thread
-                            key={answer.id}
-                            answer={answer}
-                            resolved={resolved.has(answer.id)}
-                            onResolve={(on) => onResolve(answer.id, on)}
-                        />
-                    ))}
-                </div>
-            )}
-            {/* A comment stays visible even on a folded step, without its code. */}
-            {(writing || comment) && (
-                <div className="card-note">
-                    <Note
-                        comment={comment}
-                        focus={writing}
-                        onSave={(text) => onRequestChange(clarify, text)}
-                        onDone={() => setWriting(false)}
-                        onLeave={() =>
-                            box.current?.focus({ preventScroll: true })
-                        }
+                    <Conversation
+                        answers={answers.toSorted((a, b) => a.at - b.at)}
+                        resolved={resolved}
+                        reply={note}
+                        onReply={() => setWriting(true)}
+                        onResolve={resolveAll}
                     />
                 </div>
             )}
+            {/* A comment stays visible even on a folded step, without its code. */}
+            {!talking && note && <div className="card-note">{note}</div>}
         </article>
     );
 }

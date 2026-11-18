@@ -138,7 +138,7 @@ export const FEEDBACK_GUIDE = `# Handling the user's review
 The user read the restitution below and pasted their review: a list of steps by label ("3.1"), each with "clarify", a comment in quotes, or both. Labels refer to the restitution as it is below.
 
 - "clarify": the user did not follow that step at its current grain. Replace it with several smaller steps, in the same place in the same goal, split by change: each smaller step shows only the lines of its own change (with a little context), says what that change does and why, and continues the sentence after a connector word. The first of them keeps the original step's connector.
-- A comment: the user's question or request about that step. If it asks for a change to the code, make the change, then make the step (or new steps) match it.
+- A comment: the user's question or request about that step. If it asks for a change to the code, make the change, then make the step (or new steps) match it. It may follow up one of your earlier answers on that step (listed at the end): answer it in that light, without repeating yourself.
 
 Comments are not a new outline: never add goals for them or reorganise the restitution around them. Each one gets an answer, and changes only the step it is about (when it asks for a change).
 
