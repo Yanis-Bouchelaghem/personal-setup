@@ -12,19 +12,15 @@ function fnv1a(text: string): string {
 }
 
 /**
- * Identity of a step: what the agent wrote (file, lines, words, connector,
- * examples, docs). Anything the agent changes in a step changes it, so the
- * step comes back unviewed and marked as updated; a step the agent leaves
- * alone keeps it, even when the code under it changes (that is a different
- * signal, see `codeDigest`).
+ * Identity of a step: what the reader reads in it (file, words, connector,
+ * examples, docs). Changing any of it brings the step back unviewed and
+ * marked as updated. Line numbers are left out: code changed above a step
+ * shifts them, and the agent re-anchoring it changes nothing the reader
+ * reads. Neither does the code under it changing (a different signal, see
+ * `codeDigest`).
  */
 export function stepFingerprint(step: Step): string {
-    const parts = [
-        step.file ?? "",
-        JSON.stringify(step.lines ?? []),
-        step.why,
-        step.link ?? "then",
-    ];
+    const parts = [step.file ?? "", step.why, step.link ?? "then"];
     // Only when present, so adding these fields changes nothing for others.
     if (step.examples) {
         parts.push(JSON.stringify(step.examples));

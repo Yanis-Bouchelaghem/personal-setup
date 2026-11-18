@@ -32,18 +32,21 @@ const restitution: Restitution = {
 };
 
 describe("stepFingerprint", () => {
-    it("is stable, and changes with anything the agent writes", () => {
+    it("is stable, and changes with anything the reader reads", () => {
         expect(stepFingerprint(step)).toBe(stepFingerprint({ ...step }));
         for (const changed of [
             { ...step, why: "Do it differently." },
             { ...step, link: "so" },
-            { ...step, lines: [[10, 13]] as [number, number][] },
             { ...step, file: "b.ts" },
             { ...step, examples: [{ title: "An example", body: "{}" }] },
             { ...step, docs: [{ title: "Docs", url: "https://example.com" }] },
         ]) {
             expect(stepFingerprint(changed)).not.toBe(stepFingerprint(step));
         }
+        // Lines shift when code changes above the step: not a new step.
+        expect(stepFingerprint({ ...step, lines: [[20, 22]] })).toBe(
+            stepFingerprint(step),
+        );
         // "then" is the default, so writing it out changes nothing.
         expect(stepFingerprint({ ...step, link: "then" })).toBe(
             stepFingerprint(step),
