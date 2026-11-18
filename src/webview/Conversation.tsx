@@ -30,23 +30,27 @@ export function Conversation({
     const done = answers.every((answer) => resolved.has(answer.id));
     const last = answers.at(-1);
     if (done && !reply && !peek && last) {
+        // Folded, you can still carry on: Reply opens it with your box.
         return (
-            <button
-                className="thread-folded"
-                type="button"
-                title="Show the conversation"
-                onClick={() => setPeek(true)}
-            >
-                <CheckIcon />
-                <span className="thread-folded-text">
-                    You asked: {last.comment}
-                </span>
-                {answers.length > 1 && (
-                    <span className="thread-count">
-                        {answers.length} answers
+            <div className="thread-folded-row">
+                <button
+                    className="thread-folded"
+                    type="button"
+                    title="Show the conversation"
+                    onClick={() => setPeek(true)}
+                >
+                    <CheckIcon />
+                    <span className="thread-folded-text">
+                        You asked: {last.comment}
                     </span>
-                )}
-            </button>
+                    {answers.length > 1 && (
+                        <span className="thread-count">
+                            {answers.length} answers
+                        </span>
+                    )}
+                </button>
+                <ReplyButton onReply={onReply} />
+            </div>
         );
     }
     return (
@@ -70,16 +74,7 @@ export function Conversation({
                 </div>
             ) : (
                 <div className="thread-actions">
-                    <button
-                        className="text-btn"
-                        type="button"
-                        title="Reply: ask a follow-up, or request a change · i"
-                        onClick={onReply}
-                    >
-                        <CommentIcon />
-                        Reply
-                    </button>
-                    <span className="thread-spacer" />
+                    <ReplyButton onReply={onReply} />
                     {done ? (
                         <>
                             <button
@@ -99,7 +94,7 @@ export function Conversation({
                         </>
                     ) : (
                         <button
-                            className="text-btn"
+                            className="resolve-btn"
                             type="button"
                             title="Resolve: fold the conversation away · r"
                             onClick={() => onResolve(true)}
@@ -111,5 +106,19 @@ export function Conversation({
                 </div>
             )}
         </div>
+    );
+}
+
+function ReplyButton({ onReply }: { onReply: () => void }) {
+    return (
+        <button
+            className="text-btn reply-btn"
+            type="button"
+            title="Reply: ask a follow-up, or request a change · i"
+            onClick={onReply}
+        >
+            <CommentIcon />
+            Reply
+        </button>
     );
 }

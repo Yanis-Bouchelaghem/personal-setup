@@ -1903,3 +1903,117 @@ body {
     text-overflow: ellipsis;
     white-space: nowrap;
 }
+
+/* Resolve: the one thing to do once you have read the answer, so a real
+   button: a rounded glass pill tinted with the accent. */
+.resolve-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 3px 12px 3px 9px;
+    border: 1px solid color-mix(in srgb, var(--accent) 45%, var(--glass-border));
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 18%, var(--glass-fill));
+    box-shadow:
+        inset 0 1px 0 var(--glass-highlight),
+        0 4px 12px -8px rgb(0 0 0 / 0.5);
+    -webkit-backdrop-filter: blur(8px) saturate(140%);
+    backdrop-filter: blur(8px) saturate(140%);
+    color: var(--fg);
+    font: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease;
+}
+
+.resolve-btn:hover {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 30%, var(--glass-fill));
+}
+
+.resolve-btn:focus-visible {
+    outline: 1px solid var(--accent);
+    outline-offset: 2px;
+}
+
+.resolve-btn svg {
+    flex: none;
+    width: 14px;
+    height: 14px;
+}
+
+.thread-actions {
+    align-items: center;
+    padding-bottom: 4px;
+}
+
+/* A resolved conversation: its line, and Reply beside it. */
+.thread-folded-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+}
+
+.thread-folded-row .thread-folded {
+    flex: 1;
+    width: auto;
+}
+
+.thread-folded-row .reply-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    flex: none;
+    margin: 0;
+    font-size: 12px;
+}
+
+@media (prefers-reduced-transparency: reduce), (forced-colors: active) {
+    .resolve-btn {
+        -webkit-backdrop-filter: none;
+        backdrop-filter: none;
+        background: var(--bg);
+    }
+}
+
+.reply-btn svg {
+    flex: none;
+    width: 14px;
+    height: 14px;
+}
+
+/* A conversation: turns one after another, your reply box at the end. */
+.thread-turn + .thread-turn {
+    margin-top: 4px;
+    padding-top: 8px;
+    border-top: 1px solid var(--glass-border);
+}
+
+.thread-reply {
+    margin: 2px 0 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--glass-border);
+}
+
+.thread-reply .who {
+    display: block;
+    margin-bottom: 4px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.thread-reply .note {
+    margin: 0;
+}
+
+.thread-count {
+    flex: none;
+    margin-left: auto;
+    color: var(--muted);
+    font-size: 11px;
+}
