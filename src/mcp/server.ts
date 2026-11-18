@@ -110,9 +110,16 @@ server.registerTool(
                 .describe(
                     "Applied together; every label and goal number refers to the restitution as it was before these edits.",
                 ),
+            note: z
+                .string()
+                .min(1)
+                .optional()
+                .describe(
+                    "One or two sentences for the user on what you changed in this update and why, shown at the top of their panel.",
+                ),
         },
     },
-    async ({ id, edits }) => {
+    async ({ id, edits, note }) => {
         const root = repoRoot();
         if (!root) {
             return text("Not inside a git repository.", true);
@@ -136,10 +143,11 @@ server.registerTool(
             );
         }
         tabId = target;
-        const report = await submitRestitution(root, target, result.value);
-        return text(
-            `${report}\n\nThe steps are now:\n${outline(result.value)}`,
-        );
+        // The note is about this update only: one from before goes.
+        const { note: _previous, ...rest } = result.value;
+        const updated = note ? { ...rest, note } : rest;
+        const report = await submitRestitution(root, target, updated);
+        return text(`${report}\n\nThe steps are now:\n${outline(updated)}`);
     },
 );
 

@@ -35,6 +35,11 @@ export function stepFingerprint(step: Step): string {
     return fnv1a(parts.join("\0"));
 }
 
+/** How the agent's note on an update goes in the review's `known` list. */
+export function noteKey(note: string): string {
+    return `note:${fnv1a(note)}`;
+}
+
 /** The fingerprint of every step, goal by goal. */
 export function goalFingerprints(restitution: Restitution): string[][] {
     return restitution.goals.map((goal) => goal.steps.map(stepFingerprint));

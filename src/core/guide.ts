@@ -17,9 +17,9 @@ A restitution is a reading guide for the human who asked for the change. They re
 ## How to submit
 
 Call restitution_submit with:
-{ id?, label?, request?, goals: [ { title, ref?, steps: [ { file?, lines?, why, link?, examples?: [ { title, body } ], docs?: [ { title, url } ] } ] } ] }
+{ id?, label?, request?, note?, goals: [ { title, ref?, steps: [ { file?, lines?, why, link?, examples?: [ { title, body } ], docs?: [ { title, url } ] } ] } ] }
 
-Leave "id" out, except when you update an existing restitution after the user's review (restitution_feedback tells you).
+Leave "id" and "note" out, except when you update an existing restitution after the user's review (restitution_feedback tells you). "note" is then one or two sentences on what you changed and why.
 
 - A step that points at code gives BOTH "file" and "lines" (a "which means" step, which only explains, gives neither).
   - "file" is the path relative to the git root.
@@ -40,7 +40,7 @@ restitution_edit changes part of your restitution and leaves every other step ex
 - { "op": "replace", "step": "2.1", "steps": [ ... ] }: several steps to split it, one to rewrite it, none to remove it.
 - { "op": "insert", "after": "2.1", "steps": [ ... ] } (or "before"): add steps.
 - { "op": "setGoal", "goal": 2, "title": "..." }, { "op": "removeGoal", "goal": 2 }, { "op": "addGoal", "goal": { ... }, "after": 1 }.
-If any edit is wrong, nothing is changed and the reply says why. The reply also lists the steps with their new labels. Resubmit the whole restitution only when most of it changes.
+Give "note" too: one or two sentences for the user on what you changed in this update and why ("Split 2.1 into three steps as you asked, and rewrote 3.2 after fixing the null version."). It heads the list of updates at the top of their panel. If any edit is wrong, nothing is changed and the reply says why. The reply also lists the steps with their new labels. Resubmit the whole restitution only when most of it changes.
 
 ## Goals
 
@@ -144,6 +144,6 @@ Comments are not a new outline: never add goals for them or reorganise the resti
 
 Then:
 1. Change only what the review is about: any step you change or add is shown to the user as updated, so leave the others alone.
-2. Call restitution_edit with "id" set to the id below: "replace" each clarified step with its smaller steps, and "set" or "replace" the steps a comment made you change. Steps you do not mention stay as they were, and stay read for the user.
+2. Call restitution_edit with "id" set to the id below, and a "note" saying what you changed and why: "replace" each clarified step with its smaller steps, and "set" or "replace" the steps a comment made you change. Steps you do not mention stay as they were, and stay read for the user.
 3. Answer EVERY comment with restitution_answer (same "id"): the user's comment word for word, the label of the step it is about as it is after your edits, and your answer. A question gets its answer; a change request gets what you changed and where. It shows under their comment in the panel, so they never lose track of it. Your chat reply then only needs a one-line summary.
 `;

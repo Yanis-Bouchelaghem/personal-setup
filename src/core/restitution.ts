@@ -82,6 +82,17 @@ export const RestitutionSchema = z.object({
     /** Short tab name; defaults to the request, then the first goal. */
     label: z.string().min(1).optional(),
     request: z.string().min(1).optional(),
+    /**
+     * Only when updating: what changed in this update and why, in one or two
+     * sentences for the reader. Each update replaces it.
+     */
+    note: z
+        .string()
+        .min(1)
+        .optional()
+        .describe(
+            "Only when updating an existing restitution: one or two sentences for the user on what you changed and why.",
+        ),
     goals: z.array(GoalSchema).min(1),
 });
 

@@ -275,7 +275,11 @@ export const fixtures: Record<string, ViewState> = {
                 id: "a1",
                 label: "Review fixes",
                 updatedAt: ago(1),
-                restitution: { ...many, label: "Review fixes" },
+                restitution: {
+                    ...many,
+                    label: "Review fixes",
+                    note: "Answered your question on 1.1, and rewrote 3.2 so it keeps only the plugins that parse.",
+                },
                 ...REVIEW,
             },
             {
@@ -312,7 +316,11 @@ export const fixtures: Record<string, ViewState> = {
                 id: "a1",
                 label: "Review fixes",
                 updatedAt: ago(1),
-                restitution: { ...many, label: "Review fixes" },
+                restitution: {
+                    ...many,
+                    label: "Review fixes",
+                    note: "Answered your question on 1.1, and rewrote 3.2 so it keeps only the plugins that parse.",
+                },
                 ...REVIEW,
             },
         ],

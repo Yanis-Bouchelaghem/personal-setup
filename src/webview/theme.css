@@ -1811,126 +1811,95 @@ body {
 }
 
 /*
- * What changed since you last looked: a pill in git's "modified" colour,
- * floating at the bottom (above the feedback bar when it shows) while
- * anything is unseen. A click goes to the next change.
+ * Updates to restitution: the agent's note on its last update, then what is
+ * still unseen. Git's "modified" colour, like the rings on the cards it
+ * points at.
  */
-.changes-pill {
-    position: fixed;
-    bottom: 12px;
-    left: 50%;
-    z-index: 4;
+.updates {
+    margin: 0 0 14px;
+    padding: 8px 12px 6px;
+    border: 1px solid var(--updated);
+    border-radius: var(--radius-lg);
+    background: color-mix(in srgb, var(--updated) 9%, transparent);
+}
+
+.updates-head {
     display: flex;
     align-items: center;
-    gap: 10px;
-    max-width: calc(100vw - 32px);
-    padding: 5px 8px 5px 12px;
-    border: 1px solid var(--updated);
-    border-radius: 999px;
-    /* Solid: it floats over code, which must not show through the words. */
-    background: color-mix(in srgb, var(--updated) 16%, var(--bg));
-    box-shadow: var(--glass-shadow);
+    gap: 8px;
+}
+
+.updates-head h2 {
+    flex: 1;
+    min-width: 0;
+    margin: 0;
+    overflow: hidden;
+    color: var(--updated);
+    font-size: 12px;
+    font-weight: 700;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.updates-head .text-btn {
+    margin: 0 -8px 0 0;
+    font-size: 12px;
+}
+
+.updates-note {
+    margin: 4px 0 6px;
+    line-height: 1.45;
+}
+
+.updates-list {
+    margin: 2px -8px 0;
+    padding: 0;
+    list-style: none;
+}
+
+.updates-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    width: 100%;
+    min-width: 0;
+    padding: 3px 8px;
+    border: 0;
+    border-radius: var(--radius-sm);
+    background: transparent;
     color: var(--fg);
     font: inherit;
     font-size: 12px;
-    white-space: nowrap;
+    text-align: left;
     cursor: pointer;
-    opacity: 0;
-    transform: translate(-50%, 12px);
-    visibility: hidden;
-    transition:
-        opacity 0.2s ease,
-        transform 0.28s cubic-bezier(0.2, 0, 0, 1),
-        bottom 0.28s cubic-bezier(0.2, 0, 0, 1),
-        visibility 0s linear 0.28s;
 }
 
-.changes-pill.shown {
-    opacity: 1;
-    transform: translate(-50%, 0);
-    visibility: visible;
-    transition:
-        opacity 0.2s ease,
-        transform 0.28s cubic-bezier(0.2, 0, 0, 1),
-        bottom 0.28s cubic-bezier(0.2, 0, 0, 1);
+.updates-row:hover {
+    background: color-mix(in srgb, var(--updated) 14%, transparent);
 }
 
-.app:has(.feedback-bar.shown) .changes-pill {
-    bottom: 66px;
-}
-
-.changes-pill:hover {
-    background: color-mix(in srgb, var(--updated) 26%, var(--bg));
-}
-
-.changes-pill:focus-visible {
+.updates-row:focus-visible {
     outline: 1px solid var(--accent);
-    outline-offset: 2px;
 }
 
-.changes-text {
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.changes-next {
-    display: inline-flex;
+.updates-label {
     flex: none;
-    align-items: center;
-    gap: 2px;
+    min-width: 26px;
+    color: var(--muted);
+    font-variant-numeric: tabular-nums;
+}
+
+.updates-kind {
+    flex: none;
+    /* Both words take the same room, so the texts after them line up. */
+    min-width: 7.5ch;
     color: var(--updated);
     font-weight: 600;
 }
 
-.changes-next svg {
-    width: 14px;
-    height: 14px;
-}
-
-@media (prefers-reduced-motion: reduce) {
-    .changes-pill,
-    .changes-pill.shown {
-        transform: translate(-50%, 0);
-    }
-}
-
-/* A conversation: turns one after another, your reply box at the end. */
-.thread-turn + .thread-turn {
-    margin-top: 4px;
-    padding-top: 8px;
-    border-top: 1px solid var(--glass-border);
-}
-
-.thread-reply {
-    margin: 2px 0 8px;
-    padding-top: 8px;
-    border-top: 1px solid var(--glass-border);
-}
-
-.thread-reply .who {
-    display: block;
-    margin-bottom: 4px;
-    color: var(--muted);
-    font-size: 11px;
-    font-weight: 600;
-}
-
-.thread-reply .note {
-    margin: 0;
-}
-
-.thread-spacer {
-    flex: 1;
-}
-
-.thread-actions .text-btn:first-child {
-    margin-left: -8px;
-}
-
-.thread-count {
-    flex: none;
-    margin-left: auto;
-    color: var(--muted);
-    font-size: 11px;
+.updates-text {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }

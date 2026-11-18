@@ -62,7 +62,7 @@
         {
           "type": "webview",
           "id": "restitution.plan",
-          "name": "Plan"
+          "name": "Restitution"
         }
       ]
     },

@@ -112,9 +112,13 @@ export function jumpToChange(direction: 1 | -1): void {
         direction === 1
             ? ((from && after(list, from)) ?? list[0])
             : ((from && before(list, from)) ?? list.at(-1));
-    if (!target) {
-        return;
+    if (target) {
+        jumpTo(target);
     }
+}
+
+/** Put the cursor on a card and bring it into view, unfolding its goal first. */
+export function jumpTo(target: HTMLElement): void {
     const go = () => {
         target.focus({ preventScroll: true });
         follow(target);
