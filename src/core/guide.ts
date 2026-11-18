@@ -40,7 +40,7 @@ restitution_edit changes part of your restitution and leaves every other step ex
 - { "op": "replace", "step": "2.1", "steps": [ ... ] }: several steps to split it, one to rewrite it, none to remove it.
 - { "op": "insert", "after": "2.1", "steps": [ ... ] } (or "before"): add steps.
 - { "op": "setGoal", "goal": 2, "title": "..." }, { "op": "removeGoal", "goal": 2 }, { "op": "addGoal", "goal": { ... }, "after": 1 }.
-Give "note" too: one or two sentences for the user on what you changed in this update and why ("Split 2.1 into three steps as you asked, and rewrote 3.2 after fixing the null version."). It heads the list of updates at the top of their panel. If any edit is wrong, nothing is changed and the reply says why. The reply also lists the steps with their new labels. Resubmit the whole restitution only when most of it changes.
+Give "note" too: one or two sentences for the user on what you changed in this update and why. It heads the list of updates at the top of their panel. If any edit is wrong, nothing is changed and the reply says why. The reply also lists the steps with their new labels. Resubmit the whole restitution only when most of it changes.
 
 ## Goals
 
@@ -53,17 +53,15 @@ Goals come from the request, in its words. A goal stands on its own: it could be
 
 Each step is a card. Between two cards of the same goal sits a connector (a word or a few), and the next card's "why" continues after it, so the whole goal reads top to bottom as a single sentence:
 
-  Require https for ADAPTER_APIGEE_URL, so bearer tokens never leave in clear text.       <- step 1, no connector
-  Which means
-  any environment still set to an http:// URL now fails at startup.                       <- step 2, link "which means", no code
-  So
-  say in the README that the URL must be https, so operators switch before deploying.     <- step 3, link "so"
-  Then
-  write the test that rejects an http URL, to catch a regression early.                   <- step 4, link "then"
+  <Action>, so <reason>.                    <- first step: no connector
+  <Connector>
+  <next action>, so <reason>.               <- continues the sentence
+  <Connector>
+  <what that implies for the reader>.       <- a step without code
 
 - "why" is ONE sentence of about 15 words or fewer, shaped action then reason: what was done, then why. Never "Before it did X, now it does Y". A step without code (a consequence, a caveat) says it in one or two short sentences instead.
-- The first step of a goal starts the sentence: capitalised, imperative ("Require https ...").
-- Every other step continues after its connector: start with a lowercase verb ("write the test ...") unless it begins with a name ("GatewayClient now ..."). Read the goal aloud, connector words included. If it does not sound like a normal sentence, rewrite it.
+- The first step of a goal starts the sentence: capitalised, imperative.
+- Every other step continues after its connector: it starts with a lowercase verb, unless it begins with a name. Read the goal aloud, connector words included. If it does not sound like a normal sentence, rewrite it.
 - No background and no "what to check": the reader knows the codebase and the request. Leave out dead ends and your own history.
 
 ## Connectors (the "link" field)
@@ -77,9 +75,9 @@ Suggestions, for common cases:
 - "so": right after such a consequence, the code that deals with it.
 - Anything else that fits: "because", "although", "and since", "to do that", "but", "for example", "which is why", "after that".
 
-Test every link: read the end of the previous card, the link, then this card, aloud. If it does not sound like a sentence someone would say, change the link or reword the step. For instance, after "Mount the health route at the root, so the legacy bridge no longer sees /health.", a caveat does not follow "Which means"; it follows "Although": "Although / legacy's /health also listed the AI Gateway URLs, nothing references them, so dropping them breaks no caller."
+Test every link: read the end of the previous card, the link, then this card, aloud. If it does not sound like a sentence someone would say, change the link or reword the step. A caveat, for instance, reads after "although", not after "which means".
 
-A change that forces another (a new parameter, so the callers change) is worth saying out loud: state the consequence in its own step ("which means / every caller must now pass a timeout"), then the forced change ("so / update the three callers"). The reader then knows why that code changed, not just that it did.
+A change that forces another is worth saying out loud: state the consequence in its own step, then the forced change after it. The reader then knows why that code changed, not just that it did.
 
 Goals have no connectors between them: they are independent.
 
@@ -87,13 +85,13 @@ Goals have no connectors between them: they are independent.
 
 An example is anything concrete that helps the reader understand a step, or get their hands on it, and that the diff does not show. It is shown as monospace text, so it can be data, code or a command. Two kinds matter most:
 
-- data from outside, which the reader cannot see anywhere else: what an external API sends or receives (a Microsoft Graph notification, a webhook body, a gateway error response), a file format, an environment value;
+- data from outside, which the reader cannot see anywhere else: what an external system sends or receives, a file format, an environment value;
 - anything that saves the reader friction in trying the change themselves: the command to run or try it, the request to send to the new endpoint, the config entry that turns the feature on, the command that runs its tests, how to call the new function from outside.
 
 What it produces (CLI output, a log line, the response of the new endpoint) is worth showing too. Be generous with examples that save the reader a search or a guess; do not copy code the diff already shows.
 
 - Put the example on the step it illustrates: the parser of the payload, the schema it is validated against, the function it shows how to call. Its place must make obvious what the example is.
-- "title" is a natural phrase, in the user's language, saying what the example is and where it comes from, so it makes sense on its own: "An example of a plugin the marketplace API could return", "What Microsoft Graph sends us when a new message arrives", "The command to try the new endpoint". Not a label like "Gateway: 503 response".
+- "title" is a natural phrase, in the user's language, saying what the example is and where it comes from, so it makes sense on its own ("What <the system> sends when <event>", "The command to try it"). Not a bare label.
 - "body" is the example itself, verbatim and realistic but short: cut long lists to one or two items with "…", and replace secrets, tokens and personal data with obvious placeholders.
 - The reader sees the title, folded, between the "why" and the code, and opens it on click.
 
@@ -102,7 +100,7 @@ What it produces (CLI output, a log line, the response of the new endpoint) is w
 When a step relies on something specific about how a library, an API, a protocol or a tool behaves, something the reader may not know and the code depends on, point them to the exact place in its documentation where they can read it for themselves. They see the link right under the step's "why", and it opens in their browser.
 
 - Put it on the step whose code relies on that behaviour.
-- "title" is a natural phrase, in the user's language, saying what they will learn there and where: "How Headers.set replaces a header that is already there, whatever its case (MDN)", "Why Graph sends a validation token before the first notification (Microsoft Graph docs)". Not a bare page name.
+- "title" is a natural phrase, in the user's language, saying what they will learn there and where ("How <the behaviour the code relies on> (<source>)"). Not a bare page name.
 - "url" goes straight to the section: the page and its anchor, never the site's home page. Prefer the official documentation. Only give an address you are sure exists; if you are unsure of the anchor, link the page.
 - Use it for behaviour worth checking, not for every library call.
 
@@ -112,21 +110,19 @@ Teach it the way you would to a colleague who has not seen the change: foundatio
 
 ## Example
 
+The shape only: write your own words, about your own change.
+
 {
-  "request": "Retry transient gateway failures",
+  "request": "<the user's request>",
   "goals": [
     {
-      "title": "Retry transient gateway failures",
+      "title": "<a goal, in the request's words>",
       "steps": [
-        { "file": "src/errors.ts", "lines": [[11, 23]], "why": "Add a GatewayError that carries the upstream status, so callers can tell a 5xx from a 4xx.",
-          "examples": [ { "title": "The answer the gateway gives when it is overloaded", "body": "HTTP/1.1 503 Service Unavailable\\n\\n{ \\"error\\": \\"upstream_unavailable\\", \\"retryAfter\\": 2 }" } ] },
-        { "file": "src/gateway/retry.ts", "lines": [[1, 35]], "link": "then", "why": "build withRetry on top of it, retrying only 5xx responses with exponential backoff.",
-          "docs": [ { "title": "Which status codes mean a retry may succeed, and how Retry-After says when (MDN)", "url": "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Retry-After" } ] },
-        { "file": "src/gateway/client.ts", "lines": [[1, 10], [15, 38]], "link": "then", "why": "run json() through withRetry, so every JSON call benefits." },
-        { "link": "which means", "why": "a call that fails with a 5xx now takes up to 7 seconds before the error reaches the caller." },
-        { "file": "src/server.ts", "lines": [[40, 44]], "link": "so", "why": "raise the request timeout to 10 seconds, so the retries can finish." },
-        { "file": "test/retry.test.ts", "lines": [[1, 57]], "link": "then", "why": "write the unit tests to cover what was added." },
-        { "file": "README.md", "lines": [[15, 26]], "link": "then", "why": "describe the retry behaviour, so operators know what to expect." }
+        { "file": "src/a.ts", "lines": [[10, 24]], "why": "<Action>, so <reason>." },
+        { "file": "src/b.ts", "lines": [[3, 3], [40, 46]], "link": "then", "why": "<next action>, so <reason>.",
+          "examples": [ { "title": "<what it is and where it comes from>", "body": "<verbatim, short>" } ],
+          "docs": [ { "title": "<what the reader learns there> (<source>)", "url": "https://docs.example.com/page#section" } ] },
+        { "link": "which means", "why": "<what this implies for the reader>." }
       ]
     }
   ]
