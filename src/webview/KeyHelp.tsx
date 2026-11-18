@@ -30,17 +30,22 @@ export function KeyHelp({ shown }: { shown: boolean }) {
                 </section>
             ))}
             <p className="key-help-foot">
-                Cmd+arrows move between the panel and the editor · ? or Esc to
-                close
+                A count repeats a move (3j) · Cmd+arrows move between the panel
+                and the editor · ? or Esc to close
             </p>
         </aside>
     );
 }
 
+const CAPS: Readonly<Record<string, string>> = {
+    Escape: "Esc",
+    ArrowDown: "↓",
+    ArrowUp: "↑",
+    ArrowLeft: "←",
+    ArrowRight: "→",
+};
+
 /** How a key reads on its cap. */
 function capLabel(key: string): string {
-    if (key === "Escape") {
-        return "Esc";
-    }
-    return key.replace("ctrl+", "Ctrl+");
+    return CAPS[key] ?? key.replace("ctrl+", "Ctrl+");
 }

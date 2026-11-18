@@ -5,6 +5,8 @@ const FOLLOW_MS = 120;
 
 /** The running scroll, so a new one replaces it instead of fighting it. */
 let running = 0;
+/** Where the running scroll is going, so moves made meanwhile add up. */
+let heading: number | undefined;
 
 /** Scroll the page to `y` with an ease-out; instant under reduced motion. */
 function scrollToY(y: number, duration: number): void {
@@ -14,8 +16,10 @@ function scrollToY(y: number, duration: number): void {
         Math.min(y, document.documentElement.scrollHeight - window.innerHeight),
     );
     cancelAnimationFrame(running);
+    heading = end;
     if (matchMedia("(prefers-reduced-motion: reduce)").matches) {
         window.scrollTo(0, end);
+        heading = undefined;
         return;
     }
     const began = performance.now();
@@ -25,9 +29,24 @@ function scrollToY(y: number, duration: number): void {
         window.scrollTo(0, start + (end - start) * eased);
         if (t < 1) {
             running = requestAnimationFrame(step);
+        } else {
+            heading = undefined;
         }
     };
     running = requestAnimationFrame(step);
+}
+
+/**
+ * How much further the page is about to scroll: what a measurement taken now
+ * must allow for, so keys pressed during a scroll build on where it goes.
+ */
+export function scrollAhead(): number {
+    return (heading ?? window.scrollY) - window.scrollY;
+}
+
+/** Scroll by `by` pixels from where the page is heading, quickly. */
+export function scrollLines(by: number): void {
+    scrollToY(window.scrollY + scrollAhead() + by, FOLLOW_MS);
 }
 
 /** Back to the very top: the request and the overview. */
@@ -35,7 +54,8 @@ export function scrollToTop(): void {
     scrollToY(0, JUMP_MS);
 }
 
-function marginTop(element: Element): number {
+/** Where an element sits under the pinned headers when scrolled to. */
+export function marginTop(element: Element): number {
     return parseFloat(getComputedStyle(element).scrollMarginTop) || 0;
 }
 

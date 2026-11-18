@@ -2,33 +2,59 @@ import { describe, expect, it } from "vitest";
 
 import { KEYMAP, keyName, keyReader } from "./keys";
 
+/** What each key read to: a command (with its count when more than one). */
 function readAll(names: string[], gap = 10) {
     const read = keyReader();
-    return names.map((name, index) => read(name, index * gap));
+    return names.map((name, index) => {
+        const result = read(name, index * gap);
+        if (result === undefined || result === "pending") {
+            return result;
+        }
+        return result.count === 1
+            ? result.command
+            : `${result.count}×${result.command}`;
+    });
 }
 
 describe("keyReader", () => {
-    it("reads single keys", () => {
-        expect(readAll(["j", "k", "G", "Y", "?", "Escape", "Enter"])).toEqual([
+    it("reads single keys and arrows", () => {
+        expect(
+            readAll(["j", "ArrowDown", "ArrowLeft", "l", "G", "c", "Escape"]),
+        ).toEqual([
             "next",
-            "prev",
+            "next",
+            "parent",
+            "child",
             "last",
-            "copy",
-            "help",
+            "comment",
             "leave",
-            "open",
         ]);
     });
 
     it("reads two-key sequences", () => {
-        expect(readAll(["g", "g", "z", "c", "g", "T"])).toEqual([
+        expect(readAll(["g", "g", "z", "c", "]", "c"])).toEqual([
             "pending",
             "first",
             "pending",
             "fold",
             "pending",
-            "prevTab",
+            "nextChange",
         ]);
+    });
+
+    it("reads a count before a command, like 3j or 12k", () => {
+        expect(readAll(["3", "j", "1", "2", "k", "j"])).toEqual([
+            "pending",
+            "3×next",
+            "pending",
+            "pending",
+            "12×prev",
+            "next",
+        ]);
+    });
+
+    it("does not start a count with 0", () => {
+        expect(readAll(["0", "j"])).toEqual([undefined, "next"]);
     });
 
     it("drops a sequence that goes nowhere, then reads on", () => {
@@ -39,8 +65,9 @@ describe("keyReader", () => {
         ]);
     });
 
-    it("forgets a sequence left unfinished too long", () => {
+    it("forgets a count or sequence left unfinished too long", () => {
         expect(readAll(["g", "j"], 1500)).toEqual(["pending", "next"]);
+        expect(readAll(["5", "j"], 1500)).toEqual(["pending", "next"]);
     });
 
     it("ignores keys that are not ours", () => {

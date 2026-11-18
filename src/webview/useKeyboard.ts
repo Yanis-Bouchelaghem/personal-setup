@@ -1,7 +1,14 @@
 import { type RefObject, useEffect, useRef } from "react";
 
 import { type KeyCommand, keyName, keyReader } from "./keys";
-import { followElement, scrollToElement, scrollToTop } from "./scrollTo";
+import {
+    followElement,
+    marginTop,
+    scrollAhead,
+    scrollLines,
+    scrollToElement,
+    scrollToTop,
+} from "./scrollTo";
 
 /**
  * Keyboard navigation. The places you move between (goal headers, cards)
@@ -28,6 +35,21 @@ const PLACE_COMMANDS: ReadonlySet<string> = new Set<KeyCommand>([
 
 const MODIFIERS = new Set(["Shift", "Control", "Meta", "Alt"]);
 
+/** Moves a count repeats (`3j`); the rest happen once. */
+const REPEATED: ReadonlySet<KeyCommand> = new Set<KeyCommand>([
+    "next",
+    "prev",
+    "nextGoal",
+    "prevGoal",
+    "halfDown",
+    "halfUp",
+    "nextChange",
+    "prevChange",
+]);
+
+/** How far `j` scrolls through a long card: about three lines. */
+const LINE_STEP = 56;
+
 function isCommand(value: unknown): value is KeyCommand {
     return typeof value === "string" && PLACE_COMMANDS.has(value);
 }
@@ -38,37 +60,47 @@ export function useKeyboard(handlers: Handlers): void {
     latest.current = handlers;
 
     useEffect(() => {
-        const read = keyReader();
+        const reader = keyReader();
         // Where the cursor was, so a fold that hides it doesn't lose your place.
         const place = { last: undefined as HTMLElement | undefined };
 
-        const onKey = (event: KeyboardEvent) => {
-            if (ignored(event)) {
-                return;
-            }
-            const command = read(keyName(event), event.timeStamp);
-            if (command === undefined) {
-                return;
-            }
-            event.preventDefault();
-            if (command === "pending") {
+        const run = (command: KeyCommand) => {
+            const from = current(place.last);
+            if (moveWithin(command, from) || moveInTree(command, from)) {
                 return;
             }
             if (command === "nextChange" || command === "prevChange") {
                 jumpToChange(command === "nextChange" ? 1 : -1);
                 return;
             }
-            const target = destination(command, current(place.last));
+            const target = destination(command, from);
             if (target) {
                 place.last = target;
                 target.focus({ preventScroll: true });
                 show(command, target);
             } else if (PLACE_COMMANDS.has(command)) {
-                current(place.last)?.dispatchEvent(
+                from?.dispatchEvent(
                     new CustomEvent(KEY_EVENT, { detail: command }),
                 );
             } else {
                 latest.current[command]?.();
+            }
+        };
+        const onKey = (event: KeyboardEvent) => {
+            if (ignored(event)) {
+                return;
+            }
+            const read = reader(keyName(event), event.timeStamp);
+            if (read === undefined) {
+                return;
+            }
+            event.preventDefault();
+            if (read === "pending") {
+                return;
+            }
+            const times = REPEATED.has(read.command) ? read.count : 1;
+            for (let n = 0; n < times; n++) {
+                run(read.command);
             }
         };
         // Coming back to the panel: show the cursor where you left it.
@@ -189,6 +221,91 @@ function places(kind?: string): HTMLElement[] {
 function current(last: HTMLElement | undefined): HTMLElement | undefined {
     const focused = document.activeElement?.closest<HTMLElement>("[data-nav]");
     return focused ?? (last?.isConnected ? last : undefined);
+}
+
+/**
+ * `j` and `k` on a card the screen can't hold: move through it a few lines at
+ * a time, like the cursor in a long block, before leaving it. A card scrolled
+ * out of sight comes back first, like vim returning to its cursor. True when
+ * that was the move.
+ */
+function moveWithin(
+    command: KeyCommand,
+    from: HTMLElement | undefined,
+): boolean {
+    if (!from || (command !== "next" && command !== "prev")) {
+        return false;
+    }
+    // Measured where the page is heading, so held keys add up smoothly.
+    const ahead = scrollAhead();
+    const box = from.getBoundingClientRect();
+    const rect = { top: box.top - ahead, bottom: box.bottom - ahead };
+    const bottom = readableBottom();
+    if (rect.bottom < pinnedTop() || rect.top > bottom) {
+        follow(from);
+        return true;
+    }
+    if (from.dataset.nav !== "card") {
+        return false;
+    }
+    const hidden =
+        command === "next" ? rect.bottom - bottom : marginTop(from) - rect.top;
+    if (hidden <= 4) {
+        return false;
+    }
+    const by = Math.min(LINE_STEP, hidden);
+    scrollLines(command === "next" ? by : -by);
+    return true;
+}
+
+/** Hand a command to a place, as if its key was pressed there. */
+function tell(target: HTMLElement, detail: KeyCommand): void {
+    target.dispatchEvent(new CustomEvent(KEY_EVENT, { detail }));
+}
+
+/**
+ * `h` and `l`, like a file tree: out of a card to its goal, then folding it;
+ * into a goal (unfolding it) to its first step, or unfolding a folded card.
+ * True when that was the move.
+ */
+function moveInTree(
+    command: KeyCommand,
+    from: HTMLElement | undefined,
+): boolean {
+    if (!from || (command !== "parent" && command !== "child")) {
+        return false;
+    }
+    const isGoal = from.dataset.nav === "goal";
+    if (command === "parent") {
+        const goal = from
+            .closest("section")
+            ?.querySelector<HTMLElement>('[data-nav="goal"]');
+        if (isGoal) {
+            tell(from, "fold");
+        } else {
+            // Its header is pinned, so it is in sight: no scrolling.
+            goal?.focus({ preventScroll: true });
+        }
+        return true;
+    }
+    if (!isGoal) {
+        tell(from, "unfold");
+        return true;
+    }
+    tell(from, "unfold");
+    // Once drawn unfolded, step into the goal.
+    requestAnimationFrame(() =>
+        requestAnimationFrame(() => {
+            const first = from
+                .closest("section")
+                ?.querySelector<HTMLElement>('[data-nav="card"]');
+            if (first && first.closest("[inert]") === null) {
+                first.focus({ preventScroll: true });
+                follow(first);
+            }
+        }),
+    );
+    return true;
 }
 
 /** Where a moving command takes the cursor; undefined for other commands. */

@@ -5,6 +5,8 @@
 export type KeyCommand =
     | "next"
     | "prev"
+    | "parent"
+    | "child"
     | "nextGoal"
     | "prevGoal"
     | "first"
@@ -41,8 +43,26 @@ export const KEYMAP: readonly {
     {
         title: "Move",
         rows: [
-            { keys: ["j", "ctrl+j"], command: "next", does: "Next step" },
-            { keys: ["k", "ctrl+k"], command: "prev", does: "Previous step" },
+            {
+                keys: ["j", "ArrowDown", "ctrl+j"],
+                command: "next",
+                does: "Down: through a long card, then the next",
+            },
+            {
+                keys: ["k", "ArrowUp", "ctrl+k"],
+                command: "prev",
+                does: "Up",
+            },
+            {
+                keys: ["h", "ArrowLeft"],
+                command: "parent",
+                does: "Out: to the goal, then fold it",
+            },
+            {
+                keys: ["l", "ArrowRight"],
+                command: "child",
+                does: "In: unfold, then the first step",
+            },
             { keys: ["}"], command: "nextGoal", does: "Next goal" },
             { keys: ["{"], command: "prevGoal", does: "Previous goal" },
             { keys: ["gg"], command: "first", does: "First" },
@@ -86,7 +106,7 @@ export const KEYMAP: readonly {
     {
         title: "Ask the agent",
         rows: [
-            { keys: ["i", "c"], command: "comment", does: "Write a comment" },
+            { keys: ["c", "i"], command: "comment", does: "Write a comment" },
             { keys: ["m"], command: "clarify", does: "Mark for clarification" },
             {
                 keys: ["r"],
@@ -129,28 +149,45 @@ const PREFIXES: ReadonlySet<string> = new Set(
         .map((key) => key.charAt(0)),
 );
 
+/** A command, and how many times (a count typed before it, like `3j`). */
+export type KeyRead = { command: KeyCommand; count: number };
+
+/** A count is capped: `999j` is a slip, not a wish. */
+const MAX_COUNT = 99;
+
 /**
- * Turns keys into commands, one at a time. "pending" means the key starts a
- * sequence; undefined means it is not one of ours.
+ * Turns keys into commands, one at a time, like vim: digits first make a
+ * count, then a key or a two-key sequence names the command. "pending" means
+ * more is expected; undefined means the keys meant nothing.
  */
 export function keyReader(): (
     name: string,
     now: number,
-) => KeyCommand | "pending" | undefined {
+) => KeyRead | "pending" | undefined {
     let prefix = "";
+    let count = 0;
     let last = 0;
     return (name, now) => {
-        const started = now - last <= SEQUENCE_MS ? prefix : "";
-        last = now;
-        prefix = "";
-        // A sequence that goes nowhere ("gx") is dropped, like in vim.
-        if (started) {
-            return BINDINGS.get(started + name);
+        if (now - last > SEQUENCE_MS) {
+            prefix = "";
+            count = 0;
         }
-        if (PREFIXES.has(name)) {
+        last = now;
+        // A count: 1-9 starts it, 0 only continues it.
+        if (!prefix && /^[0-9]$/.test(name) && (name !== "0" || count > 0)) {
+            count = Math.min(MAX_COUNT, count * 10 + Number(name));
+            return "pending";
+        }
+        const started = prefix;
+        prefix = "";
+        if (!started && PREFIXES.has(name)) {
             prefix = name;
             return "pending";
         }
-        return BINDINGS.get(name);
+        // A sequence that goes nowhere ("gx") is dropped, like in vim.
+        const command = BINDINGS.get(started + name);
+        const read = command && { command, count: Math.max(1, count) };
+        count = 0;
+        return read;
     };
 }
