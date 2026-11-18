@@ -8,7 +8,7 @@ Plan and milestones: `~/.claude/plans/eager-sauteeing-treehouse.md`. Architectur
 
 - A JSON file is the contract between agent and viewer. The agent writes it through an MCP tool; writing the file by hand also works.
 - Explanations live only in the side panel. "Open in editor" opens the native `vscode.diff` on demand.
-- Each step after the first in a goal carries a connector word (`link`: free text, the word as shown, in the reader's language; default "then"). The page reads as one sentence: the next card's text continues after the word. The model chooses and translates the word; nothing checks it, so the panel works in any language, and because this is only a guide.
+- Each step after the first in a goal carries a connector (`link`: free text, a word or a few, as shown, in the reader's language; default "then"). The agent chooses whatever words make the two cards read as one natural sentence ("then", "which means", "so", "in parallel" are suggestions, as are "because", "although", "and since"…), and must read each link aloud with the cards around it. The page reads as one sentence: the next card's text continues after the word. The model chooses and translates the word; nothing checks it, so the panel works in any language, and because this is only a guide.
 - The explanation is optional. Nothing blocks a commit or a turn.
 - MCP transport is **stdio** with the official SDK: the agent spawns it in the project folder, so it finds the repo for free, with no port, token or stale URL.
 - Colours come only from VS Code theme variables. "Glass" is a light touch on cards and sticky headers.

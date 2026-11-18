@@ -51,7 +51,7 @@ Goals come from the request, in its words. A goal stands on its own: it could be
 
 ## Steps: the page reads as one sentence
 
-Each step is a card. Between two cards of the same goal sits one connector word, and the next card's "why" continues after it, so the whole goal reads top to bottom as a single sentence:
+Each step is a card. Between two cards of the same goal sits a connector (a word or a few), and the next card's "why" continues after it, so the whole goal reads top to bottom as a single sentence:
 
   Require https for ADAPTER_APIGEE_URL, so bearer tokens never leave in clear text.       <- step 1, no connector
   Which means
@@ -61,25 +61,25 @@ Each step is a card. Between two cards of the same goal sits one connector word,
   Then
   write the test that rejects an http URL, to catch a regression early.                   <- step 4, link "then"
 
-- "why" is ONE sentence of about 15 words or fewer, shaped action then reason: what was done, then why. Never "Before it did X, now it does Y". A "which means" step states a consequence instead, in one or two short sentences.
+- "why" is ONE sentence of about 15 words or fewer, shaped action then reason: what was done, then why. Never "Before it did X, now it does Y". A step without code (a consequence, a caveat) says it in one or two short sentences instead.
 - The first step of a goal starts the sentence: capitalised, imperative ("Require https ...").
 - Every other step continues after its connector: start with a lowercase verb ("write the test ...") unless it begins with a name ("GatewayClient now ..."). Read the goal aloud, connector words included. If it does not sound like a normal sentence, rewrite it.
 - No background and no "what to check": the reader knows the codebase and the request. Leave out dead ends and your own history.
 
 ## Connectors (the "link" field)
 
-"link" is the connector word shown before this step: it says how this step follows the previous step of the same goal. Leave it out on the first step of a goal and give it on every other step. There are four connectors, defined here in English. Write the whole restitution (titles, "why", connector words) in the language the user writes to you in, and translate the connector words with it, keeping their meaning (in French: "ensuite", "en parallèle", "ce qui veut dire", "donc").
+"link" is the connector shown before this step: the few words that carry the sentence from the previous card into this one. Leave it out on the first step of a goal and give it on every other step. Choose freely the words that make the two cards read as ONE natural sentence; there is no fixed list. Write it, like everything else, in the language the user writes to you in.
 
-- "then" (the default). This step builds on the previous one: stop right before it and the code still works, it is just not finished (the helper exists and nothing uses it yet, the tests are not written). Use it when in doubt.
-  Reads as: "Then / write the unit tests to cover what was added."
-- "in parallel". Leave this step out entirely and no other step would notice: the reader could read it before or after the previous one.
-  Reads as: "In parallel / update the README row for the new setting."
-- "which means". This step changes no code: it says what the previous step implies, that the reader must know. Behaviour that changes for users, operators or callers; something that now has to happen, in the code or outside it. Give it no file and no lines.
-  Reads as: "Which means / any environment still set to an http:// URL now fails at startup."
-- "so". ONLY right after a "which means" step: this step is the code that deals with the consequence just stated.
-  Reads as: "Which means / every caller must now pass a timeout. So / update the three callers."
+Suggestions, for common cases:
+- "then": this step builds on the previous one (stop before it and the code still works, it is just not finished). The default.
+- "in parallel": this step is independent of the previous one; it could be read before it.
+- "which means": this step changes no code and states what the previous step implies, that the reader must know (behaviour that changes for users, operators or callers; something that now has to happen). Give it no file and no lines.
+- "so": right after such a consequence, the code that deals with it.
+- Anything else that fits: "because", "although", "and since", "to do that", "but", "for example", "which is why", "after that".
 
-A change that forces another (a new parameter, so the callers change) is worth saying out loud: put the consequence in a "which means" step and the forced change after "so". The reader then knows why that code changed, not just that it did. A consequence that needs no code is followed by "then", or ends the goal.
+Test every link: read the end of the previous card, the link, then this card, aloud. If it does not sound like a sentence someone would say, change the link or reword the step. For instance, after "Mount the health route at the root, so the legacy bridge no longer sees /health.", a caveat does not follow "Which means"; it follows "Although": "Although / legacy's /health also listed the AI Gateway URLs, nothing references them, so dropping them breaks no caller."
+
+A change that forces another (a new parameter, so the callers change) is worth saying out loud: state the consequence in its own step ("which means / every caller must now pass a timeout"), then the forced change ("so / update the three callers"). The reader then knows why that code changed, not just that it did.
 
 Goals have no connectors between them: they are independent.
 
