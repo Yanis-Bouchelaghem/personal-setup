@@ -118,7 +118,7 @@ export function GoalSection({
                     ref={toggle}
                     aria-expanded={!folded}
                     title={
-                        folded ? "Unfold this goal · zo" : "Fold this goal · zc"
+                        folded ? "Unfold this goal · a" : "Fold this goal · a"
                     }
                     onClick={toggleFold}
                 >

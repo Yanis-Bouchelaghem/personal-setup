@@ -274,8 +274,8 @@ export function StepCard({
                     aria-expanded={open}
                     title={
                         viewed
-                            ? "Viewed (click to unfold) · za"
-                            : "Mark as viewed · zc"
+                            ? "Viewed (click to unfold) · a"
+                            : "Mark as viewed · a"
                     }
                     onClick={toggleViewed}
                 >

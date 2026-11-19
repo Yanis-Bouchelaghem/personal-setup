@@ -101,9 +101,9 @@ export const KEYMAP: readonly {
                 does: "Open the docs link (2gx: the second)",
             },
             {
-                keys: ["za"],
+                keys: ["a", "za"],
                 command: "toggle",
-                does: "Fold or unfold (viewed)",
+                does: "Fold or unfold (mark viewed)",
             },
             { keys: ["zc"], command: "fold", does: "Fold (mark viewed)" },
             { keys: ["zo"], command: "unfold", does: "Unfold" },

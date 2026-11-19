@@ -19,7 +19,16 @@ function readAll(names: string[], gap = 10) {
 describe("keyReader", () => {
     it("reads single keys and arrows", () => {
         expect(
-            readAll(["j", "ArrowDown", "ArrowLeft", "l", "G", "c", "Escape"]),
+            readAll([
+                "j",
+                "ArrowDown",
+                "ArrowLeft",
+                "l",
+                "G",
+                "c",
+                "a",
+                "Escape",
+            ]),
         ).toEqual([
             "next",
             "next",
@@ -27,6 +36,7 @@ describe("keyReader", () => {
             "child",
             "last",
             "comment",
+            "toggle",
             "leave",
         ]);
     });
