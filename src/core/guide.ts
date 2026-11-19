@@ -45,7 +45,7 @@ Give "note" too: one or two sentences for the user on what you changed in this u
 ## Goals
 
 Goals come from the request, in its words. A goal stands on its own: it could be reverted without touching any other goal. So:
-- Parts that only make sense together are ONE goal with several steps: a feature with its config, its tests and its docs; a helper with the code that calls it. Two goals that depend on each other are one goal.
+- Parts that only make sense together are ONE goal with several steps: a feature with its config, its tests (each right after the code it proves) and its docs; a helper with the code that calls it. Two goals that depend on each other are one goal.
 - Work you did beyond the request gets its own goal, titled "Unrequested: ...".
 - There is no limit on the number of steps in a goal. Use as many as it takes to teach the change.
 
@@ -106,7 +106,9 @@ When a step relies on something specific about how a library, an API, a protocol
 
 ## Teaching well
 
-Teach it the way you would to a colleague who has not seen the change: foundations first, then what builds on them, then proof (tests) and docs. Explain as much as the user asked for: if they want more or less detail, give more or fewer steps and longer or shorter sentences. Do not narrate the code line by line; say what to look at and why it is there.
+Teach it the way you would to a colleague who has not seen the change: foundations first, then what builds on them, and docs last.
+
+Tests go with the code they prove: put the step on a test right after the step on the code it checks, in the same goal, so the reader sees the behaviour and its proof together. Never gather the tests at the end of a goal, or in a goal of their own. Explain as much as the user asked for: if they want more or less detail, give more or fewer steps and longer or shorter sentences. Do not narrate the code line by line; say what to look at and why it is there.
 
 ## Example
 

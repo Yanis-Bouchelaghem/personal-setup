@@ -64,6 +64,8 @@ The tab name is `label`, else `request`, else the first goal. The extension keep
 
 ## Writing rules (for the agent)
 
+- **Tests go with the code they prove**: a step on a test comes right after the step on the code it checks, in the same goal, never gathered at the end or in a goal of their own.
+
 The rules agents follow live in `src/core/guide.ts`: it is both what the MCP server sends as `instructions` and what `restitution_guide` returns, so there is one source of truth. In short:
 
 - Goals come from the request. **A goal stands on its own and could be reverted without touching another goal**; parts that only make sense together (a feature with its config, tests and docs) are one goal with several steps. There is no limit on steps: the model should teach well, and the user can ask for more or less detail.
