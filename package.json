@@ -66,6 +66,18 @@
         }
       ]
     },
+    "keybindings": [
+      {
+        "key": "cmd+r",
+        "command": "restitution.plan.focus",
+        "when": "focusedView != 'restitution.plan'"
+      },
+      {
+        "key": "cmd+r",
+        "command": "workbench.action.closeSidebar",
+        "when": "focusedView == 'restitution.plan'"
+      }
+    ],
     "commands": [
       {
         "command": "restitution.connectAgents",
