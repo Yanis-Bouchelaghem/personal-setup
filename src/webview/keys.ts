@@ -16,6 +16,8 @@ export type KeyCommand =
     | "open"
     | "diff"
     | "toggle"
+    | "examples"
+    | "docs"
     | "fold"
     | "unfold"
     | "foldAll"
@@ -88,6 +90,16 @@ export const KEYMAP: readonly {
         rows: [
             { keys: ["Enter", "gf"], command: "open", does: "Open the file" },
             { keys: ["gd"], command: "diff", does: "Open the diff" },
+            {
+                keys: ["e"],
+                command: "examples",
+                does: "Open or close the examples",
+            },
+            {
+                keys: ["gx"],
+                command: "docs",
+                does: "Open the docs link (2gx: the second)",
+            },
             {
                 keys: ["za"],
                 command: "toggle",
@@ -184,7 +196,7 @@ export function keyReader(): (
             prefix = name;
             return "pending";
         }
-        // A sequence that goes nowhere ("gx") is dropped, like in vim.
+        // A sequence that goes nowhere ("gq") is dropped, like in vim.
         const command = BINDINGS.get(started + name);
         const read = command && { command, count: Math.max(1, count) };
         count = 0;

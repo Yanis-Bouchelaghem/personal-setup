@@ -19,7 +19,7 @@ export function DocLinks({
                     <button
                         className="doc-link"
                         type="button"
-                        title={doc.url}
+                        title={`${doc.url} · gx`}
                         onClick={() => onOpen(doc.url)}
                     >
                         <DocIcon />

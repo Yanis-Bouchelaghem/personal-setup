@@ -15,7 +15,7 @@ import { Collapse } from "./Collapse";
 import { Conversation } from "./Conversation";
 import { DiffView } from "./DiffView";
 import { DocLinks } from "./DocLinks";
-import { Example } from "./Example";
+import { Example, useExamples } from "./Example";
 import {
     ChevronIcon,
     ClarifyIcon,
@@ -30,6 +30,18 @@ import { useKeyCommands } from "./useKeyboard";
 import { useLabelsFit } from "./useLabelsFit";
 import { useScrollAnchor } from "./useScrollAnchor";
 import { useSeenOnHover } from "./useSeenOnHover";
+
+/** `gx` opens the first doc link, `2gx` the second; one that isn't there, nothing. */
+function openNthDoc(
+    docs: readonly { url: string }[],
+    count: number,
+    open: (url: string) => void,
+): void {
+    const doc = docs[count - 1];
+    if (doc) {
+        open(doc.url);
+    }
+}
 
 /** Folder part fades and truncates first; the file name always stays visible. */
 export function FilePath({ path }: { path: string }) {
@@ -151,6 +163,15 @@ export function StepCard({
     const clarify = request?.clarify ?? false;
     const comment = request?.comment ?? "";
     const [writing, setWriting] = useState(false);
+    const examples = step.examples ?? [];
+    const shownExamples = useExamples(examples.length);
+    const toggleExamples = () => {
+        // They live in the card's body: a folded card opens to show them.
+        if (shownExamples.toggleAll() && viewed) {
+            toggleViewed();
+        }
+    };
+    const docs = step.docs ?? [];
 
     // Viewed is the only state: a viewed step is folded to its header.
     const open = !viewed;
@@ -191,6 +212,9 @@ export function StepCard({
         unfold: viewed ? toggleViewed : undefined,
         clarify: toggleClarify,
         comment: () => setWriting(true),
+        // With no examples there is nothing to toggle: it does nothing.
+        examples: toggleExamples,
+        docs: (count) => openNthDoc(docs, count, onOpenUrl),
         resolve: () => resolveAll(true),
     });
     const resolveAll = (on: boolean) =>
@@ -326,8 +350,13 @@ export function StepCard({
                     {step.docs && (
                         <DocLinks docs={step.docs} onOpen={onOpenUrl} />
                     )}
-                    {step.examples?.map((example, index) => (
-                        <Example key={index} example={example} />
+                    {examples.map((example, index) => (
+                        <Example
+                            key={index}
+                            example={example}
+                            open={shownExamples.isOpen(index)}
+                            onToggle={() => shownExamples.toggle(index)}
+                        />
                     ))}
                     {code.hunks.length > 0 && (
                         <DiffView

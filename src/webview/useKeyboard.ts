@@ -19,13 +19,19 @@ import {
  */
 const KEY_EVENT = "restitution-key";
 
-type Handlers = Partial<Record<KeyCommand, () => void>>;
+/** What a key does; a place's handler also gets the count typed before it. */
+type Handlers = Partial<Record<KeyCommand, (count: number) => void>>;
+
+/** What a place hears: the command, and the count (`2gx`: the second link). */
+type Heard = { command: KeyCommand; count: number };
 
 /** What the focused place handles itself; the rest is moving or the page's. */
 const PLACE_COMMANDS: ReadonlySet<string> = new Set<KeyCommand>([
     "open",
     "diff",
     "toggle",
+    "examples",
+    "docs",
     "fold",
     "unfold",
     "clarify",
@@ -50,8 +56,16 @@ const REPEATED: ReadonlySet<KeyCommand> = new Set<KeyCommand>([
 /** How far `j` scrolls through a long card: about three lines. */
 const LINE_STEP = 56;
 
-function isCommand(value: unknown): value is KeyCommand {
-    return typeof value === "string" && PLACE_COMMANDS.has(value);
+function isHeard(value: unknown): value is Heard {
+    return (
+        typeof value === "object" &&
+        value !== null &&
+        "command" in value &&
+        "count" in value &&
+        typeof value.command === "string" &&
+        PLACE_COMMANDS.has(value.command) &&
+        typeof value.count === "number"
+    );
 }
 
 /** Listen to the keys for the whole panel; `handlers` gets the page's commands. */
@@ -64,7 +78,7 @@ export function useKeyboard(handlers: Handlers): void {
         // Where the cursor was, so a fold that hides it doesn't lose your place.
         const place = { last: undefined as HTMLElement | undefined };
 
-        const run = (command: KeyCommand) => {
+        const run = (command: KeyCommand, count: number) => {
             const from = current(place.last);
             if (moveWithin(command, from) || moveInTree(command, from)) {
                 return;
@@ -78,12 +92,10 @@ export function useKeyboard(handlers: Handlers): void {
                 place.last = target;
                 target.focus({ preventScroll: true });
                 show(command, target);
-            } else if (PLACE_COMMANDS.has(command)) {
-                from?.dispatchEvent(
-                    new CustomEvent(KEY_EVENT, { detail: command }),
-                );
+            } else if (PLACE_COMMANDS.has(command) && from) {
+                tell(from, command, count);
             } else {
-                latest.current[command]?.();
+                latest.current[command]?.(count);
             }
         };
         const onKey = (event: KeyboardEvent) => {
@@ -98,9 +110,13 @@ export function useKeyboard(handlers: Handlers): void {
             if (read === "pending") {
                 return;
             }
-            const times = REPEATED.has(read.command) ? read.count : 1;
-            for (let n = 0; n < times; n++) {
-                run(read.command);
+            // A move repeats; anything else gets the count to use as it likes.
+            if (REPEATED.has(read.command)) {
+                for (let n = 0; n < read.count; n++) {
+                    run(read.command, 1);
+                }
+            } else {
+                run(read.command, read.count);
             }
         };
         // Coming back to the panel: show the cursor where you left it.
@@ -179,8 +195,8 @@ export function useKeyCommands(
             return undefined;
         }
         const onCommand = (event: Event) => {
-            if (event instanceof CustomEvent && isCommand(event.detail)) {
-                latest.current[event.detail]?.();
+            if (event instanceof CustomEvent && isHeard(event.detail)) {
+                latest.current[event.detail.command]?.(event.detail.count);
             }
         };
         element.addEventListener(KEY_EVENT, onCommand);
@@ -259,7 +275,8 @@ function moveWithin(
 }
 
 /** Hand a command to a place, as if its key was pressed there. */
-function tell(target: HTMLElement, detail: KeyCommand): void {
+function tell(target: HTMLElement, command: KeyCommand, count = 1): void {
+    const detail: Heard = { command, count };
     target.dispatchEvent(new CustomEvent(KEY_EVENT, { detail }));
 }
 

@@ -57,8 +57,8 @@ describe("keyReader", () => {
         expect(readAll(["0", "j"])).toEqual([undefined, "next"]);
     });
 
-    it("drops a sequence that goes nowhere, then reads on", () => {
-        expect(readAll(["g", "x", "j"])).toEqual([
+    it("drops a sequence that goes nowhere (gq), then reads on", () => {
+        expect(readAll(["g", "q", "j"])).toEqual([
             "pending",
             undefined,
             "next",
