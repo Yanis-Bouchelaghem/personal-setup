@@ -1,4 +1,10 @@
-import { type FileDiff, type Hunk, type LineRange, selectLines } from "./diff";
+import {
+    type FileDiff,
+    type Hunk,
+    type LineRange,
+    readingOrder,
+    selectLines,
+} from "./diff";
 import type { Restitution, Step } from "./restitution";
 
 /**
@@ -66,7 +72,8 @@ export function pickLines(
 
 /**
  * Unchanged code as hunks of context lines, so it shows like the rest: one
- * hunk per run of consecutive lines. Lines the file doesn't have are left out.
+ * hunk per run of consecutive lines, in the ranges' reading order. Lines the
+ * file doesn't have are left out.
  */
 export function sourceHunks(
     source: SourceLines | undefined,
@@ -76,31 +83,32 @@ export function sourceHunks(
         return [];
     }
     // From the lines that were read, never from the ranges: a range can be huge.
-    const positions = Object.keys(source)
+    const read = Object.keys(source)
         .map(Number)
-        .filter((at) => ranges.some(([from, to]) => at >= from && at <= to))
         .toSorted((a, b) => a - b);
-    const hunks: Hunk[] = [];
-    for (const at of positions) {
-        const line = {
-            kind: "ctx" as const,
-            text: source[at] ?? "",
-            oldNo: at,
-            newNo: at,
-            at,
-        };
-        const last = hunks.at(-1);
-        if (last && at === last.newStart + last.newLines) {
-            last.lines.push(line);
-            last.newLines++;
-        } else {
-            hunks.push({
-                oldStart: at,
-                newStart: at,
-                newLines: 1,
-                lines: [line],
-            });
+    return readingOrder(ranges).flatMap(([from, to]) => {
+        const hunks: Hunk[] = [];
+        for (const at of read.filter((n) => n >= from && n <= to)) {
+            const line = {
+                kind: "ctx" as const,
+                text: source[at] ?? "",
+                oldNo: at,
+                newNo: at,
+                at,
+            };
+            const last = hunks.at(-1);
+            if (last && at === last.newStart + last.newLines) {
+                last.lines.push(line);
+                last.newLines++;
+            } else {
+                hunks.push({
+                    oldStart: at,
+                    newStart: at,
+                    newLines: 1,
+                    lines: [line],
+                });
+            }
         }
-    }
-    return hunks;
+        return hunks;
+    });
 }

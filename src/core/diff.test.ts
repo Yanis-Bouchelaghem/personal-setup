@@ -94,6 +94,11 @@ describe("where a line sits (`at`)", () => {
     });
 });
 
+/** Where each block a step shows starts, in the order shown. */
+function starts(ranges: [number, number][]): number[] {
+    return selectLines(config, ranges).map((hunk) => hunk.newStart);
+}
+
 describe("selectLines", () => {
     it("shows exactly the lines in the range, cut out of their hunk", () => {
         const hunks = selectLines(config, [[11, 12]]);
@@ -134,6 +139,22 @@ describe("selectLines", () => {
         expect(selectLines(config, [[1, 100]])).toHaveLength(2);
         expect(selectLines(added, [[1, 1]])[0]?.lines).toHaveLength(1);
         expect(selectLines(deleted, [[1, 2]])[0]?.lines).toHaveLength(2);
+    });
+
+    it("shows ranges in the order listed, merging those that touch", () => {
+        // A call site listed before the definition it calls shows first.
+        expect(
+            starts([
+                [41, 41],
+                [11, 12],
+            ]),
+        ).toEqual([41, 11]);
+        expect(
+            starts([
+                [11, 11],
+                [12, 12],
+            ]),
+        ).toEqual([11]);
     });
 
     it("shows nothing for a missing file or lines outside every hunk", () => {

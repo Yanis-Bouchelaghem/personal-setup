@@ -150,9 +150,29 @@ function parseBodyLine(
 }
 
 /**
- * Exactly the lines of a diff that fall in the ranges, as hunks: a hunk is cut
- * wherever a line is left out, so a step shows what it chose and no more.
- * The lines are the diff's own objects, so callers can tell which were shown.
+ * The ranges in the order the step lists them, which is the order the reader
+ * sees them (a call site before the definition it calls, say). Ranges that
+ * overlap or touch merge into the first of them, so nothing shows twice.
+ */
+export function readingOrder(ranges: readonly LineRange[]): LineRange[] {
+    const merged: [number, number][] = [];
+    for (const [from, to] of ranges) {
+        const near = merged.find(([a, b]) => from <= b + 1 && to >= a - 1);
+        if (near) {
+            near[0] = Math.min(near[0], from);
+            near[1] = Math.max(near[1], to);
+        } else {
+            merged.push([from, to]);
+        }
+    }
+    return merged;
+}
+
+/**
+ * Exactly the lines of a diff that fall in the ranges, as hunks, in the
+ * ranges' reading order: a hunk is cut wherever a line is left out, so a
+ * step shows what it chose and no more. The lines are the diff's own
+ * objects, so callers can tell which were shown.
  */
 export function selectLines(
     diff: FileDiff | undefined,
@@ -161,9 +181,13 @@ export function selectLines(
     if (!diff) {
         return [];
     }
-    const chosen = (line: DiffLine) =>
-        ranges.some(([from, to]) => line.at >= from && line.at <= to);
-    return diff.hunks.flatMap((hunk) => runsOf(hunk.lines, chosen).map(toHunk));
+    return readingOrder(ranges).flatMap(([from, to]) =>
+        diff.hunks.flatMap((hunk) =>
+            runsOf(hunk.lines, (line) => line.at >= from && line.at <= to).map(
+                toHunk,
+            ),
+        ),
+    );
 }
 
 /** Consecutive lines that satisfy `keep`, each run on its own. */

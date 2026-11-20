@@ -79,6 +79,8 @@ The rules agents follow live in `src/core/guide.ts`: it is both what the MCP ser
 
 A step that points at code gives both `file` (relative to the git root) and `lines`, a list of `[from, to]` ranges. `lines` is required with `file`, and is **exactly what the card shows**: the panel cuts the step's diff down to those lines and nothing around them, so the model chooses what the reader sees. The editor, on the other hand, selects only what changed: the added or changed lines inside the shown ranges, one selection per contiguous run, so unchanged code between two changes stays unselected. A step that only removes code has nothing to select on the new side, so it selects its range.
 
+Ranges show **in the order the step lists them** (ranges that overlap or touch merge into one block), so the agent can show a new function's call sites before its definition, in one card, however far apart they are in the file.
+
 A step can also point at **code that did not change**: existing code the change relies on, or code the user asked to have explained. When its lines hold no change, the extension reads exactly those lines from the file as it is now (only inside the repository, files up to 2 MB) and the card shows them as plain lines under an "Unchanged code" label. File opens them with the range selected; Diff is greyed out ("No diff: this code is unchanged"). Steps on changes and on existing code mix freely in a goal. They never get a drift warning (there is no change to compare). Lines that don't exist show "These lines are not in the file".
 
 - Ranges are on the new side of the file; for a deleted file, on the old side, the only one that exists.
