@@ -37,6 +37,7 @@
     streamMaxLength: 150,   // px; longest trail kept while the cursor is still moving (~8 lines)
     streamCatchup: 50,      // ms; how fast the tail is pulled in when over that length
     headWidth: 15,          // px, streak width at the head
+    roundFront: true,       // the streak's front is a half circle instead of a flat cut
     tailWidth: 6,           // px, streak width floor along the tail
     taperPower: 2,          // how quickly the width falls from head to floor (convex)
     tipFraction: 0.12,      // last share of the length that closes to a point
@@ -401,6 +402,13 @@
         right.push([q.x - nx * half, q.y - ny * half]);
       }
       poly = left.concat(right.reverse());
+      if (cfg.roundFront) {        // close the front with a half circle, not a flat cut
+        var q0 = S[0], r0 = cfg.headWidth / 2, n0x = -q0.dy, n0y = q0.dx;
+        for (var t = 1; t < 8; t++) {   // from the right edge, round the front, to the left edge
+          var ang = Math.PI * t / 8, c0 = Math.cos(ang) * r0, s0 = Math.sin(ang) * r0;
+          poly.push([q0.x - n0x * c0 - q0.dx * s0, q0.y - n0y * c0 - q0.dy * s0]);
+        }
+      }
       if (len >= 1) {
         grad = ctx.createLinearGradient(hc.x, hc.y, T.x, T.y);
         grad.addColorStop(0, rgba(col, gt));
