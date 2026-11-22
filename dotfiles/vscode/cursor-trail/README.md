@@ -98,7 +98,7 @@ To remove it: delete the import, run "Disable Custom CSS and JS", restart.
 | explorer / search / lists | the focused row's label, plus a soft wash across the row |
 | integrated terminal       | the terminal cursor cell (xterm helper textarea)         |
 | input boxes               | the left edge of the field                               |
-| a webview (any extension) | the pane's top-left corner, then a comet round its border |
+| a webview (any extension) | the middle of the pane's side facing where you came from; two streaks run round its border and meet |
 
 Moves shorter than `minDistance` (16 px) never trail, so typing and a single `h` or `l` stay quiet. Moves less than
 `chainMs` (140 ms) apart count as one path: holding an arrow key grows the trail along the path the cursor took (up to
@@ -113,9 +113,10 @@ Moves shorter than `minDistance` (16 px) never trail, so typing and a single `h`
 - Terminal tracking assumes xterm parks its helper textarea on the cursor cell; not verified.
 - Multi-cursor: only the primary caret is followed.
 - A webview's content is a separate document, so the trail cannot follow the cursor inside it; it only shows that focus
-  arrived in the pane: the trail lands on its top-left corner, a faint wash covers it and a comet runs once round its
-  border. Turn it all off with `followPanes: false`, the comet with `paneWave: false`, the wash with `paneWash: false`.
-  It works for every extension because it only looks at the iframe's box.
+  arrived in the pane: the trail lands on the middle of the side you came from, a faint wash covers the pane and two
+  light streaks run one each way round its border and meet on the far side. Turn it all off with `followPanes: false`,
+  the streaks with `paneWave: false`, the wash with `paneWash: false`. It works for every extension because it only
+  looks at the iframe's box.
 
 ## Tests and reference
 

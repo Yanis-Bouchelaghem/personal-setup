@@ -11,8 +11,8 @@
  *   - sidebar / tree / lists .monaco-list-row.focused (marker at the row's label)
  *   - terminal               textarea.xterm-helper-textarea (xterm parks it on the cursor cell)
  *   - plain inputs           input / textarea (marker at the field's left edge)
- *   - webviews               any extension panel or editor in an iframe: the trail lands on its top-left
- *                            corner, then a comet runs once around the pane's border
+ *   - webviews               any extension panel or editor in an iframe: the trail lands on the middle of
+ *                            the side it came from, then two light streaks run round the border and meet
  *
  * Override settings (no edit needed) with either:
  *   window.CURSOR_TRAIL_CONFIG = {...}                       (before this script runs)
@@ -57,14 +57,13 @@
     followPanes: true,      // webviews (extension panels): their content is a separate document, so only the pane is marked
     paneWash: true,         // soft wash across the whole pane the cursor arrived in
     paneWashAlpha: 0.07,
-    paneMarkerHeight: 24,   // px, head height at the pane's top-left corner
-    paneWave: true,         // a comet runs once around the pane's border when the cursor arrives
-    waveMs: 800,            // ms for the comet to go all the way round (and drain into the corner)
-    waveDelay: 0.5,         // share of `duration` to wait, so it starts as the trail lands
-    waveLength: 0.3,        // comet length, as a share of the pane's perimeter
-    waveWidth: 3,           // px, comet width at the head
-    waveAlpha: 0.95,
-    waveBorder: 0.2,        // opacity of the border's faint glow while the comet runs (0 = none)
+    paneMarkerHeight: 24,   // px, head length along the pane's side
+    paneWave: true,         // two light streaks run round the pane's border and meet on the far side
+    waveMs: 700,            // ms for the streaks to meet and fade
+    waveDelay: 0.5,         // share of `duration` to wait, so they start as the trail lands
+    waveLength: 0.12,       // streak length, as a share of the pane's perimeter
+    waveWidth: 2,           // px, streak width at the head
+    waveAlpha: 0.7,
     rowPulse: true,         // soft wash across the focused sidebar row
     rowPulseAlpha: 0.16,
     markerWidth: 8,         // px, head width used for rows / inputs
@@ -109,7 +108,8 @@
   var state = {
     last: null,          // { c:{x,y}, rect, kind, row }
     anim: null,          // { t0, start:{x,y}, head }
-    wave: null,          // { rect, ts, col }: the comet running round a pane
+    wave: null,          // { rect, side, ts, col }: the streaks running round a pane
+    pane: null,          // { el, side }: the pane the cursor is in, and the side it came in by
     caretColor: null,
     color: [255, 255, 255],
     dirty: false,
@@ -158,6 +158,17 @@
       if (c[3] < 0.1) c = parseColor(cs.borderTopColor);
       if (c[3] >= 0.1) state.caretColor = c;
     } catch (e) { /* ignore */ }
+  }
+
+  // The side of a pane the cursor came from: the one nearest to where it was.
+  function entrySide(r) {
+    var p = state.last && state.last.c;
+    if (!p) return 'left';
+    var dx = p.x < r.x ? r.x - p.x : p.x > r.x + r.w ? p.x - r.x - r.w : 0;
+    var dy = p.y < r.y ? r.y - p.y : p.y > r.y + r.h ? p.y - r.y - r.h : 0;
+    if (dx === 0 && dy === 0) return 'left';
+    if (dx >= dy) return p.x < r.x ? 'left' : 'right';
+    return p.y < r.y ? 'top' : 'bottom';
   }
 
   function resolveTarget() {
@@ -222,15 +233,19 @@
     }
 
     // 5. webviews: focus inside one leaves document.activeElement on its iframe, and the page
-    // inside cannot be read, so the head lands at the pane's top-left corner. Any extension works.
+    // inside cannot be read, so the head lands on the middle of the pane's side facing where the
+    // cursor came from. Any extension works.
     if (cfg.followPanes && ae.tagName === 'IFRAME') {
       r = rectOf(ae);
       if (r.w > 0 && r.h > 0) {
-        return {
-          kind: 'pane',
-          rect: { x: r.x + 6, y: r.y + 8, w: cfg.markerWidth, h: Math.min(r.h, cfg.paneMarkerHeight) },
-          row: r, el: ae
-        };
+        if (!state.pane || state.pane.el !== ae) state.pane = { el: ae, side: entrySide(r) };
+        var side = state.pane.side, len = Math.min(side === 'left' || side === 'right' ? r.h : r.w, cfg.paneMarkerHeight);
+        var m = cfg.markerWidth, gap = 4, hr;
+        if (side === 'left') hr = { x: r.x + gap, y: r.y + (r.h - len) / 2, w: m, h: len };
+        else if (side === 'right') hr = { x: r.x + r.w - gap - m, y: r.y + (r.h - len) / 2, w: m, h: len };
+        else if (side === 'top') hr = { x: r.x + (r.w - len) / 2, y: r.y + gap, w: len, h: m };
+        else hr = { x: r.x + (r.w - len) / 2, y: r.y + r.h - gap - m, w: len, h: m };
+        return { kind: 'pane', rect: hr, row: r, el: ae, side: side };
       }
     }
     return null;
@@ -312,6 +327,7 @@
   }
 
   function step(now, t) {
+    if (!t || t.kind !== 'pane') state.pane = null;
     if (!t) return;
     var c = { x: t.rect.x + t.rect.w / 2, y: t.rect.y + t.rect.h / 2 };
     var last = state.last, a = state.anim;
@@ -334,9 +350,9 @@
         state.color = resolveColor(t);
       }
     }
-    // arriving in a pane (or another one): send the comet round its border
+    // arriving in a pane (or another one): send the streaks round its border
     if (cfg.paneWave && cfg.enabled && t.kind === 'pane' && (!last || last.kind !== 'pane' || last.el !== t.el)) {
-      state.wave = { rect: t.row, ts: now + cfg.waveDelay * cfg.duration, col: resolveColor(t) };
+      state.wave = { rect: t.row, side: t.side, ts: now + cfg.waveDelay * cfg.duration, col: resolveColor(t) };
     }
     state.last = { c: c, rect: t.rect, kind: t.kind, row: t.row, el: t.el };
     if (a) {
@@ -425,48 +441,63 @@
     state.dirty = true;
   }
 
-  // The comet round a pane: starts in the top-left corner, goes clockwise once, and drains
-  // back into the corner. Drawn after (over) the trail, on its own clock.
-  function pointOnRect(r, s) {
-    var w = r.w, h = r.h;
+  // Two streaks leave the middle of the side the cursor arrived by, one each way round the
+  // pane's border, and meet at the middle of the far side, where they melt away. Drawn over the
+  // trail on its own clock. No blur filters: a few plain strokes per frame, the glow is a wider,
+  // fainter stroke under the same line.
+  function pointOnRect(r, s) {   // s: distance clockwise from the top-left corner
+    var P = 2 * (r.w + r.h), w = r.w, h = r.h;
+    s = ((s % P) + P) % P;
     if (s <= w) return { x: r.x + s, y: r.y };
     s -= w; if (s <= h) return { x: r.x + w, y: r.y + s };
     s -= h; if (s <= w) return { x: r.x + w - s, y: r.y + h };
-    s -= w; return { x: r.x, y: r.y + h - Math.min(s, h) };
+    s -= w; return { x: r.x, y: r.y + h - s };
+  }
+  function sideStart(r, side) {  // the middle of a side, as a distance clockwise from the top-left
+    return side === 'top' ? r.w / 2 : side === 'right' ? r.w + r.h / 2
+      : side === 'bottom' ? r.w + r.h + r.w / 2 : 2 * r.w + r.h + r.h / 2;
+  }
+  var WAVE_SEGMENTS = 12;
+  function drawStreak(r, s0, dir, from, to, col, env) {
+    var n = WAVE_SEGMENTS, prev = pointOnRect(r, s0 + dir * from), i, u, a, wd, next;
+    for (var pass = 0; pass < 2; pass++) {                 // glow under, line over
+      prev = pointOnRect(r, s0 + dir * from);
+      for (i = 1; i <= n; i++) {
+        u = i / n;                                         // 0 = tail, 1 = head
+        next = pointOnRect(r, s0 + dir * (from + (to - from) * u));
+        a = cfg.waveAlpha * env * Math.pow(u, 1.6);
+        wd = 0.6 + (cfg.waveWidth - 0.6) * u;
+        ctx.strokeStyle = rgba(col, pass === 0 ? a * 0.22 : a);
+        ctx.lineWidth = pass === 0 ? wd * 3.4 : wd;
+        ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(next.x, next.y); ctx.stroke();
+        prev = next;
+      }
+    }
   }
   function drawWave(now) {
     var wv = state.wave, el = now - wv.ts;
-    if (el < 0) return;                                   // the trail is still on its way
+    if (el < 0) return;                                    // the trail is still on its way
     var x = clamp01(el / cfg.waveMs);
     if (x >= 1) { state.wave = null; state.dirty = true; return; }
     var r = { x: wv.rect.x + 1, y: wv.rect.y + 1, w: Math.max(2, wv.rect.w - 2), h: Math.max(2, wv.rect.h - 2) };
-    var P = 2 * (r.w + r.h), L = P * cfg.waveLength;
-    var head = (P + L) * (0.5 - 0.5 * Math.cos(Math.PI * x));   // eases in and out; out of sight at the end
-    var from = Math.max(0, head - L), to = Math.min(P, head);
-    var env = x < 0.85 ? 1 : clamp01((1 - x) / 0.15), col = wv.col;
+    var P = 2 * (r.w + r.h), half = P / 2, L = P * cfg.waveLength;
+    var travel = (half + L) * (0.5 - 0.5 * Math.cos(Math.PI * x));   // eases in and out
+    var head = Math.min(half, travel), tail = Math.max(0, travel - L);
+    var env = x < 0.9 ? 1 : clamp01((1 - x) / 0.1), col = wv.col, s0 = sideStart(r, wv.side);
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.save();
-    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
-    if (cfg.waveBorder > 0) {                              // the whole border glows faintly
-      ctx.filter = 'blur(2px)';
-      ctx.strokeStyle = rgba(col, cfg.waveBorder * env * (1 - x));
-      ctx.lineWidth = 2;
-      ctx.strokeRect(r.x, r.y, r.w, r.h);
+    ctx.lineCap = 'butt';                                  // round caps would double up where segments meet
+    if (head - tail > 1) {
+      drawStreak(r, s0, 1, tail, head, col, env);
+      drawStreak(r, s0, -1, tail, head, col, env);
     }
-    if (to > from) {
-      var n = Math.max(4, Math.ceil((to - from) / 5)), pts = [], i;
-      for (i = 0; i <= n; i++) pts.push(pointOnRect(r, from + (to - from) * i / n));
-      for (var pass = 0; pass < 2; pass++) {               // halo first, then the crisp comet
-        ctx.filter = pass === 0 ? 'blur(' + cfg.glowRadius * 0.6 + 'px)' : 'blur(0.6px)';
-        for (i = 0; i < n; i++) {
-          var u = (i + 1) / n;                             // 0 = tail, 1 = head
-          var a0 = cfg.waveAlpha * env * Math.pow(u, 1.7);
-          ctx.strokeStyle = rgba(col, pass === 0 ? a0 * 0.8 : a0);
-          ctx.lineWidth = (pass === 0 ? 2.6 : 1) * (1 + (cfg.waveWidth - 1) * u);
-          ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[i + 1].x, pts[i + 1].y); ctx.stroke();
-        }
-      }
+    // where they meet: a small soft bloom as they arrive, gone as the tails catch up
+    var bloom = Math.pow(head / half, 8) * (1 - clamp01((travel - half) / L)) * cfg.waveAlpha * env;
+    if (bloom > 0.01) {
+      var m = pointOnRect(r, s0 + half), g = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, 16);
+      g.addColorStop(0, rgba(col, 0.55 * bloom)); g.addColorStop(1, rgba(col, 0));
+      ctx.fillStyle = g; ctx.fillRect(m.x - 16, m.y - 16, 32, 32);
     }
     ctx.restore();
     state.dirty = true;
