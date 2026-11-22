@@ -19,7 +19,7 @@
     "format:check": "oxfmt --check",
     "typecheck": "tsc",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm test",
-    "dev:host": "npm run build && code --user-data-dir=.vscode-dev/data --extensions-dir=.vscode-dev/ext --extensionDevelopmentPath=\"$PWD\" \"$PWD\"",
+    "dev:host": "npm run build && code --user-data-dir=.vscode-dev/data --extensions-dir=.vscode-dev/ext --extensionDevelopmentPath=. .",
     "package": "npm run build && vsce package --no-dependencies --allow-missing-repository --skip-license",
     "install:local": "npm run package && code --install-extension restitution-0.0.1.vsix --force",
     "dump:state": "node scripts/dump-state.mjs"
@@ -68,12 +68,14 @@
     },
     "keybindings": [
       {
-        "key": "cmd+r",
+        "key": "ctrl+r",
+        "mac": "cmd+r",
         "command": "restitution.plan.focus",
         "when": "focusedView != 'restitution.plan'"
       },
       {
-        "key": "cmd+r",
+        "key": "ctrl+r",
+        "mac": "cmd+r",
         "command": "workbench.action.closeSidebar",
         "when": "focusedView == 'restitution.plan'"
       }

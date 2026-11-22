@@ -1,4 +1,4 @@
-import { execFile } from "node:child_process";
+import { exec, execFile } from "node:child_process";
 import { copyFile, mkdir } from "node:fs/promises";
 import { join } from "node:path";
 import { promisify } from "node:util";
@@ -8,6 +8,7 @@ import * as vscode from "vscode";
 import { type Agent, connectCommand } from "../node/agents";
 
 const run = promisify(execFile);
+const runCmd = promisify(exec);
 
 /**
  * Put the bundled MCP server at a path that survives extension updates:
@@ -58,8 +59,15 @@ const CHOICES: Choice[] = [
     { label: "Codex", description: "all projects", agent: "codex" },
 ];
 
-/** Agents run in a login shell so `claude` and `codex` are on the PATH. */
+/**
+ * On macOS and Linux, a login shell, so `claude` and `codex` are on the PATH
+ * even when VS Code was opened from the Dock. On Windows, cmd.exe, which
+ * already has the user's PATH.
+ */
 function runInShell(command: string, cwd: string): Promise<unknown> {
+    if (process.platform === "win32") {
+        return runCmd(command, { cwd });
+    }
     const shell = process.env.SHELL ?? "/bin/zsh";
     return run(shell, ["-ilc", command], { cwd });
 }

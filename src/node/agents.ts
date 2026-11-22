@@ -23,8 +23,17 @@ const REGISTRATIONS: Record<Agent, { remove: string; add: string }> = {
 /**
  * The shell command that registers the MCP server with an agent. It removes
  * any older registration first, so connecting twice just refreshes the path.
+ * A POSIX shell on macOS and Linux, cmd.exe on Windows.
  */
-export function connectCommand(agent: Agent, serverPath: string): string {
+export function connectCommand(
+    agent: Agent,
+    serverPath: string,
+    platform: NodeJS.Platform = process.platform,
+): string {
     const { remove, add } = REGISTRATIONS[agent];
+    if (platform === "win32") {
+        // Windows paths never contain a double quote.
+        return `${remove} >NUL 2>&1 & ${add} node "${serverPath}"`;
+    }
     return `${remove} >/dev/null 2>&1 || true; ${add} node ${shellQuote(serverPath)}`;
 }
