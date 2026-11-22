@@ -63,6 +63,7 @@
     paneWave: true,         // two light streaks run round the pane's border and meet on the far side
     waveMs: 300,            // ms for the streaks to meet and fade
     waveLength: 0.09,       // streak length, as a share of the pane's perimeter
+    waveFadeFrom: 0.68,     // share of the time at which the streaks start to fade out
     waveEase: 2.4,          // how much the streaks slow down as they near each other (1 = steady speed)
     waveWidth: 1.6,         // px, streak width at the head
     waveAlpha: 0.6,
@@ -530,7 +531,7 @@
     var P = 2 * (r.w + r.h), half = P / 2, L = P * cfg.waveLength;
     // The heads set off quickly and slow down all the way to the meeting point, where they arrive
     // almost at rest; the tails then close in on them.
-    var head, tail, ARRIVE = 0.85;
+    var head, tail, ARRIVE = 0.78;
     if (x < ARRIVE) {
       head = half * (1 - Math.pow(1 - x / ARRIVE, cfg.waveEase));
       tail = Math.max(0, head - L);
@@ -539,7 +540,9 @@
       tail = half - L + L * (0.5 - 0.5 * Math.cos(Math.PI * (x - ARRIVE) / (1 - ARRIVE)));
     }
     wv.head = head;
-    var env = x < 0.9 ? 1 : clamp01((1 - x) / 0.1), col = wv.col, s0 = sideStart(r, wv.side);
+    var fade = clamp01((x - cfg.waveFadeFrom) / (1 - cfg.waveFadeFrom));
+    var env = 1 - fade * fade * (3 - 2 * fade);             // melts away: eased at both ends, no cut
+    var col = wv.col, s0 = sideStart(r, wv.side);
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.save();
