@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>cursor-trail harness</title>
+<style>
+  /* Mock of the VS Code classes the script looks for; dark bg matches the reference capture. */
+  html, body { margin: 0; height: 100%; overflow: hidden; background: rgb(15,15,12); color: #bdbdbd;
+               font: 13px/19.5px Consolas, "Courier New", monospace; }
+  #sidebar { position: absolute; left: 0; top: 0; bottom: 0; width: 260px; border-right: 1px solid #222; }
+  .monaco-list { height: 100%; outline: none; }
+  .monaco-list-row { position: relative; height: 22px; line-height: 22px; padding-left: 24px; box-sizing: border-box; }
+  .monaco-list-row.focused { background: #2a2d2e; }
+  .monaco-icon-label { display: inline-block; }
+  #editorHost { position: absolute; left: 280px; top: 0; right: 0; bottom: 0; }
+  .monaco-editor { position: relative; width: 100%; height: 100%; }
+  .native-edit-context { position: absolute; left: 0; top: 0; width: 1px; height: 1px; opacity: 0; }
+  .cursors-layer { position: absolute; left: 0; top: 0; }
+  .cursors-layer > .cursor { position: absolute; width: 10px; height: 19.5px; background: rgb(230,59,62); }
+  .code { position: absolute; left: 20px; top: 0; white-space: pre; color: #9aa; }
+  #terminalHost { position: absolute; left: 280px; right: 0; bottom: 0; height: 120px; border-top: 1px solid #222; }
+  .xterm-helper-textarea { position: absolute; width: 10px; height: 19.5px; opacity: 0; }
+  #searchInput { position: absolute; left: 8px; bottom: 8px; width: 240px; background: #222; color: #ccc; border: 1px solid #333; }
+</style>
+</head>
+<body>
+  <div id="sidebar">
+    <div class="monaco-list" tabindex="0" id="list"></div>
+    <input id="searchInput" placeholder="search">
+  </div>
+  <div id="editorHost">
+    <div class="monaco-editor focused" id="editor">
+      <div class="native-edit-context" tabindex="0" id="editCtx"></div>
+      <div class="code" id="code"></div>
+      <div class="cursors-layer"><div class="cursor" id="caret"></div></div>
+    </div>
+  </div>
+  <div id="terminalHost"><textarea class="xterm-helper-textarea" id="xtermTa" style="left:20px;top:20px"></textarea></div>
+
+  <script>
+    // fake file tree + code
+    (function () {
+      var names = ['src', 'napkin', 'Root.tsx', 'package.json', 'remotion.config.ts', 'README.md', 'tokenizer.c', 'main.c', 'tokenizer.h'];
+      var list = document.getElementById('list');
+      names.forEach(function (n, i) {
+        var row = document.createElement('div'); row.className = 'monaco-list-row'; row.dataset.i = i;
+        var lab = document.createElement('div'); lab.className = 'monaco-icon-label'; lab.textContent = n; row.appendChild(lab);
+        list.appendChild(row);
+      });
+      var code = [];
+      for (var i = 0; i < 60; i++) code.push('  for (int i = 0; i < input_len; i++) { /* line ' + (i + 11) + ' */');
+      document.getElementById('code').textContent = code.join('\n');
+    })();
+    // helpers used by measure.js and by hand
+    window.placeCaretCenter = function (cx, cy) {
+      var c = document.getElementById('caret'), host = document.getElementById('editorHost').getBoundingClientRect();
+      c.style.left = (cx - host.left - 5) + 'px'; c.style.top = (cy - host.top - 9.75) + 'px';
+    };
+    window.focusEditor = function () { document.getElementById('editCtx').focus(); };
+    window.focusRow = function (i) {
+      var rows = document.querySelectorAll('.monaco-list-row');
+      rows.forEach(function (r) { r.classList.remove('focused'); });
+      rows[i].classList.add('focused'); document.getElementById('list').focus();
+    };
+    window.focusTerminal = function () { document.getElementById('xtermTa').focus(); };
+    window.focusInput = function () { document.getElementById('searchInput').focus(); };
+  </script>
+  <script>
+    // test config: 1:1 canvas pixels so measurements are comparable to the 1080p reference
+    window.CURSOR_TRAIL_CONFIG = { pixelRatio: 1 };
+  </script>
+  <script src="../cursor-trail.js"></script>
+  <script src="measure.js"></script>
+</body>
+</html>
