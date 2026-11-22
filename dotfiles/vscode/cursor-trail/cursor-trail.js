@@ -56,14 +56,14 @@
     followInputs: true,
     followPanes: true,      // webviews (extension panels): their content is a separate document, so only the pane is marked
     paneWash: true,         // soft wash across the whole pane the cursor arrived in
-    paneWashAlpha: 0.07,
+    paneWashAlpha: 0.035,
     paneMarkerHeight: 24,   // px, head length along the pane's side
     paneWave: true,         // two light streaks run round the pane's border and meet on the far side
-    waveMs: 700,            // ms for the streaks to meet and fade
-    waveDelay: 0.5,         // share of `duration` to wait, so they start as the trail lands
-    waveLength: 0.12,       // streak length, as a share of the pane's perimeter
-    waveWidth: 2,           // px, streak width at the head
-    waveAlpha: 0.7,
+    waveMs: 300,            // ms for the streaks to meet and fade
+    waveDelay: 0.35,        // share of `duration` to wait, so they start as the trail lands
+    waveLength: 0.09,       // streak length, as a share of the pane's perimeter
+    waveWidth: 1.2,         // px, streak width at the head
+    waveAlpha: 0.4,
     rowPulse: true,         // soft wash across the focused sidebar row
     rowPulseAlpha: 0.16,
     markerWidth: 8,         // px, head width used for rows / inputs
@@ -421,10 +421,13 @@
     ctx.filter = 'blur(' + cfg.glowRadius + 'px)';
     ctx.globalAlpha = cfg.glowStrength;
     fillPoly(grad);
-    var infl = cfg.headGlowInflate, hr = head.rect;
-    ctx.globalAlpha = cfg.headGlowAlpha * gh;
-    ctx.fillStyle = rgba(col, 1);
-    ctx.fillRect(hr.x - infl, hr.y - infl, hr.w + 2 * infl, hr.h + 2 * infl);
+    // a pane has no text cell to light up: its trail just ends, so no head block there
+    var infl = cfg.headGlowInflate, hr = head.rect, cell = head.kind !== 'pane';
+    if (cell) {
+      ctx.globalAlpha = cfg.headGlowAlpha * gh;
+      ctx.fillStyle = rgba(col, 1);
+      ctx.fillRect(hr.x - infl, hr.y - infl, hr.w + 2 * infl, hr.h + 2 * infl);
+    }
 
     // pass 2: the streak with slightly soft edges
     ctx.filter = 'blur(' + cfg.coreBlur + 'px)';
@@ -433,9 +436,11 @@
 
     // pass 3: brightened head cell, crisp
     ctx.filter = 'none';
-    ctx.globalAlpha = cfg.headAlpha * g;
-    ctx.fillStyle = rgba(col, 1);
-    ctx.fillRect(hr.x, hr.y, hr.w, hr.h);
+    if (cell) {
+      ctx.globalAlpha = cfg.headAlpha * g;
+      ctx.fillStyle = rgba(col, 1);
+      ctx.fillRect(hr.x, hr.y, hr.w, hr.h);
+    }
 
     ctx.restore();
     state.dirty = true;
@@ -457,18 +462,31 @@
     return side === 'top' ? r.w / 2 : side === 'right' ? r.w + r.h / 2
       : side === 'bottom' ? r.w + r.h + r.w / 2 : 2 * r.w + r.h + r.h / 2;
   }
-  var WAVE_SEGMENTS = 12;
+  var WAVE_SEGMENTS = 10;
+  // The distances (from s0, going `dir`) to sample a streak at: evenly spaced, plus the pane's
+  // corners, so the streak turns them instead of cutting across.
+  function streakStops(r, s0, dir, from, to) {
+    var P = 2 * (r.w + r.h), stops = [], k, d, c;
+    for (k = 0; k <= WAVE_SEGMENTS; k++) stops.push(from + (to - from) * k / WAVE_SEGMENTS);
+    var corners = [0, r.w, r.w + r.h, 2 * r.w + r.h];
+    for (k = 0; k < 4; k++) {
+      c = corners[k];
+      d = (((dir * (c - s0)) % P) + P) % P;
+      if (d > from + 1 && d < to - 1) stops.push(d);
+    }
+    return stops.sort(function (a, b) { return a - b; });
+  }
   function drawStreak(r, s0, dir, from, to, col, env) {
-    var n = WAVE_SEGMENTS, prev = pointOnRect(r, s0 + dir * from), i, u, a, wd, next;
+    var stops = streakStops(r, s0, dir, from, to), i, u, a, wd, prev, next;
     for (var pass = 0; pass < 2; pass++) {                 // glow under, line over
-      prev = pointOnRect(r, s0 + dir * from);
-      for (i = 1; i <= n; i++) {
-        u = i / n;                                         // 0 = tail, 1 = head
-        next = pointOnRect(r, s0 + dir * (from + (to - from) * u));
+      prev = pointOnRect(r, s0 + dir * stops[0]);
+      for (i = 1; i < stops.length; i++) {
+        u = (stops[i] - from) / (to - from);               // 0 = tail, 1 = head
+        next = pointOnRect(r, s0 + dir * stops[i]);
         a = cfg.waveAlpha * env * Math.pow(u, 1.6);
-        wd = 0.6 + (cfg.waveWidth - 0.6) * u;
-        ctx.strokeStyle = rgba(col, pass === 0 ? a * 0.22 : a);
-        ctx.lineWidth = pass === 0 ? wd * 3.4 : wd;
+        wd = 0.5 + (cfg.waveWidth - 0.5) * u;
+        ctx.strokeStyle = rgba(col, pass === 0 ? a * 0.18 : a);
+        ctx.lineWidth = pass === 0 ? wd * 3 : wd;
         ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(next.x, next.y); ctx.stroke();
         prev = next;
       }
@@ -495,9 +513,9 @@
     // where they meet: a small soft bloom as they arrive, gone as the tails catch up
     var bloom = Math.pow(head / half, 8) * (1 - clamp01((travel - half) / L)) * cfg.waveAlpha * env;
     if (bloom > 0.01) {
-      var m = pointOnRect(r, s0 + half), g = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, 16);
-      g.addColorStop(0, rgba(col, 0.55 * bloom)); g.addColorStop(1, rgba(col, 0));
-      ctx.fillStyle = g; ctx.fillRect(m.x - 16, m.y - 16, 32, 32);
+      var m = pointOnRect(r, s0 + half), g = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, 10);
+      g.addColorStop(0, rgba(col, 0.4 * bloom)); g.addColorStop(1, rgba(col, 0));
+      ctx.fillStyle = g; ctx.fillRect(m.x - 10, m.y - 10, 20, 20);
     }
     ctx.restore();
     state.dirty = true;
