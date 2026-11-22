@@ -12,7 +12,8 @@
  *   - terminal               textarea.xterm-helper-textarea (xterm parks it on the cursor cell)
  *   - plain inputs           input / textarea (marker at the field's left edge)
  *   - webviews               any extension panel or editor in an iframe: the trail lands on the middle of
- *                            the side it came from, then two light streaks run round the border and meet
+ *                            the side it came from, then two light streaks run round the border and meet,
+ *                            with a faint glow over the pane that begins and ends with them
  *
  * Override settings (no edit needed) with either:
  *   window.CURSOR_TRAIL_CONFIG = {...}                       (before this script runs)
@@ -55,15 +56,15 @@
     followTerminal: true,
     followInputs: true,
     followPanes: true,      // webviews (extension panels): their content is a separate document, so only the pane is marked
-    paneWash: true,         // soft wash across the whole pane the cursor arrived in
-    paneWashAlpha: 0.035,
+    paneWash: true,         // soft glow over the whole pane, rising and falling with the streaks
+    paneWashAlpha: 0.05,
     paneMarkerHeight: 24,   // px, head length along the pane's side
     paneWave: true,         // two light streaks run round the pane's border and meet on the far side
     waveMs: 300,            // ms for the streaks to meet and fade
     waveDelay: 0.35,        // share of `duration` to wait, so they start as the trail lands
     waveLength: 0.09,       // streak length, as a share of the pane's perimeter
-    waveWidth: 1.2,         // px, streak width at the head
-    waveAlpha: 0.4,
+    waveWidth: 1.6,         // px, streak width at the head
+    waveAlpha: 0.6,
     rowPulse: true,         // soft wash across the focused sidebar row
     rowPulseAlpha: 0.16,
     markerWidth: 8,         // px, head width used for rows / inputs
@@ -382,9 +383,9 @@
     ctx.clearRect(0, 0, W, H);
     ctx.save();
 
-    // sidebar rows get a soft wash across the whole row, a webview across the whole pane
-    if (head.row && ((head.kind === 'row' && cfg.rowPulse) || (head.kind === 'pane' && cfg.paneWash))) {
-      ctx.fillStyle = rgba(col, (head.kind === 'pane' ? cfg.paneWashAlpha : cfg.rowPulseAlpha) * g);
+    // sidebar rows get a soft wash across the whole row (a pane's wash is drawn with its streaks)
+    if (head.kind === 'row' && cfg.rowPulse && head.row) {
+      ctx.fillStyle = rgba(col, cfg.rowPulseAlpha * g);
       ctx.fillRect(head.row.x, head.row.y, head.row.w, head.row.h);
     }
 
@@ -447,7 +448,8 @@
   }
 
   // Two streaks leave the middle of the side the cursor arrived by, one each way round the
-  // pane's border, and meet at the middle of the far side, where they melt away. Drawn over the
+  // pane's border, and meet at the middle of the far side, where they melt away (nothing
+  // flashes there). The pane's glow runs on the same clock, so both start and end together. Drawn over the
   // trail on its own clock. No blur filters: a few plain strokes per frame, the glow is a wider,
   // fainter stroke under the same line.
   function pointOnRect(r, s) {   // s: distance clockwise from the top-left corner
@@ -505,17 +507,14 @@
 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.save();
+    if (cfg.paneWash) {   // the pane's glow rises and falls with the streaks: same start, same end
+      ctx.fillStyle = rgba(col, cfg.paneWashAlpha * Math.sin(Math.PI * x));
+      ctx.fillRect(wv.rect.x, wv.rect.y, wv.rect.w, wv.rect.h);
+    }
     ctx.lineCap = 'butt';                                  // round caps would double up where segments meet
     if (head - tail > 1) {
       drawStreak(r, s0, 1, tail, head, col, env);
       drawStreak(r, s0, -1, tail, head, col, env);
-    }
-    // where they meet: a small soft bloom as they arrive, gone as the tails catch up
-    var bloom = Math.pow(head / half, 8) * (1 - clamp01((travel - half) / L)) * cfg.waveAlpha * env;
-    if (bloom > 0.01) {
-      var m = pointOnRect(r, s0 + half), g = ctx.createRadialGradient(m.x, m.y, 0, m.x, m.y, 10);
-      g.addColorStop(0, rgba(col, 0.4 * bloom)); g.addColorStop(1, rgba(col, 0));
-      ctx.fillStyle = g; ctx.fillRect(m.x - 10, m.y - 10, 20, 20);
     }
     ctx.restore();
     state.dirty = true;

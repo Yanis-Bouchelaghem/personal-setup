@@ -113,8 +113,8 @@ Moves shorter than `minDistance` (16 px) never trail, so typing and a single `h`
 - Terminal tracking assumes xterm parks its helper textarea on the cursor cell; not verified.
 - Multi-cursor: only the primary caret is followed.
 - A webview's content is a separate document, so the trail cannot follow the cursor inside it; it only shows that focus
-  arrived in the pane: the trail lands on the middle of the side you came from, a faint wash covers the pane and two
-  light streaks run one each way round its border and meet on the far side. Turn it all off with `followPanes: false`,
+  arrived in the pane: the trail lands on the middle of the side you came from, two light streaks run one each way round its
+  border and meet on the far side, while a faint glow covers the pane; both begin and end together. Turn it all off with `followPanes: false`,
   the streaks with `paneWave: false`, the wash with `paneWash: false`. It works for every extension because it only
   looks at the iframe's box.
 
