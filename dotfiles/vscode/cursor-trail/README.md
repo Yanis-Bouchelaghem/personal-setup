@@ -55,7 +55,7 @@ Written for Claude. Steps 4 and 5 need the user: you cannot run VS Code's Comman
 4. **User:** Command Palette, "Enable Custom CSS and JS" (first time) or "Reload Custom CSS and JS", then quit and
    restart VS Code completely.
 5. **Check it took.** In VS Code: Help > Toggle Developer Tools > Console, run `cursorTrail.version`. It should print
-   `'0.2.0'`. Without the UI, check that the patched `workbench.html` now contains the script (Windows):
+   `'0.3.0'`. Without the UI, check that the patched `workbench.html` now contains the script (Windows):
    ```powershell
    Get-ChildItem "$env:LOCALAPPDATA\Programs\Microsoft VS Code" -Recurse -Filter workbench.html | Select-String -Pattern cursorTrail -List
    ```
@@ -98,6 +98,7 @@ To remove it: delete the import, run "Disable Custom CSS and JS", restart.
 | explorer / search / lists | the focused row's label, plus a soft wash across the row |
 | integrated terminal       | the terminal cursor cell (xterm helper textarea)         |
 | input boxes               | the left edge of the field                               |
+| a webview (any extension) | the pane's top-left corner, then a comet round its border |
 
 Moves shorter than `minDistance` (16 px) never trail, so typing and a single `h` or `l` stay quiet. Moves less than
 `chainMs` (140 ms) apart count as one path: holding an arrow key grows the trail along the path the cursor took (up to
@@ -111,6 +112,10 @@ Moves shorter than `minDistance` (16 px) never trail, so typing and a single `h`
   fix `resolveTarget()`.
 - Terminal tracking assumes xterm parks its helper textarea on the cursor cell; not verified.
 - Multi-cursor: only the primary caret is followed.
+- A webview's content is a separate document, so the trail cannot follow the cursor inside it; it only shows that focus
+  arrived in the pane: the trail lands on its top-left corner, a faint wash covers it and a comet runs once round its
+  border. Turn it all off with `followPanes: false`, the comet with `paneWave: false`, the wash with `paneWash: false`.
+  It works for every extension because it only looks at the iframe's box.
 
 ## Tests and reference
 

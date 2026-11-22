@@ -11,6 +11,8 @@
  *   - sidebar / tree / lists .monaco-list-row.focused (marker at the row's label)
  *   - terminal               textarea.xterm-helper-textarea (xterm parks it on the cursor cell)
  *   - plain inputs           input / textarea (marker at the field's left edge)
+ *   - webviews               any extension panel or editor in an iframe: the trail lands on its top-left
+ *                            corner, then a comet runs once around the pane's border
  *
  * Override settings (no edit needed) with either:
  *   window.CURSOR_TRAIL_CONFIG = {...}                       (before this script runs)
@@ -52,6 +54,17 @@
     followSidebar: true,
     followTerminal: true,
     followInputs: true,
+    followPanes: true,      // webviews (extension panels): their content is a separate document, so only the pane is marked
+    paneWash: true,         // soft wash across the whole pane the cursor arrived in
+    paneWashAlpha: 0.07,
+    paneMarkerHeight: 24,   // px, head height at the pane's top-left corner
+    paneWave: true,         // a comet runs once around the pane's border when the cursor arrives
+    waveMs: 800,            // ms for the comet to go all the way round (and drain into the corner)
+    waveDelay: 0.5,         // share of `duration` to wait, so it starts as the trail lands
+    waveLength: 0.3,        // comet length, as a share of the pane's perimeter
+    waveWidth: 3,           // px, comet width at the head
+    waveAlpha: 0.95,
+    waveBorder: 0.2,        // opacity of the border's faint glow while the comet runs (0 = none)
     rowPulse: true,         // soft wash across the focused sidebar row
     rowPulseAlpha: 0.16,
     markerWidth: 8,         // px, head width used for rows / inputs
@@ -96,6 +109,7 @@
   var state = {
     last: null,          // { c:{x,y}, rect, kind, row }
     anim: null,          // { t0, start:{x,y}, head }
+    wave: null,          // { rect, ts, col }: the comet running round a pane
     caretColor: null,
     color: [255, 255, 255],
     dirty: false,
@@ -206,6 +220,19 @@
         return { kind: 'input', rect: { x: r.x + 6, y: r.y, w: cfg.markerWidth, h: r.h }, el: ae };
       }
     }
+
+    // 5. webviews: focus inside one leaves document.activeElement on its iframe, and the page
+    // inside cannot be read, so the head lands at the pane's top-left corner. Any extension works.
+    if (cfg.followPanes && ae.tagName === 'IFRAME') {
+      r = rectOf(ae);
+      if (r.w > 0 && r.h > 0) {
+        return {
+          kind: 'pane',
+          rect: { x: r.x + 6, y: r.y + 8, w: cfg.markerWidth, h: Math.min(r.h, cfg.paneMarkerHeight) },
+          row: r, el: ae
+        };
+      }
+    }
     return null;
   }
 
@@ -307,7 +334,11 @@
         state.color = resolveColor(t);
       }
     }
-    state.last = { c: c, rect: t.rect, kind: t.kind, row: t.row };
+    // arriving in a pane (or another one): send the comet round its border
+    if (cfg.paneWave && cfg.enabled && t.kind === 'pane' && (!last || last.kind !== 'pane' || last.el !== t.el)) {
+      state.wave = { rect: t.row, ts: now + cfg.waveDelay * cfg.duration, col: resolveColor(t) };
+    }
+    state.last = { c: c, rect: t.rect, kind: t.kind, row: t.row, el: t.el };
     if (a) {
       a.head = state.last;
       a.pts[a.pts.length - 1] = { x: c.x, y: c.y };   // the head end follows the live cursor
@@ -335,9 +366,9 @@
     ctx.clearRect(0, 0, W, H);
     ctx.save();
 
-    // sidebar rows get a soft wash across the whole row
-    if (head.kind === 'row' && cfg.rowPulse && head.row) {
-      ctx.fillStyle = rgba(col, cfg.rowPulseAlpha * g);
+    // sidebar rows get a soft wash across the whole row, a webview across the whole pane
+    if (head.row && ((head.kind === 'row' && cfg.rowPulse) || (head.kind === 'pane' && cfg.paneWash))) {
+      ctx.fillStyle = rgba(col, (head.kind === 'pane' ? cfg.paneWashAlpha : cfg.rowPulseAlpha) * g);
       ctx.fillRect(head.row.x, head.row.y, head.row.w, head.row.h);
     }
 
@@ -394,6 +425,53 @@
     state.dirty = true;
   }
 
+  // The comet round a pane: starts in the top-left corner, goes clockwise once, and drains
+  // back into the corner. Drawn after (over) the trail, on its own clock.
+  function pointOnRect(r, s) {
+    var w = r.w, h = r.h;
+    if (s <= w) return { x: r.x + s, y: r.y };
+    s -= w; if (s <= h) return { x: r.x + w, y: r.y + s };
+    s -= h; if (s <= w) return { x: r.x + w - s, y: r.y + h };
+    s -= w; return { x: r.x, y: r.y + h - Math.min(s, h) };
+  }
+  function drawWave(now) {
+    var wv = state.wave, el = now - wv.ts;
+    if (el < 0) return;                                   // the trail is still on its way
+    var x = clamp01(el / cfg.waveMs);
+    if (x >= 1) { state.wave = null; state.dirty = true; return; }
+    var r = { x: wv.rect.x + 1, y: wv.rect.y + 1, w: Math.max(2, wv.rect.w - 2), h: Math.max(2, wv.rect.h - 2) };
+    var P = 2 * (r.w + r.h), L = P * cfg.waveLength;
+    var head = (P + L) * (0.5 - 0.5 * Math.cos(Math.PI * x));   // eases in and out; out of sight at the end
+    var from = Math.max(0, head - L), to = Math.min(P, head);
+    var env = x < 0.85 ? 1 : clamp01((1 - x) / 0.15), col = wv.col;
+
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.save();
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    if (cfg.waveBorder > 0) {                              // the whole border glows faintly
+      ctx.filter = 'blur(2px)';
+      ctx.strokeStyle = rgba(col, cfg.waveBorder * env * (1 - x));
+      ctx.lineWidth = 2;
+      ctx.strokeRect(r.x, r.y, r.w, r.h);
+    }
+    if (to > from) {
+      var n = Math.max(4, Math.ceil((to - from) / 5)), pts = [], i;
+      for (i = 0; i <= n; i++) pts.push(pointOnRect(r, from + (to - from) * i / n));
+      for (var pass = 0; pass < 2; pass++) {               // halo first, then the crisp comet
+        ctx.filter = pass === 0 ? 'blur(' + cfg.glowRadius * 0.6 + 'px)' : 'blur(0.6px)';
+        for (i = 0; i < n; i++) {
+          var u = (i + 1) / n;                             // 0 = tail, 1 = head
+          var a0 = cfg.waveAlpha * env * Math.pow(u, 1.7);
+          ctx.strokeStyle = rgba(col, pass === 0 ? a0 * 0.8 : a0);
+          ctx.lineWidth = (pass === 0 ? 2.6 : 1) * (1 + (cfg.waveWidth - 1) * u);
+          ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[i + 1].x, pts[i + 1].y); ctx.stroke();
+        }
+      }
+    }
+    ctx.restore();
+    state.dirty = true;
+  }
+
   // ---------------------------------------------------------------- loop / lifecycle
   function tick(now) {
     if (now === undefined) now = state.clock();
@@ -401,6 +479,7 @@
     step(now, t);
     if (state.anim && !advance(state.anim, now)) state.anim = null;
     render(now);
+    if (state.wave) drawWave(now);
   }
   function frame() {
     state.raf = requestAnimationFrame(frame);
@@ -413,7 +492,7 @@
   G.addEventListener('resize', onResize);
 
   var api = {
-    version: '0.2.0',
+    version: '0.3.0',
     config: cfg,
     state: state,
     tick: tick,
@@ -423,10 +502,10 @@
     },
     resolveTarget: resolveTarget,
     enable: function () { cfg.enabled = true; },
-    disable: function () { cfg.enabled = false; state.anim = null; state.dirty = true; render(0); },
+    disable: function () { cfg.enabled = false; state.anim = null; state.wave = null; state.dirty = true; render(0); },
     // test hooks: drive the clock by hand
     manual: function (on) { state.manual = !!on; if (on) stop(); else start(); },
-    reset: function () { state.last = null; state.anim = null; state.dirty = true; render(0); },
+    reset: function () { state.last = null; state.anim = null; state.wave = null; state.dirty = true; render(0); },
     canvas: canvas,
     destroy: function () {
       stop(); G.removeEventListener('resize', onResize);
