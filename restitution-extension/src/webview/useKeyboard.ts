@@ -148,6 +148,25 @@ export function useKeyboard(handlers: Handlers): void {
 }
 
 /**
+ * Escape, for a panel with nothing to move through (no restitution, no git
+ * repository, an error): it still gives the keyboard back to the editor.
+ */
+export function useLeaveOnEscape(leave: () => void): void {
+    const latest = useRef(leave);
+    latest.current = leave;
+    useEffect(() => {
+        const onKey = (event: KeyboardEvent) => {
+            if (event.key === "Escape" && !ignored(event)) {
+                event.preventDefault();
+                latest.current();
+            }
+        };
+        window.addEventListener("keydown", onKey);
+        return () => window.removeEventListener("keydown", onKey);
+    }, []);
+}
+
+/**
  * Move the cursor to the next (1) or previous (-1) card with something new on
  * it, wrapping around; one in a folded goal unfolds it first.
  */

@@ -2017,3 +2017,8 @@ body {
     color: var(--muted);
     font-size: 11px;
 }
+
+/* The notice states hold the keyboard on this element: no ring around it. */
+.idle:focus {
+    outline: none;
+}

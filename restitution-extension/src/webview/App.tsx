@@ -1,10 +1,11 @@
-import { useEffect, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 
 import type { ViewState } from "../core/messages";
 import { ErrorList } from "./ErrorList";
 import type { Host } from "./host";
 import { Notice } from "./Notice";
 import { Tabs } from "./Tabs";
+import { useLeaveOnEscape } from "./useKeyboard";
 
 /** The panel: it shows whatever state the extension last sent. */
 export function App({ host }: { host: Host }) {
@@ -34,6 +35,32 @@ export function App({ host }: { host: Host }) {
     );
 }
 
+/**
+ * What the panel shows when there is nothing to read. It still has to take
+ * the keyboard: without a focusable element, VS Code has nothing inside the
+ * panel to hand the keys to, so Escape and its own shortcuts (Cmd+arrows
+ * between windows) would go nowhere.
+ */
+function Idle({ host, children }: { host: Host; children: ReactNode }) {
+    const root = useRef<HTMLDivElement>(null);
+    useLeaveOnEscape(() => host.send({ type: "focusEditor" }));
+    useEffect(() => {
+        const take = () => root.current?.focus({ preventScroll: true });
+        // Only when the panel has the keyboard: taking it unasked would pull
+        // the focus out of the editor.
+        if (document.hasFocus()) {
+            take();
+        }
+        window.addEventListener("focus", take);
+        return () => window.removeEventListener("focus", take);
+    }, []);
+    return (
+        <div className="idle" ref={root} tabIndex={-1}>
+            {children}
+        </div>
+    );
+}
+
 function Body({
     state,
     focus,
@@ -41,6 +68,32 @@ function Body({
 }: {
     state: ViewState;
     focus: { id: string } | undefined;
+    host: Host;
+}) {
+    if (state.status !== "ok") {
+        return (
+            <Idle host={host}>
+                <Notices state={state} host={host} />
+            </Idle>
+        );
+    }
+    return (
+        <Tabs
+            tabs={state.tabs}
+            diffs={state.diffs}
+            sources={state.sources}
+            closed={state.closed}
+            focus={focus}
+            host={host}
+        />
+    );
+}
+
+function Notices({
+    state,
+    host,
+}: {
+    state: Exclude<ViewState, { status: "ok" }>;
     host: Host;
 }) {
     if (state.status === "no-repo") {
@@ -82,21 +135,9 @@ function Body({
             </Notice>
         );
     }
-    if (state.status === "error") {
-        return (
-            <Notice title="Something went wrong" tone="error">
-                <ErrorList errors={state.errors} />
-            </Notice>
-        );
-    }
     return (
-        <Tabs
-            tabs={state.tabs}
-            diffs={state.diffs}
-            sources={state.sources}
-            closed={state.closed}
-            focus={focus}
-            host={host}
-        />
+        <Notice title="Something went wrong" tone="error">
+            <ErrorList errors={state.errors} />
+        </Notice>
     );
 }
