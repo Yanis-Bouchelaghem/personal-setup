@@ -62,7 +62,6 @@
     paneMarkerHeight: 24,   // px, head length along the pane's side
     paneWave: true,         // two light streaks run round the pane's border and meet on the far side
     waveMs: 300,            // ms for the streaks to meet and fade
-    waveDelay: 0.35,        // share of `duration` to wait, so they start as the trail lands
     waveLength: 0.09,       // streak length, as a share of the pane's perimeter
     waveWidth: 1.6,         // px, streak width at the head
     waveAlpha: 0.6,
@@ -354,7 +353,7 @@
     }
     // arriving in a pane (or another one): send the streaks round its border
     if (cfg.paneWave && cfg.enabled && t.kind === 'pane' && (!last || last.kind !== 'pane' || last.el !== t.el)) {
-      state.wave = { rect: t.row, side: t.side, ts: now + cfg.waveDelay * cfg.duration, col: resolveColor(t) };
+      state.wave = { rect: t.row, side: t.side, ts: now, col: resolveColor(t) };
     }
     state.last = { c: c, rect: t.rect, kind: t.kind, row: t.row, el: t.el };
     if (a) {
@@ -472,39 +471,58 @@
     return side === 'top' ? r.w / 2 : side === 'right' ? r.w + r.h / 2
       : side === 'bottom' ? r.w + r.h + r.w / 2 : 2 * r.w + r.h + r.h / 2;
   }
-  var WAVE_SEGMENTS = 10;
-  // The distances (from s0, going `dir`) to sample a streak at: evenly spaced, plus the pane's
-  // corners, so the streak turns them instead of cutting across.
+  // Where a streak bends: its two ends, and any corner of the pane in between.
   function streakStops(r, s0, dir, from, to) {
-    var P = 2 * (r.w + r.h), stops = [], k, d, c;
-    for (k = 0; k <= WAVE_SEGMENTS; k++) stops.push(from + (to - from) * k / WAVE_SEGMENTS);
-    var corners = [0, r.w, r.w + r.h, 2 * r.w + r.h];
-    for (k = 0; k < 4; k++) {
-      c = corners[k];
-      d = (((dir * (c - s0)) % P) + P) % P;
+    var P = 2 * (r.w + r.h), stops = [from], corners = [0, r.w, r.w + r.h, 2 * r.w + r.h];
+    for (var k = 0; k < 4; k++) {
+      var d = (((dir * (corners[k] - s0)) % P) + P) % P;
       if (d > from + 1 && d < to - 1) stops.push(d);
     }
+    stops.push(to);
     return stops.sort(function (a, b) { return a - b; });
   }
-  function drawStreak(r, s0, dir, from, to, col, env) {
-    var stops = streakStops(r, s0, dir, from, to), i, u, a, wd, prev, next;
-    for (var pass = 0; pass < 2; pass++) {                 // glow under, line over
-      prev = pointOnRect(r, s0 + dir * stops[0]);
-      for (i = 1; i < stops.length; i++) {
-        u = (stops[i] - from) / (to - from);               // 0 = tail, 1 = head
-        next = pointOnRect(r, s0 + dir * stops[i]);
-        a = cfg.waveAlpha * env * Math.pow(u, 1.6);
-        wd = 0.5 + (cfg.waveWidth - 0.5) * u;
-        ctx.strokeStyle = rgba(col, pass === 0 ? a * 0.18 : a);
-        ctx.lineWidth = pass === 0 ? wd * 3 : wd;
-        ctx.beginPath(); ctx.moveTo(prev.x, prev.y); ctx.lineTo(next.x, next.y); ctx.stroke();
-        prev = next;
+  // A streak is a ribbon that thins and fades toward its tail. One gradient per straight piece
+  // gives a smooth fade; a few nested, fainter, wider layers give it a soft glow.
+  var STREAK_LAYERS = [[4.6, 0.07], [3, 0.12], [1.8, 0.2], [1, 1]];   // [width factor, alpha factor]
+  function streakAlpha(u, env) { return cfg.waveAlpha * env * Math.pow(u, 1.5); }
+  function streakWidth(u) { return 0.4 + (cfg.waveWidth - 0.4) * u; }
+  function drawPiece(p0, p1, u0, u1, col, env, isHead) {
+    var dx = p1.x - p0.x, dy = p1.y - p0.y, L = Math.hypot(dx, dy);
+    if (L < 0.01) return;
+    var nx = -dy / L, ny = dx / L, k, t, g, h0, h1, layer;
+    for (var li = 0; li < STREAK_LAYERS.length; li++) {
+      layer = STREAK_LAYERS[li];
+      g = ctx.createLinearGradient(p0.x, p0.y, p1.x, p1.y);
+      for (k = 0; k <= 4; k++) {
+        t = k / 4;
+        g.addColorStop(t, rgba(col, streakAlpha(u0 + (u1 - u0) * t, env) * layer[1]));
       }
+      h0 = streakWidth(u0) * layer[0] / 2; h1 = streakWidth(u1) * layer[0] / 2;
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.moveTo(p0.x + nx * h0, p0.y + ny * h0);
+      ctx.lineTo(p1.x + nx * h1, p1.y + ny * h1);
+      if (isHead) {   // a rounded front: half a disc beyond the end
+        var a0 = Math.atan2(ny, nx);
+        ctx.arc(p1.x, p1.y, h1, a0, a0 + Math.PI, true);
+        ctx.fillStyle = g;
+      } else {
+        ctx.lineTo(p1.x - nx * h1, p1.y - ny * h1);
+      }
+      ctx.lineTo(p0.x - nx * h0, p0.y - ny * h0);
+      ctx.closePath();
+      ctx.fill();
+    }
+  }
+  function drawStreak(r, s0, dir, from, to, col, env) {
+    var stops = streakStops(r, s0, dir, from, to), n = stops.length - 1, len = to - from;
+    for (var i = 0; i < n; i++) {
+      drawPiece(pointOnRect(r, s0 + dir * stops[i]), pointOnRect(r, s0 + dir * stops[i + 1]),
+        (stops[i] - from) / len, (stops[i + 1] - from) / len, col, env, i === n - 1);
     }
   }
   function drawWave(now) {
     var wv = state.wave, el = now - wv.ts;
-    if (el < 0) return;                                    // the trail is still on its way
     var x = clamp01(el / cfg.waveMs);
     if (x >= 1) { state.wave = null; state.dirty = true; return; }
     var r = { x: wv.rect.x + 1, y: wv.rect.y + 1, w: Math.max(2, wv.rect.w - 2), h: Math.max(2, wv.rect.h - 2) };
@@ -519,7 +537,6 @@
       ctx.fillStyle = rgba(col, cfg.paneWashAlpha * Math.sin(Math.PI * x));
       ctx.fillRect(wv.rect.x, wv.rect.y, wv.rect.w, wv.rect.h);
     }
-    ctx.lineCap = 'butt';                                  // round caps would double up where segments meet
     if (head - tail > 1) {
       drawStreak(r, s0, 1, tail, head, col, env);
       drawStreak(r, s0, -1, tail, head, col, env);
