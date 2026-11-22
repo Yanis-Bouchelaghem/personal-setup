@@ -1,0 +1,268 @@
+// Windows version of keybindings.mac.json: every cmd+ is ctrl+, and the
+// default bindings it removes use their Windows keys. Keep both in step.
+// Place your key bindings in this file to override the defaults
+[
+    // ── Terminal sequence ──────────────────────────────────────────────
+    {
+        "key": "shift+enter",
+        "command": "workbench.action.terminal.sendSequence",
+        "args": { "text": "\\\r\n" },
+        "when": "terminalFocus"
+    },
+    // ── List / quick-open navigation (Ctrl+J/K instead of Ctrl+N/P) ───
+    {
+        "key": "ctrl+j",
+        "command": "workbench.action.quickOpenSelectNext",
+        "when": "inQuickOpen && neovim.mode != 'cmdline'"
+    },
+    {
+        "key": "ctrl+n",
+        "command": "-workbench.action.quickOpenSelectNext",
+        "when": "inQuickOpen && neovim.mode != 'cmdline'"
+    },
+    {
+        "key": "ctrl+k",
+        "command": "workbench.action.quickOpenSelectPrevious",
+        "when": "inQuickOpen && neovim.mode != 'cmdline'"
+    },
+    {
+        "key": "ctrl+p",
+        "command": "-workbench.action.quickOpenSelectPrevious",
+        "when": "inQuickOpen && neovim.mode != 'cmdline'"
+    },
+    {
+        "key": "ctrl+j",
+        "command": "focusNextRenameSuggestion",
+        "when": "renameInputVisible"
+    },
+    {
+        "key": "ctrl+n",
+        "command": "-focusNextRenameSuggestion",
+        "when": "renameInputVisible"
+    },
+    {
+        "key": "ctrl+k",
+        "command": "focusPreviousRenameSuggestion",
+        "when": "renameInputVisible"
+    },
+    {
+        "key": "ctrl+p",
+        "command": "-focusPreviousRenameSuggestion",
+        "when": "renameInputVisible"
+    },
+    {
+        "key": "ctrl+j",
+        "command": "selectNextSuggestion",
+        "when": "suggestWidgetMultipleSuggestions && suggestWidgetVisible && textInputFocus"
+    },
+    {
+        "key": "ctrl+n",
+        "command": "-selectNextSuggestion",
+        "when": "suggestWidgetMultipleSuggestions && suggestWidgetVisible && textInputFocus"
+    },
+    {
+        "key": "ctrl+k",
+        "command": "selectPrevSuggestion",
+        "when": "suggestWidgetMultipleSuggestions && suggestWidgetVisible && textInputFocus"
+    },
+    {
+        "key": "ctrl+p",
+        "command": "-selectPrevSuggestion",
+        "when": "suggestWidgetMultipleSuggestions && suggestWidgetVisible && textInputFocus"
+    },
+    {
+        "key": "ctrl+j",
+        "command": "selectNextCodeAction",
+        "when": "codeActionMenuVisible"
+    },
+    {
+        "key": "ctrl+n",
+        "command": "-selectNextCodeAction",
+        "when": "codeActionMenuVisible"
+    },
+    {
+        "key": "ctrl+k",
+        "command": "selectPrevCodeAction",
+        "when": "codeActionMenuVisible"
+    },
+    {
+        "key": "ctrl+p",
+        "command": "-selectPrevCodeAction",
+        "when": "codeActionMenuVisible"
+    },
+    // ── Explorer ───────────────────────────────────────────────────────
+    {
+        "key": "ctrl+b",
+        "command": "workbench.explorer.fileView.focus",
+        "when": "!filesExplorerFocus"
+    },
+    {
+        "key": "ctrl+b",
+        "command": "workbench.action.closeSidebar",
+        "when": "filesExplorerFocus"
+    },
+    {
+        "key": "n",
+        "command": "explorer.newFile",
+        "when": "filesExplorerFocus && !inputFocus"
+    },
+    {
+        "key": "shift+n",
+        "command": "explorer.newFolder",
+        "when": "filesExplorerFocus && !inputFocus"
+    },
+    {
+        "key": "r",
+        "command": "renameFile",
+        "when": "filesExplorerFocus && !inputFocus && !explorerResourceIsRoot && !explorerResourceReadonly"
+    },
+    // ── Terminal toggle ────────────────────────────────────────────────
+    {
+        "key": "f3",
+        "command": "workbench.action.terminal.toggleTerminal"
+    },
+    // ── Tab cycling (current group only) ──────────────────────────────
+    {
+        "key": "ctrl+pagedown",
+        "command": "workbench.action.nextEditorInGroup",
+        "when": "!terminalFocus"
+    },
+    {
+        "key": "ctrl+pageup",
+        "command": "workbench.action.previousEditorInGroup",
+        "when": "!terminalFocus"
+    },
+    // ── Split navigation ───────────────────────────────────────────────
+    {
+        "key": "ctrl+left",
+        "command": "workbench.action.navigateLeft"
+    },
+    {
+        "key": "ctrl+right",
+        "command": "workbench.action.navigateRight"
+    },
+    {
+        "key": "ctrl+up",
+        "command": "workbench.action.navigateUp"
+    },
+    {
+        "key": "ctrl+down",
+        "command": "workbench.action.navigateDown"
+    },
+    // ── Split creation ─────────────────────────────────────────────────
+    {
+        "key": "alt+left",
+        "command": "workbench.action.splitEditorLeft"
+    },
+    {
+        "key": "alt+right",
+        "command": "workbench.action.splitEditorRight"
+    },
+    {
+        "key": "alt+up",
+        "command": "workbench.action.splitEditorUp"
+    },
+    {
+        "key": "alt+down",
+        "command": "workbench.action.splitEditorDown"
+    },
+    // ── Move editor between groups ─────────────────────────────────────
+    {
+        "key": "ctrl+alt+up",
+        "command": "workbench.action.moveEditorToAboveGroup"
+    },
+    {
+        "key": "ctrl+alt+down",
+        "command": "workbench.action.moveEditorToBelowGroup"
+    },
+    {
+        "key": "ctrl+alt+left",
+        "command": "workbench.action.moveEditorToPreviousGroup"
+    },
+    {
+        "key": "ctrl+alt+right",
+        "command": "workbench.action.moveEditorToNextGroup"
+    },
+    // ── Resize (active split / sidebars / panel) ───────────────────────
+    {
+        "key": "ctrl+shift+right",
+        "command": "workbench.action.increaseViewWidth",
+        "when": "!sideBarFocus && !auxiliaryBarFocus && !panelFocus && focusedView != 'restitution.plan'"
+    },
+    {
+        "key": "ctrl+shift+left",
+        "command": "workbench.action.decreaseViewWidth",
+        "when": "!sideBarFocus && !auxiliaryBarFocus && !panelFocus && focusedView != 'restitution.plan'"
+    },
+    {
+        "key": "ctrl+shift+up",
+        "command": "workbench.action.increaseViewHeight",
+        "when": "!sideBarFocus && !auxiliaryBarFocus && !panelFocus && focusedView != 'restitution.plan'"
+    },
+    {
+        "key": "ctrl+shift+down",
+        "command": "workbench.action.decreaseViewHeight",
+        "when": "!sideBarFocus && !auxiliaryBarFocus && !panelFocus && focusedView != 'restitution.plan'"
+    },
+    {
+        "key": "ctrl+shift+right",
+        "command": "workbench.action.increaseViewSize",
+        "when": "sideBarFocus || auxiliaryBarFocus || focusedView == 'restitution.plan'"
+    },
+    {
+        "key": "ctrl+shift+left",
+        "command": "workbench.action.decreaseViewSize",
+        "when": "sideBarFocus || auxiliaryBarFocus || focusedView == 'restitution.plan'"
+    },
+    {
+        "key": "ctrl+shift+up",
+        "command": "workbench.action.increaseViewSize",
+        "when": "panelFocus"
+    },
+    {
+        "key": "ctrl+shift+down",
+        "command": "workbench.action.decreaseViewSize",
+        "when": "panelFocus"
+    },
+    // ── Folding ────────────────────────────────────────────────────────
+    {
+        "key": "z c",
+        "command": "editor.fold",
+        "when": "editorTextFocus && foldingEnabled && neovim.mode == 'normal'"
+    },
+    {
+        "key": "ctrl+shift+[",
+        "command": "-editor.fold",
+        "when": "editorTextFocus && foldingEnabled"
+    },
+    {
+        "key": "z shift+c",
+        "command": "editor.foldAll",
+        "when": "editorTextFocus && foldingEnabled && neovim.mode == 'normal'"
+    },
+    {
+        "key": "ctrl+k ctrl+0",
+        "command": "-editor.foldAll",
+        "when": "editorTextFocus && foldingEnabled"
+    },
+    {
+        "key": "z o",
+        "command": "editor.unfold",
+        "when": "editorTextFocus && foldingEnabled && neovim.mode == 'normal'"
+    },
+    {
+        "key": "ctrl+shift+]",
+        "command": "-editor.unfold",
+        "when": "editorTextFocus && foldingEnabled"
+    },
+    {
+        "key": "z shift+o",
+        "command": "editor.unfoldAll",
+        "when": "editorTextFocus && foldingEnabled && neovim.mode == 'normal'"
+    },
+    {
+        "key": "ctrl+k ctrl+j",
+        "command": "-editor.unfoldAll",
+        "when": "editorTextFocus && foldingEnabled"
+    }
+]
