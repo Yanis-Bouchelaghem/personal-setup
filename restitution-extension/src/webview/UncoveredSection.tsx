@@ -104,6 +104,7 @@ function UncoveredFile({
     const canOpen = entry.status !== "deleted";
     const card = useRef<HTMLElement>(null);
     useKeyCommands(card, {
+        enter: canOpen ? openFile : undefined,
         open: canOpen ? openFile : undefined,
         diff: entry.status === "modified" ? openDiff : undefined,
         toggle: () => setOpen(!open),

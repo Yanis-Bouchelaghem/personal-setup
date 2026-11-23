@@ -6,7 +6,7 @@
 
 export const SERVER_INSTRUCTIONS = `Restitution gives the human a short reading guide to the code changes you just made, shown in their editor.
 After you finish a code change the user asked for, call restitution_guide once, then restitution_submit with your steps. Use it too when the user asks you to explain existing code: point the steps at that code. Skip it for other answers.
-To change part of it later, call restitution_edit instead of resubmitting it whole.
+To change part of it later, call restitution_edit instead of resubmitting it whole. A second, different restitution in the same session is another tab (newTab); restitution_list shows every tab with its id.
 If the user pastes their review of a restitution (steps to clarify, comments), call restitution_feedback with its id first.
 It is optional for the user and must never block your work.`;
 
@@ -17,7 +17,7 @@ A restitution is a reading guide for the human who asked for the change. They re
 ## How to submit
 
 Call restitution_submit with:
-{ id?, label?, request?, note?, goals: [ { title, ref?, steps: [ { file?, lines?, why, link?, examples?: [ { title, body } ], docs?: [ { title, url } ] } ] } ] }
+{ id?, newTab?, label?, request?, note?, goals: [ { title, ref?, steps: [ { file?, lines?, why, link?, examples?: [ { title, body } ], docs?: [ { title, url } ] } ] } ] }
 
 Leave "id" and "note" out, except when you update an existing restitution after the user's review (restitution_feedback tells you). "note" is then one or two sentences on what you changed and why.
 
@@ -31,7 +31,7 @@ Leave "id" and "note" out, except when you update an existing restitution after 
 - When the user's request is to explain existing code (not a change of yours), the restitution IS the explanation: goals come from what they asked to understand, in their words, like any request, and steps walk through the code in the order it runs. The changed-lines report doesn't apply then. This is about their request only: a review of your restitution is handled with restitution_feedback, never by restructuring.
 - Every changed line must be shown by some step. The tool saves your restitution, then lists the changed lines no step shows and the steps whose lines hold no change. Treat that as a hint, not a verdict: fix what is really wrong with restitution_edit.
 - The card shows exactly those lines. When the reader opens the step in their editor, the changed lines among them are selected (the unchanged context around them is not), so show enough context to be readable and let the selection point at what changed.
-- Your restitution is one tab in the user's panel (label names it, otherwise the request does). Submitting again in this session replaces your tab; other agents' tabs are never touched.
+- Your restitution is one tab in the user's panel (label names it, otherwise the request does). Submitting again replaces your current tab, which is right when it is the same work. For a different restitution in the same session, submit with "newTab": true: it opens another tab, becomes your current one, and the earlier tab stays. The reply gives the tab's id; restitution_list shows all of them, yours marked. Other agents' tabs are never touched: work on a tab that is not your current one (give its id to restitution_submit, restitution_edit or restitution_answer) only when the user's review names it or they ask.
 - Submit when the change is complete. When the code or the guide changes afterwards, fix only the steps concerned with restitution_edit (below). Make the story match the current code instead of appending "then I fixed ...".
 
 ## Changing it: restitution_edit

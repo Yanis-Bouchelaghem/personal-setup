@@ -27,6 +27,7 @@ type Heard = { command: KeyCommand; count: number };
 
 /** What the focused place handles itself; the rest is moving or the page's. */
 const PLACE_COMMANDS: ReadonlySet<string> = new Set<KeyCommand>([
+    "enter",
     "open",
     "diff",
     "toggle",
@@ -76,11 +77,20 @@ export function useKeyboard(handlers: Handlers): void {
     useEffect(() => {
         const reader = keyReader();
         // Where the cursor was, so a fold that hides it doesn't lose your place.
-        const place = { last: undefined as HTMLElement | undefined };
+        // `block` is which block of that card it was on, if any.
+        const place = {
+            last: undefined as HTMLElement | undefined,
+            block: undefined as number | undefined,
+        };
 
         const run = (command: KeyCommand, count: number) => {
             const from = current(place.last);
-            if (moveWithin(command, from) || moveInTree(command, from)) {
+            if (
+                moveInBlocks(command) ||
+                enterBlocks(command, from) ||
+                moveWithin(command, from) ||
+                moveInTree(command, from)
+            ) {
                 return;
             }
             if (command === "nextChange" || command === "prevChange") {
@@ -123,16 +133,24 @@ export function useKeyboard(handlers: Handlers): void {
         const onFocus = () =>
             requestAnimationFrame(() => {
                 if (document.activeElement === document.body) {
-                    const back = current(place.last) ?? firstInView();
-                    back?.focus({ preventScroll: true });
+                    const kept = current(place.last);
+                    const back = kept ?? firstInView();
+                    // Found again by position: opening a block may redraw it.
+                    const block =
+                        kept && place.block !== undefined
+                            ? blocksOf(kept)[place.block]
+                            : undefined;
+                    (block ?? back)?.focus({ preventScroll: true });
                 }
             });
         const onFocusIn = (event: FocusEvent) => {
-            const own =
-                event.target instanceof Element &&
-                event.target.closest<HTMLElement>("[data-nav]");
+            const target =
+                event.target instanceof Element ? event.target : undefined;
+            const own = target?.closest<HTMLElement>("[data-nav]");
             if (own) {
                 place.last = own;
+                const block = target?.closest<HTMLElement>("[data-block]");
+                place.block = block ? blocksOf(own).indexOf(block) : undefined;
             }
         };
 
@@ -291,6 +309,77 @@ function moveWithin(
     const by = Math.min(LINE_STEP, hidden);
     scrollLines(command === "next" ? by : -by);
     return true;
+}
+
+/**
+ * Enter on a card whose code is cut short ("Show 12 more lines"): show the
+ * rest first, then step in. On a card that shows several blocks of code, the
+ * cursor steps into the first block instead of opening the file. True when
+ * that was the move.
+ */
+function enterBlocks(
+    command: KeyCommand,
+    from: HTMLElement | undefined,
+): boolean {
+    if (command !== "enter" || !from) {
+        return false;
+    }
+    const more = from.querySelector<HTMLElement>("[data-expand]");
+    if (more && !more.closest("[inert]")) {
+        more.click();
+        // Once drawn: the hidden lines may hold more blocks to step into.
+        requestAnimationFrame(() => stepIntoBlocks(from));
+        return true;
+    }
+    return stepIntoBlocks(from);
+}
+
+/** Put the cursor on a card's first block. False when it has none to enter. */
+function stepIntoBlocks(card: HTMLElement): boolean {
+    const first = card.querySelector<HTMLElement>("[data-block]");
+    if (!first || first.closest("[inert]")) {
+        return false;
+    }
+    first.focus({ preventScroll: true });
+    follow(first);
+    return true;
+}
+
+/**
+ * With the cursor on a block of code: `j` and `k` move between the blocks of
+ * its card (staying on the first or last), Enter opens the block, Escape goes
+ * back to the card. True when that was the move.
+ */
+function moveInBlocks(command: KeyCommand): boolean {
+    const block = document.activeElement?.closest<HTMLElement>("[data-block]");
+    const card = block?.closest<HTMLElement>("[data-nav]");
+    if (!block || !card) {
+        return false;
+    }
+    if (command === "leave") {
+        card.focus({ preventScroll: true });
+        return true;
+    }
+    if (command === "enter") {
+        block.click();
+        return true;
+    }
+    if (command !== "next" && command !== "prev") {
+        return false;
+    }
+    const blocks = blocksOf(card);
+    const step = command === "next" ? 1 : -1;
+    const target = blocks[blocks.indexOf(block) + step];
+    if (target) {
+        target.focus({ preventScroll: true });
+        follow(target);
+    }
+    return true;
+}
+
+/** The blocks of code a card shows, top to bottom (none with a single block). */
+function blocksOf(card: HTMLElement): HTMLElement[] {
+    return [...card.querySelectorAll<HTMLElement>("[data-block]")];
 }
 
 /** Hand a command to a place, as if its key was pressed there. */

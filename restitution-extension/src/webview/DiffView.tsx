@@ -34,6 +34,9 @@ export function DiffView({
                     className={onOpen ? "hunk opens" : "hunk"}
                     key={`${hunk.oldStart}-${hunk.newStart}`}
                     title={onOpen ? "Open in the editor" : undefined}
+                    // With several blocks, Enter on the card steps into them.
+                    data-block={shown.length > 1 || undefined}
+                    tabIndex={shown.length > 1 ? -1 : undefined}
                     onClick={() => {
                         // The preview may cut a block: open the whole of it.
                         const whole = hunks[at];
@@ -60,6 +63,8 @@ export function DiffView({
                 <button
                     className="more"
                     type="button"
+                    // Enter on the card shows the rest first.
+                    data-expand={expanded ? undefined : ""}
                     onClick={() => setExpanded(!expanded)}
                 >
                     {expanded

@@ -80,6 +80,14 @@ describe("keyReader", () => {
         expect(readAll(["5", "j"], 1500)).toEqual(["pending", "next"]);
     });
 
+    it("reads Enter apart from gf, which always opens the file", () => {
+        expect(readAll(["Enter", "g", "f"])).toEqual([
+            "enter",
+            "pending",
+            "open",
+        ]);
+    });
+
     it("ignores keys that are not ours", () => {
         expect(readAll(["q", "ctrl+x"])).toEqual([undefined, undefined]);
     });

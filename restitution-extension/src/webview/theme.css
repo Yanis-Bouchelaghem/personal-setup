@@ -7,6 +7,8 @@
     --fg: var(--vscode-foreground);
     --muted: var(--vscode-descriptionForeground, var(--vscode-foreground));
     --accent: var(--vscode-focusBorder, var(--vscode-textLink-foreground));
+    /* The keyboard cursor, white like the editor's: black on a light theme. */
+    --ring: #fff;
     --bg: var(--vscode-sideBar-background, var(--vscode-editor-background));
     --danger: var(--vscode-errorForeground, #f14c4c);
 
@@ -25,6 +27,10 @@
     --glass-border: color-mix(in srgb, var(--fg) 15%, transparent);
     --glass-highlight: color-mix(in srgb, var(--fg) 16%, transparent);
     --glass-shadow: 0 10px 24px -14px rgb(0 0 0 / 0.5);
+}
+
+body.vscode-light {
+    --ring: #000;
 }
 
 * {
@@ -119,7 +125,7 @@ body {
 }
 
 .goal-toggle:focus-visible {
-    outline: 1px solid var(--accent);
+    outline: 1px solid var(--ring);
     outline-offset: -1px;
 }
 
@@ -1588,8 +1594,19 @@ body {
     outline: none;
 }
 
+.hunk[data-block]:focus {
+    outline: none;
+}
+
+/* Inside the block, with its own corners, so the diff's rounded clip can't cut it. */
+.hunk[data-block]:focus-visible {
+    outline: 1px solid var(--ring);
+    outline-offset: -3px;
+    border-radius: var(--radius-sm);
+}
+
 .card:focus-visible {
-    outline: 1px solid var(--accent);
+    outline: 1px solid var(--ring);
     outline-offset: 1px;
 }
 

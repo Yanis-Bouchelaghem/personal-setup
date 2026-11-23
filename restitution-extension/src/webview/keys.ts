@@ -13,6 +13,7 @@ export type KeyCommand =
     | "last"
     | "halfDown"
     | "halfUp"
+    | "enter"
     | "open"
     | "diff"
     | "toggle"
@@ -88,7 +89,12 @@ export const KEYMAP: readonly {
     {
         title: "Act",
         rows: [
-            { keys: ["Enter", "gf"], command: "open", does: "Open the file" },
+            {
+                keys: ["Enter"],
+                command: "enter",
+                does: "Show hidden lines, then step into several blocks (j/k move, Enter opens, Esc backs out); else open the file",
+            },
+            { keys: ["gf"], command: "open", does: "Open the file" },
             { keys: ["gd"], command: "diff", does: "Open the diff" },
             {
                 keys: ["e"],

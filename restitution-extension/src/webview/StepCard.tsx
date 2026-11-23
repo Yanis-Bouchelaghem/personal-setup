@@ -205,6 +205,7 @@ export function StepCard({
     const toggleClarify = () => onRequestChange(!clarify, comment || undefined);
 
     useKeyCommands(box, {
+        enter: openCode,
         open: openCode,
         diff: file && !code.noDiff ? openDiff : undefined,
         toggle: toggleViewed,

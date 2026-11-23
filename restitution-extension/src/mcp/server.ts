@@ -12,9 +12,11 @@ import {
     type Restitution,
     RestitutionSchema,
 } from "../core/restitution";
+import { describeTabs } from "../core/tabList";
 import { findGitRoot } from "../node/gitRoot";
 import { addAnswers, readAnswers } from "../node/store/answers";
 import { newTabId, tabFile } from "../node/store/paths";
+import { readTabs } from "../node/store/tabs";
 import { submitRestitution } from "../node/submit";
 
 /**
@@ -26,7 +28,8 @@ const server = new McpServer(
     { instructions: SERVER_INSTRUCTIONS },
 );
 
-// One agent session = one tab: the first submit creates it, later ones replace it.
+// A session's current tab: the first submit creates it and later ones replace it,
+// until the agent opens another (newTab) or works on one by id, which becomes current.
 let tabId: string | undefined;
 
 const TAB_ID = z.string().regex(/^[a-z0-9][a-z0-9-]{0,63}$/i);
@@ -67,6 +70,21 @@ server.registerTool(
 );
 
 server.registerTool(
+    "restitution_list",
+    {
+        description:
+            "List the restitutions in the user's panel for this repository, with their ids and which one is your current tab. Use it before working on a tab that is not the one you just submitted.",
+    },
+    async () => {
+        const root = repoRoot();
+        if (!root) {
+            return text("Not inside a git repository.", true);
+        }
+        return text(describeTabs(await readTabs(root), tabId, Date.now()));
+    },
+);
+
+server.registerTool(
     "restitution_submit",
     {
         description:
@@ -75,11 +93,17 @@ server.registerTool(
             // The file version is ours to set, not the agent's.
             ...RestitutionSchema.omit({ version: true }).shape,
             id: TAB_ID.optional().describe(
-                "Only when updating an existing restitution after the user's review: its id. Leave it out otherwise.",
+                "Only to update a tab that is not your current one, such as the one the user's review is about: its id (restitution_list shows them). Leave it out otherwise.",
             ),
+            newTab: z
+                .boolean()
+                .optional()
+                .describe(
+                    "Open an additional tab for a different restitution instead of replacing your current one. The earlier tab stays; the new one becomes your current tab.",
+                ),
         },
     },
-    async ({ id, ...input }) => {
+    async ({ id, newTab, ...input }) => {
         const root = repoRoot();
         if (!root) {
             return text(
@@ -87,11 +111,26 @@ server.registerTool(
                 true,
             );
         }
-        // A given id is the tab to update; it stays this session's tab after.
-        tabId = id ?? tabId ?? newTabId();
-        return text(
-            await submitRestitution(root, tabId, { version: 1, ...input }),
-        );
+        if (id && newTab) {
+            return text(
+                "Give either id (update that tab) or newTab (open another), not both.",
+                true,
+            );
+        }
+        // A given id is the tab to update; either way it becomes this session's tab.
+        const target = newTab ? newTabId() : (id ?? tabId ?? newTabId());
+        const replacing = !newTab && (await readSaved(root, target)).ok;
+        tabId = target;
+        const report = await submitRestitution(root, target, {
+            version: 1,
+            ...input,
+        });
+        const where = newTab
+            ? `This is a new tab (id: ${target}); your earlier tab stays as it was.`
+            : replacing
+              ? `It replaced the restitution that was in this tab (id: ${target}).`
+              : `Tab id: ${target}.`;
+        return text(`${report}\n${where}`);
     },
 );
 
@@ -102,7 +141,7 @@ server.registerTool(
             "Change part of a restitution you already submitted: change, split, add or remove steps and goals, without resubmitting the rest. Steps you don't mention stay exactly as they were. Reports coverage like restitution_submit, and the new step labels.",
         inputSchema: {
             id: TAB_ID.optional().describe(
-                "The restitution to edit. Leave it out for the one you submitted in this session; after the user's review, use the id given there.",
+                "The restitution to edit. Leave it out for your current tab; after the user's review, or for another tab (restitution_list), use its id.",
             ),
             edits: z
                 .array(EditSchema)
