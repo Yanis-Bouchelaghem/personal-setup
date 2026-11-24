@@ -7,103 +7,139 @@
             "title": "Retry transient gateway failures",
             "steps": [
                 {
-                    "file": "src/errors.ts",
-                    "lines": [
-                        [
-                            11,
-                            23
-                        ]
+                    "code": [
+                        {
+                            "file": "src/errors.ts",
+                            "lines": [
+                                [
+                                    11,
+                                    23
+                                ]
+                            ]
+                        }
                     ],
                     "why": "Add a GatewayError that carries the upstream status, so callers can tell a 5xx from a 4xx."
                 },
                 {
-                    "file": "src/telemetry/metrics.ts",
-                    "lines": [
-                        [
-                            7,
-                            14
-                        ]
+                    "code": [
+                        {
+                            "file": "src/telemetry/metrics.ts",
+                            "lines": [
+                                [
+                                    7,
+                                    14
+                                ]
+                            ]
+                        }
                     ],
                     "link": "in parallel",
                     "why": "count every retry, so flaky gateway periods show up."
                 },
                 {
-                    "file": "src/gateway/retry.ts",
-                    "lines": [
-                        [
-                            1,
-                            35
-                        ]
+                    "code": [
+                        {
+                            "file": "src/gateway/retry.ts",
+                            "lines": [
+                                [
+                                    1,
+                                    35
+                                ]
+                            ]
+                        }
                     ],
                     "link": "then",
                     "why": "build withRetry on top of both, retrying only 5xx responses with exponential backoff."
                 },
                 {
-                    "file": "src/gateway/client.ts",
-                    "lines": [
-                        [
-                            1,
-                            10
-                        ],
-                        [
-                            15,
-                            38
-                        ]
+                    "code": [
+                        {
+                            "file": "src/gateway/client.ts",
+                            "lines": [
+                                [
+                                    1,
+                                    10
+                                ],
+                                [
+                                    15,
+                                    38
+                                ]
+                            ]
+                        }
                     ],
                     "link": "then",
                     "why": "throw GatewayError and run json() through withRetry, so every JSON call benefits."
                 },
                 {
-                    "file": "src/config.ts",
-                    "lines": [
-                        [
-                            23,
-                            41
-                        ]
+                    "code": [
+                        {
+                            "file": "src/config.ts",
+                            "lines": [
+                                [
+                                    23,
+                                    41
+                                ]
+                            ]
+                        }
                     ],
                     "link": "then",
                     "why": "read ADAPTER_MAX_RETRIES with a safe default, so operators can tune the retries."
                 },
                 {
-                    "file": "src/index.ts",
-                    "lines": [
-                        [
-                            2,
-                            14
-                        ]
+                    "code": [
+                        {
+                            "file": "src/index.ts",
+                            "lines": [
+                                [
+                                    2,
+                                    14
+                                ]
+                            ]
+                        }
                     ],
                     "link": "then",
                     "why": "pass the configured count into the client at startup, so the setting takes effect."
                 },
                 {
-                    "file": "test/retry.test.ts",
-                    "lines": [
-                        [
-                            1,
-                            57
-                        ]
+                    "code": [
+                        {
+                            "file": "test/retry.test.ts",
+                            "lines": [
+                                [
+                                    1,
+                                    57
+                                ]
+                            ]
+                        }
                     ],
                     "link": "then",
                     "why": "write the unit tests for the retry rules: success, 5xx recovery, 4xx and exhaustion."
                 },
                 {
-                    "file": "test/config.test.ts",
-                    "lines": [
-                        [
-                            32,
-                            44
-                        ]
+                    "code": [
+                        {
+                            "file": "test/config.test.ts",
+                            "lines": [
+                                [
+                                    32,
+                                    44
+                                ]
+                            ]
+                        }
                     ],
                     "link": "in parallel",
                     "why": "test the new setting's default and its invalid value."
                 },
                 {
-                    "file": "README.md",
-                    "lines": [
-                        [
-                            15,
-                            26
-                        ]
+                    "code": [
+                        {
+                            "file": "README.md",
+                            "lines": [
+                                [
+                                    15,
+                                    26
+                                ]
+                            ]
+                        }
                     ],
                     "link": "then",
                     "why": "describe the retry behaviour and the setting, so operators know what to expect."
@@ -114,26 +150,34 @@
             "title": "Log failures as JSON",
             "steps": [
                 {
-                    "file": "src/middleware/logging.ts",
-                    "lines": [
-                        [
-                            1,
-                            9
-                        ]
+                    "code": [
+                        {
+                            "file": "src/middleware/logging.ts",
+                            "lines": [
+                                [
+                                    1,
+                                    9
+                                ]
+                            ]
+                        }
                     ],
                     "why": "Add logError, printing the error's name and message as JSON, so failures are searchable."
                 },
                 {
-                    "file": "src/routes/inference.ts",
-                    "lines": [
-                        [
-                            1,
-                            7
-                        ],
-                        [
-                            11,
-                            17
-                        ]
+                    "code": [
+                        {
+                            "file": "src/routes/inference.ts",
+                            "lines": [
+                                [
+                                    1,
+                                    7
+                                ],
+                                [
+                                    11,
+                                    17
+                                ]
+                            ]
+                        }
                     ],
                     "link": "then",
                     "why": "call it where inference fails, instead of swallowing the error."

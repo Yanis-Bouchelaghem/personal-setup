@@ -45,13 +45,11 @@ show(
                 title: "Reject plain-http Apigee URLs",
                 steps: [
                     {
-                        file: "src/config.ts",
-                        lines: [[1, 12]],
+                        code: [{ file: "src/config.ts", lines: [[1, 12]] }],
                         why: "Require https, so tokens never leave in clear text.",
                     },
                     {
-                        file: "src/nope.ts",
-                        lines: [[1, 3]],
+                        code: [{ file: "src/nope.ts", lines: [[1, 3]] }],
                         why: "Point at a file that did not change, to see the warning.",
                     },
                 ],
@@ -73,8 +71,7 @@ show(
                 title: "Reject plain-http Apigee URLs",
                 steps: [
                     {
-                        file: "src/config.ts",
-                        lines: [[1, 12]],
+                        code: [{ file: "src/config.ts", lines: [[1, 12]] }],
                         why: "Require https, so tokens never leave in clear text.",
                     },
                 ],
@@ -93,13 +90,11 @@ show(
             step: "1.1",
             steps: [
                 {
-                    file: "src/config.ts",
-                    lines: [[1, 6]],
+                    code: [{ file: "src/config.ts", lines: [[1, 6]] }],
                     why: "Parse the URL first.",
                 },
                 {
-                    file: "src/config.ts",
-                    lines: [[7, 12]],
+                    code: [{ file: "src/config.ts", lines: [[7, 12]] }],
                     link: "then",
                     why: "reject anything but https.",
                 },

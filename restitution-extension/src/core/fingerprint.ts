@@ -1,5 +1,6 @@
-import { type FileDiff, type Hunk, selectLines } from "./diff";
+import type { FileDiff, Hunk } from "./diff";
 import type { Restitution, Step } from "./restitution";
+import { stepHunks } from "./source";
 
 /** FNV-1a, 32 bit: plenty to tell "same content" from "changed". */
 function fnv1a(text: string): string {
@@ -12,7 +13,7 @@ function fnv1a(text: string): string {
 }
 
 /**
- * Identity of a step: what the reader reads in it (file, words, connector,
+ * Identity of a step: what the reader reads in it (files, words, connector,
  * examples, docs). Changing any of it brings the step back unviewed and
  * marked as updated. Line numbers are left out: code changed above a step
  * shifts them, and the agent re-anchoring it changes nothing the reader
@@ -20,7 +21,8 @@ function fnv1a(text: string): string {
  * `codeDigest`).
  */
 export function stepFingerprint(step: Step): string {
-    const parts = [step.file ?? "", step.why, step.link ?? "then"];
+    const files = (step.code ?? []).map((place) => place.file).join("\n");
+    const parts = [files, step.why, step.link ?? "then"];
     // Only when present, so adding these fields changes nothing for others.
     if (step.examples) {
         parts.push(JSON.stringify(step.examples));
@@ -51,14 +53,6 @@ export function codeDigest(hunks: Hunk[]): string | undefined {
         .filter((line) => line.kind !== "ctx")
         .map((line) => `${line.kind}${line.text}`);
     return changes.length > 0 ? fnv1a(changes.join("\n")) : undefined;
-}
-
-/** The code each step shows, right now. */
-export function stepHunks(step: Step, diffs: Record<string, FileDiff>): Hunk[] {
-    return selectLines(
-        step.file ? diffs[step.file] : undefined,
-        step.lines ?? [],
-    );
 }
 
 /**

@@ -318,6 +318,21 @@ body {
     font-variant-numeric: tabular-nums;
 }
 
+/* What a folded step does, on its header: the file names live in its code. */
+.head-why {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.card:not(.collapsed) .head-why {
+    visibility: hidden;
+}
+
 .step-no {
     flex: none;
     color: var(--muted);
@@ -506,8 +521,49 @@ body {
     min-width: 100%;
 }
 
-.hunk + .hunk {
+.block + .block {
     border-top: 1px solid var(--glass-border);
+}
+
+/*
+ * Where a new file starts in a card's code: its name and its Diff and File,
+ * a shade stronger than the line separators between blocks of one file.
+ */
+.file-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    padding: 3px 4px 3px 10px;
+    border-bottom: 1px solid var(--glass-border);
+    background: color-mix(in srgb, var(--fg) 9%, transparent);
+    font-family: var(--vscode-font-family, system-ui, sans-serif);
+}
+
+/* The header is the pill already: the name sits on it bare. */
+.file-head .chip {
+    padding: 0;
+    background: transparent;
+}
+
+.file-tag {
+    flex: none;
+    color: var(--muted);
+    font-size: 11px;
+    white-space: nowrap;
+}
+
+.file-head .icon-btn {
+    min-width: 22px;
+    height: 22px;
+}
+
+/* Lines that are not in the file: said where they would have been. */
+.missing {
+    padding: 4px 10px;
+    color: var(--muted);
+    font-family: var(--vscode-font-family, system-ui, sans-serif);
+    font-style: italic;
 }
 
 .hunk-head {
@@ -1331,7 +1387,7 @@ body {
 /* A very narrow side bar: the step header keeps its buttons and drops the file
    name, and the rail takes less room. */
 @container card (max-width: 230px) {
-    .chip {
+    .card-head .chip {
         display: none;
     }
 }
@@ -1713,16 +1769,8 @@ body {
     scroll-margin-top: calc(var(--tabs-h) + 8px);
 }
 
-/* Existing code a step explains: plain lines, no signs, labelled as unchanged. */
-.diff-label {
-    padding: 3px 10px;
-    color: var(--muted);
-    font-family: var(--vscode-font-family, sans-serif);
-    font-size: 11px;
-    border-bottom: 1px solid var(--glass-border);
-}
-
-.diff.unchanged .sign {
+/* Existing code a step explains: plain lines, no signs (its header says so). */
+.hunk.unchanged .sign {
     display: none;
 }
 

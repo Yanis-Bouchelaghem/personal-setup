@@ -94,8 +94,16 @@ export const KEYMAP: readonly {
                 command: "enter",
                 does: "Show hidden lines, then step into several blocks (j/k move, Enter opens, Esc backs out); else open the file",
             },
-            { keys: ["gf"], command: "open", does: "Open the file" },
-            { keys: ["gd"], command: "diff", does: "Open the diff" },
+            {
+                keys: ["gf"],
+                command: "open",
+                does: "Open the file (on a block: that block's file)",
+            },
+            {
+                keys: ["gd"],
+                command: "diff",
+                does: "Open the diff (on a block: that block's file)",
+            },
             {
                 keys: ["e"],
                 command: "examples",

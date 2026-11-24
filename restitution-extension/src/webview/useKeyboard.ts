@@ -347,8 +347,9 @@ function stepIntoBlocks(card: HTMLElement): boolean {
 
 /**
  * With the cursor on a block of code: `j` and `k` move between the blocks of
- * its card (staying on the first or last), Enter opens the block, Escape goes
- * back to the card. True when that was the move.
+ * its card (staying on the first or last), across files, Enter or `gf` opens
+ * the block in its file and `gd` its diff, Escape goes back to the card. True
+ * when that was the move.
  */
 function moveInBlocks(command: KeyCommand): boolean {
     const block = document.activeElement?.closest<HTMLElement>("[data-block]");
@@ -360,8 +361,9 @@ function moveInBlocks(command: KeyCommand): boolean {
         card.focus({ preventScroll: true });
         return true;
     }
-    if (command === "enter") {
-        block.click();
+    // The block's own file: Enter and `gf` open it, `gd` its diff.
+    if (command === "enter" || command === "open" || command === "diff") {
+        tell(block, command);
         return true;
     }
     if (command !== "next" && command !== "prev") {

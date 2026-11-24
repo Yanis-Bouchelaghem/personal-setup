@@ -19,8 +19,7 @@ const diffOf = (added: string, start = 10) =>
     );
 
 const step: Step = {
-    file: "a.ts",
-    lines: [[10, 12]],
+    code: [{ file: "a.ts", lines: [[10, 12]] }],
     why: "Do it, so it works.",
 };
 
@@ -34,19 +33,31 @@ const restitution: Restitution = {
 describe("stepFingerprint", () => {
     it("is stable, and changes with anything the reader reads", () => {
         expect(stepFingerprint(step)).toBe(stepFingerprint({ ...step }));
-        for (const changed of [
+        const changes: Step[] = [
             { ...step, why: "Do it differently." },
             { ...step, link: "so" },
-            { ...step, file: "b.ts" },
+            { ...step, code: [{ file: "b.ts", lines: [[10, 12]] }] },
+            // A second place, even in the same file, is something new to read.
+            {
+                ...step,
+                code: [
+                    { file: "a.ts", lines: [[10, 12]] },
+                    { file: "a.ts", lines: [[1, 2]] },
+                ],
+            },
             { ...step, examples: [{ title: "An example", body: "{}" }] },
             { ...step, docs: [{ title: "Docs", url: "https://example.com" }] },
-        ]) {
+        ];
+        for (const changed of changes) {
             expect(stepFingerprint(changed)).not.toBe(stepFingerprint(step));
         }
         // Lines shift when code changes above the step: not a new step.
-        expect(stepFingerprint({ ...step, lines: [[20, 22]] })).toBe(
-            stepFingerprint(step),
-        );
+        expect(
+            stepFingerprint({
+                ...step,
+                code: [{ file: "a.ts", lines: [[20, 22]] }],
+            }),
+        ).toBe(stepFingerprint(step));
         // "then" is the default, so writing it out changes nothing.
         expect(stepFingerprint({ ...step, link: "then" })).toBe(
             stepFingerprint(step),

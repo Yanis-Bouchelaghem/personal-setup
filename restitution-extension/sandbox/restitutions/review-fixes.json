@@ -8,12 +8,16 @@
             "ref": "#1",
             "steps": [
                 {
-                    "file": "src/config.ts",
-                    "lines": [
-                        [
-                            7,
-                            17
-                        ]
+                    "code": [
+                        {
+                            "file": "src/config.ts",
+                            "lines": [
+                                [
+                                    7,
+                                    17
+                                ]
+                            ]
+                        }
                     ],
                     "why": "Require https for ADAPTER_APIGEE_URL, so bearer tokens never leave in clear text."
                 },
@@ -22,23 +26,31 @@
                     "why": "any environment still set to an http:// URL now fails at startup, and must switch before this ships."
                 },
                 {
-                    "file": "README.md",
-                    "lines": [
-                        [
-                            7,
-                            13
-                        ]
+                    "code": [
+                        {
+                            "file": "README.md",
+                            "lines": [
+                                [
+                                    7,
+                                    13
+                                ]
+                            ]
+                        }
                     ],
                     "link": "so",
                     "why": "say in the README that the URL must be https, so operators switch before deploying."
                 },
                 {
-                    "file": "test/config.test.ts",
-                    "lines": [
-                        [
-                            1,
-                            18
-                        ]
+                    "code": [
+                        {
+                            "file": "test/config.test.ts",
+                            "lines": [
+                                [
+                                    1,
+                                    18
+                                ]
+                            ]
+                        }
                     ],
                     "link": "then",
                     "why": "write the test that rejects an http URL, to catch a regression early."
@@ -50,12 +62,16 @@
             "ref": "#2",
             "steps": [
                 {
-                    "file": "src/gateway/client.ts",
-                    "lines": [
-                        [
-                            15,
-                            38
-                        ]
+                    "code": [
+                        {
+                            "file": "src/gateway/client.ts",
+                            "lines": [
+                                [
+                                    15,
+                                    38
+                                ]
+                            ]
+                        }
                     ],
                     "why": "Set Authorization through Headers, because a plain object kept both casings.",
                     "docs": [
@@ -66,12 +82,16 @@
                     ]
                 },
                 {
-                    "file": "test/gateway.test.ts",
-                    "lines": [
-                        [
-                            24,
-                            41
-                        ]
+                    "code": [
+                        {
+                            "file": "test/gateway.test.ts",
+                            "lines": [
+                                [
+                                    24,
+                                    41
+                                ]
+                            ]
+                        }
                     ],
                     "link": "then",
                     "why": "assert that a single header goes out, to prove the casing clash is gone."
@@ -83,16 +103,20 @@
             "ref": "#4",
             "steps": [
                 {
-                    "file": "src/marketplace/schema.ts",
-                    "lines": [
-                        [
-                            2,
-                            19
-                        ],
-                        [
-                            21,
-                            43
-                        ]
+                    "code": [
+                        {
+                            "file": "src/marketplace/schema.ts",
+                            "lines": [
+                                [
+                                    2,
+                                    19
+                                ],
+                                [
+                                    21,
+                                    43
+                                ]
+                            ]
+                        }
                     ],
                     "why": "Parse each plugin on its own, so one bad entry can't fail the catalog.",
                     "examples": [
@@ -103,27 +127,35 @@
                     ]
                 },
                 {
-                    "file": "src/marketplace/rewriter.ts",
-                    "lines": [
-                        [
-                            1,
-                            4
-                        ],
-                        [
-                            8,
-                            20
-                        ]
+                    "code": [
+                        {
+                            "file": "src/marketplace/rewriter.ts",
+                            "lines": [
+                                [
+                                    1,
+                                    4
+                                ],
+                                [
+                                    8,
+                                    20
+                                ]
+                            ]
+                        }
                     ],
                     "link": "then",
                     "why": "rewrite only the plugins that parsed, and keep the skipped count."
                 },
                 {
-                    "file": "test/marketplace.test.ts",
-                    "lines": [
-                        [
-                            13,
-                            32
-                        ]
+                    "code": [
+                        {
+                            "file": "test/marketplace.test.ts",
+                            "lines": [
+                                [
+                                    13,
+                                    32
+                                ]
+                            ]
+                        }
                     ],
                     "link": "then",
                     "why": "write the unit tests to cover what was added, with one broken plugin among good ones."

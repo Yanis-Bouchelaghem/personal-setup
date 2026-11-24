@@ -1,4 +1,5 @@
 import {
+    describeRanges,
     type DiffLine,
     type FileDiff,
     type Hunk,
@@ -6,23 +7,16 @@ import {
     selectLines,
 } from "./diff";
 import { type Restitution, tabLabel } from "./restitution";
-import { unchangedSteps } from "./source";
+import { describePlace, places, unchangedPlaces } from "./source";
 
 export type Coverage = {
-    /** Steps showing only unchanged code that exists, as "file:lines". */
+    /** Places showing only unchanged code that exists, as "file:lines". */
     unchanged: string[];
-    /** Steps pointing at a file or lines that don't exist, as "file:lines". */
+    /** Places pointing at a file or lines that don't exist, as "file:lines". */
     nowhere: string[];
     /** Changed lines no step shows, as "file:lines". */
     unexplained: string[];
 };
-
-/** "12", "12-15", or a comma list of those. */
-function describeRanges(ranges: readonly LineRange[]): string {
-    return ranges
-        .map(([from, to]) => (from === to ? `${from}` : `${from}-${to}`))
-        .join(",");
-}
 
 /** Positions in order, as runs of neighbours: [3,4,5,9] -> [[3,5],[9,9]]. */
 function runsOfPositions(positions: number[]): LineRange[] {
@@ -45,13 +39,9 @@ function shownLines(
     diffs: Record<string, FileDiff>,
 ): Set<DiffLine> {
     const shown = new Set<DiffLine>();
-    for (const step of restitutions.flatMap((r) =>
-        r.goals.flatMap((goal) => goal.steps),
-    )) {
-        if (step.file && step.lines) {
-            for (const hunk of selectLines(diffs[step.file], step.lines)) {
-                hunk.lines.forEach((line) => shown.add(line));
-            }
+    for (const place of restitutions.flatMap(places)) {
+        for (const hunk of selectLines(diffs[place.file], place.lines)) {
+            hunk.lines.forEach((line) => shown.add(line));
         }
     }
     return shown;
@@ -70,7 +60,7 @@ function hiddenRanges(diff: FileDiff, shown: Set<DiffLine>): LineRange[] {
 /**
  * Compare a restitution's steps with the working-tree diffs, line by line. A
  * changed line counts as shown when any restitution's step shows it (`others`
- * are the other tabs). Steps whose lines hold no change are only reported for
+ * are the other tabs). Places whose lines hold no change are only reported for
  * `restitution`, split by `lineCounts` (how many lines each of their files
  * has; absent when it doesn't exist) into existing code and wrong anchors.
  */
@@ -82,14 +72,12 @@ export function checkCoverage(
 ): Coverage {
     const unchanged: string[] = [];
     const nowhere: string[] = [];
-    for (const step of unchangedSteps(restitution, diffs)) {
-        const count = lineCounts[step.file];
+    for (const place of unchangedPlaces(restitution, diffs)) {
+        const count = lineCounts[place.file];
         const exists =
             count !== undefined &&
-            step.lines.every(([from, to]) => from >= 1 && to <= count);
-        (exists ? unchanged : nowhere).push(
-            `${step.file}:${describeRanges(step.lines)}`,
-        );
+            place.lines.every(([from, to]) => from >= 1 && to <= count);
+        (exists ? unchanged : nowhere).push(describePlace(place));
     }
 
     const shown = shownLines([restitution, ...others], diffs);
@@ -153,17 +141,17 @@ export function describeSubmit(
     }
     if (coverage.nowhere.length > 0) {
         lines.push(
-            `Steps pointing at lines that don't exist (wrong file, or wrong line numbers): ${coverage.nowhere.join(", ")}.`,
+            `Places pointing at lines that don't exist (wrong file, or wrong line numbers): ${coverage.nowhere.join(", ")}.`,
         );
     }
     if (coverage.unchanged.length > 0) {
         lines.push(
-            `Steps showing only unchanged code: ${coverage.unchanged.join(", ")}. Fine when they explain existing code; otherwise check their line numbers.`,
+            `Places showing only unchanged code: ${coverage.unchanged.join(", ")}. Fine when they explain existing code; otherwise check their line numbers.`,
         );
     }
     if (coverage.unexplained.length > 0) {
         lines.push(
-            `Changed lines no step shows: ${coverage.unexplained.join(", ")}. Widen a step's "lines" to include them, or add a step.`,
+            `Changed lines no step shows: ${coverage.unexplained.join(", ")}. Widen a place's "lines" in a step's "code" to include them, or add a step.`,
         );
     }
     if (stale.length > 0) {

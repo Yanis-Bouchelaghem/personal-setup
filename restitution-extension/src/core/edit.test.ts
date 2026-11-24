@@ -9,8 +9,12 @@ const base: Restitution = {
         {
             title: "First",
             steps: [
-                { file: "a.ts", lines: [[1, 2]], why: "Do a." },
-                { file: "b.ts", lines: [[3, 4]], link: "then", why: "do b." },
+                { code: [{ file: "a.ts", lines: [[1, 2]] }], why: "Do a." },
+                {
+                    code: [{ file: "b.ts", lines: [[3, 4]] }],
+                    link: "then",
+                    why: "do b.",
+                },
             ],
         },
         {
@@ -35,8 +39,7 @@ describe("applyEdits", () => {
         ]);
         expect(whys(result)).toEqual([["Do a.", "do b better."], ["Do c."]]);
         expect(result.ok && result.value.goals[0]?.steps[1]).toEqual({
-            file: "b.ts",
-            lines: [[3, 4]],
+            code: [{ file: "b.ts", lines: [[3, 4]] }],
             link: "then",
             why: "do b better.",
         });
@@ -90,9 +93,14 @@ describe("applyEdits", () => {
         ).toMatchObject({ ok: false });
     });
 
-    it("rejects a step that gets a file without lines", () => {
+    it("rejects a place without lines", () => {
         const result = applyEdits(base, [
-            { op: "set", step: "2.1", fields: { file: "c.ts" } },
+            {
+                op: "set",
+                step: "2.1",
+                // @ts-expect-error: what an agent might send
+                fields: { code: [{ file: "c.ts" }] },
+            },
         ]);
         expect(result.ok).toBe(false);
     });

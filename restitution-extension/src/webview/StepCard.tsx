@@ -1,16 +1,11 @@
 import { useState } from "react";
 
 import type { Answer } from "../core/answers";
-import {
-    changedRanges,
-    type FileDiff,
-    hunkSelection,
-    selectLines,
-} from "../core/diff";
+import type { FileDiff } from "../core/diff";
 import type { OpenRequest } from "../core/messages";
 import type { Step } from "../core/restitution";
 import type { ReviewRequest } from "../core/review";
-import { type SourceLines, sourceHunks } from "../core/source";
+import { fileRuns, type SourceLines } from "../core/source";
 import { Collapse } from "./Collapse";
 import { Conversation } from "./Conversation";
 import { DiffView } from "./DiffView";
@@ -20,12 +15,11 @@ import {
     ChevronIcon,
     ClarifyIcon,
     CommentIcon,
-    DiffIcon,
-    FileIcon,
     IconButton,
     WarningIcon,
 } from "./Icons";
 import { Note } from "./Note";
+import { stepCode } from "./StepCode";
 import { useKeyCommands } from "./useKeyboard";
 import { useLabelsFit } from "./useLabelsFit";
 import { useScrollAnchor } from "./useScrollAnchor";
@@ -41,78 +35,6 @@ function openNthDoc(
     if (doc) {
         open(doc.url);
     }
-}
-
-/** Folder part fades and truncates first; the file name always stays visible. */
-export function FilePath({ path }: { path: string }) {
-    const split = path.lastIndexOf("/") + 1;
-    return (
-        <code className="chip" title={path}>
-            <span className="dir">{path.slice(0, split)}</span>
-            <span className="name">{path.slice(split)}</span>
-        </code>
-    );
-}
-
-/**
- * What a step shows and where the editor should land when it is opened: the
- * changed lines it chose, or, when it chose no change, that code as it is
- * now (existing code it explains).
- */
-function useStepCode(
-    step: Step,
-    diffs: Record<string, FileDiff>,
-    sources: Record<string, SourceLines>,
-) {
-    const file = step.file;
-    const diff = file ? diffs[file] : undefined;
-    // Exactly the lines the step chose, nothing around them.
-    const ranges = step.lines ?? [];
-    const changes = selectLines(diff, ranges);
-    const changed = changes.some((hunk) =>
-        hunk.lines.some((line) => line.kind !== "ctx"),
-    );
-    const existing = !changed && file ? sourceHunks(sources[file], ranges) : [];
-    const unchanged = existing.length > 0;
-    const hunks = unchanged ? existing : changes;
-    // The editor selects only what changed, not the context shown around it;
-    // a step that only removes code has no new-side lines, so it selects its range.
-    const added = changedRanges(hunks);
-    const selection = added.length > 0 ? added : ranges;
-    const status = diff?.status;
-    return {
-        file,
-        hunks,
-        selection,
-        unchanged,
-        // Why a button cannot be used here; undefined when it can.
-        noDiff: unchanged ? UNCHANGED : whyNoDiff(hunks.length, status),
-        noFile: unchanged ? undefined : whyNoFile(hunks.length, status),
-    };
-}
-
-const NO_CODE = "These lines are not in the file";
-const UNCHANGED = "No diff: this code is unchanged";
-
-/** A diff only makes sense when both sides exist. */
-function whyNoDiff(hunks: number, status: FileDiff["status"] | undefined) {
-    if (hunks === 0) {
-        return NO_CODE;
-    }
-    if (status === "added") {
-        return "No diff: this file is new, every line is added";
-    }
-    if (status === "deleted") {
-        return "No diff: this file was deleted, every line is removed";
-    }
-    return undefined;
-}
-
-function whyNoFile(hunks: number, status: FileDiff["status"] | undefined) {
-    if (hunks === 0) {
-        return NO_CODE;
-    }
-    return status === "deleted" ? "This file was deleted" : undefined;
 }
 
 export function StepCard({
@@ -158,8 +80,7 @@ export function StepCard({
     onOpenUrl: (url: string) => void;
     onRequestChange: (clarify: boolean, comment: string | undefined) => void;
 }) {
-    const code = useStepCode(step, diffs, sources);
-    const { file } = code;
+    const runs = fileRuns(step, diffs, sources);
     const clarify = request?.clarify ?? false;
     const comment = request?.comment ?? "";
     const [writing, setWriting] = useState(false);
@@ -187,27 +108,13 @@ export function StepCard({
     const hover = useSeenOnHover(updated, onSeen);
     const labelled = useLabelsFit(head);
 
-    // Where a click on the card takes you: the file with the changes
-    // selected, or the diff when the file is gone.
-    const openFile = () =>
-        onOpenRequest({
-            type: "openFile",
-            file: file ?? "",
-            ranges: code.selection,
-        });
-    const openDiff = () =>
-        onOpenRequest({
-            type: "openDiff",
-            file: file ?? "",
-            ranges: code.selection,
-        });
-    const openCode = file && !code.noFile ? openFile : undefined;
+    const { blocks, openCode, openDiff } = stepCode(runs, onOpenRequest);
     const toggleClarify = () => onRequestChange(!clarify, comment || undefined);
 
     useKeyCommands(box, {
         enter: openCode,
         open: openCode,
-        diff: file && !code.noDiff ? openDiff : undefined,
+        diff: openDiff,
         toggle: toggleViewed,
         fold: viewed ? undefined : toggleViewed,
         unfold: viewed ? toggleViewed : undefined,
@@ -293,7 +200,13 @@ export function StepCard({
                         <WarningIcon />
                     </span>
                 )}
-                {file && <FilePath path={file} />}
+                {/* A folded step still says what it does. */}
+                <span
+                    className="head-why"
+                    title={viewed ? step.why : undefined}
+                >
+                    {step.why}
+                </span>
                 <span className="actions">
                     <IconButton
                         label={
@@ -308,33 +221,6 @@ export function StepCard({
                         <ClarifyIcon />
                     </IconButton>
                 </span>
-                {/* Always there on a step with code, folded or not, so nothing
-                    beside them moves: greyed out, with the reason, when they
-                    cannot be used. A text-only step has none. */}
-                {file && (
-                    <span className="actions open-actions">
-                        <IconButton
-                            label="Open the diff in the editor · gd"
-                            onClick={openDiff}
-                            text="Diff"
-                            unavailable={code.noDiff}
-                        >
-                            <DiffIcon />
-                        </IconButton>
-                        <IconButton
-                            label={
-                                code.unchanged
-                                    ? "Open the file at these lines · gf"
-                                    : "Open the file, with the changes selected · gf"
-                            }
-                            onClick={openFile}
-                            text="File"
-                            unavailable={code.noFile}
-                        >
-                            <FileIcon />
-                        </IconButton>
-                    </span>
-                )}
             </header>
             <Collapse open={open} snap={snap}>
                 <div className="card-body">
@@ -359,25 +245,7 @@ export function StepCard({
                             onToggle={() => shownExamples.toggle(index)}
                         />
                     ))}
-                    {code.hunks.length > 0 && (
-                        <DiffView
-                            hunks={code.hunks}
-                            unchanged={code.unchanged}
-                            onOpen={
-                                openCode
-                                    ? (hunk) =>
-                                          onOpenRequest({
-                                              type: "openFile",
-                                              file: file ?? "",
-                                              ranges: hunkSelection(hunk),
-                                          })
-                                    : undefined
-                            }
-                        />
-                    )}
-                    {file && code.hunks.length === 0 && (
-                        <p className="no-diff">{NO_CODE}.</p>
-                    )}
+                    {blocks.length > 0 && <DiffView blocks={blocks} />}
                     {!talking && !replying && (
                         <button
                             className="icon-btn comment-btn"

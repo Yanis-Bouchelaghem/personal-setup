@@ -9,11 +9,11 @@ import {
     isStale,
     noteKey,
     stepFingerprint,
-    stepHunks,
 } from "../core/fingerprint";
 import type { Tab } from "../core/messages";
 import type { Restitution } from "../core/restitution";
 import type { Review } from "../core/review";
+import { stepHunks } from "../core/source";
 import type { SourceLines } from "../core/source";
 import { ErrorList } from "./ErrorList";
 import { FeedbackBar, useCopied } from "./FeedbackBar";

@@ -2,13 +2,12 @@ import { readFile } from "node:fs/promises";
 import { resolve, sep } from "node:path";
 
 import type { FileDiff } from "../core/diff";
-import type { Restitution } from "../core/restitution";
+import type { Place, Restitution } from "../core/restitution";
 import {
-    type AnchoredStep,
     pickLines,
     type SourceLines,
     splitLines,
-    unchangedSteps,
+    unchangedPlaces,
 } from "../core/source";
 
 /** Beyond this a file is not code anyone reads in a side panel. */
@@ -35,11 +34,11 @@ async function readLines(
     }
 }
 
-/** Each file once, with the steps that point at it. */
-function byFile(steps: AnchoredStep[]): Map<string, AnchoredStep[]> {
-    const files = new Map<string, AnchoredStep[]>();
-    for (const step of steps) {
-        files.set(step.file, [...(files.get(step.file) ?? []), step]);
+/** Each file once, with the places that point at it. */
+function byFile(places: Place[]): Map<string, Place[]> {
+    const files = new Map<string, Place[]>();
+    for (const place of places) {
+        files.set(place.file, [...(files.get(place.file) ?? []), place]);
     }
     return files;
 }
@@ -55,11 +54,11 @@ export async function readSources(
 ): Promise<Record<string, SourceLines>> {
     const files = byFile(
         restitutions.flatMap((restitution) =>
-            unchangedSteps(restitution, diffs),
+            unchangedPlaces(restitution, diffs),
         ),
     );
     const entries = await Promise.all(
-        [...files].map(async ([file, steps]) => {
+        [...files].map(async ([file, shown]) => {
             const lines = await readLines(gitRoot, file);
             return lines
                 ? [
@@ -67,7 +66,7 @@ export async function readSources(
                           file,
                           pickLines(
                               lines,
-                              steps.flatMap((step) => step.lines),
+                              shown.flatMap((place) => place.lines),
                           ),
                       ] as const,
                   ]
@@ -78,7 +77,7 @@ export async function readSources(
 }
 
 /**
- * How many lines each file of the unchanged steps has, to tell existing code
+ * How many lines each file of the unchanged places has, to tell existing code
  * from a wrong anchor. A file that can't be read is left out.
  */
 export async function unchangedLineCounts(
@@ -86,7 +85,7 @@ export async function unchangedLineCounts(
     restitution: Restitution,
     diffs: Record<string, FileDiff>,
 ): Promise<Record<string, number>> {
-    const files = [...byFile(unchangedSteps(restitution, diffs)).keys()];
+    const files = [...byFile(unchangedPlaces(restitution, diffs)).keys()];
     const entries = await Promise.all(
         files.map(async (file) => {
             const lines = await readLines(gitRoot, file);

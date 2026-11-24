@@ -29,7 +29,7 @@ const diffs = Object.fromEntries(
 
 type Range = [number, number];
 
-function restitution(steps: { file?: string; lines?: Range[] }[]) {
+function restitution(steps: { code?: { file: string; lines: Range[] }[] }[]) {
     return {
         version: 1,
         goals: [
@@ -46,13 +46,17 @@ describe("checkCoverage", () => {
         const result = checkCoverage(
             restitution([
                 {
-                    file: "src/a.ts",
-                    lines: [
-                        [1, 2],
-                        [20, 21],
+                    code: [
+                        {
+                            file: "src/a.ts",
+                            lines: [
+                                [1, 2],
+                                [20, 21],
+                            ],
+                        },
                     ],
                 },
-                { file: "src/b.ts", lines: [[5, 5]] },
+                { code: [{ file: "src/b.ts", lines: [[5, 5]] }] },
             ]),
             diffs,
         );
@@ -61,7 +65,7 @@ describe("checkCoverage", () => {
 
     it("lists the changed lines no step shows, per file", () => {
         const result = checkCoverage(
-            restitution([{ file: "src/a.ts", lines: [[1, 2]] }]),
+            restitution([{ code: [{ file: "src/a.ts", lines: [[1, 2]] }] }]),
             diffs,
         );
         expect(result.unexplained).toEqual(["src/a.ts:20-21", "src/b.ts:5"]);
@@ -72,13 +76,17 @@ describe("checkCoverage", () => {
         const result = checkCoverage(
             restitution([
                 {
-                    file: "src/a.ts",
-                    lines: [
-                        [2, 2],
-                        [20, 21],
+                    code: [
+                        {
+                            file: "src/a.ts",
+                            lines: [
+                                [2, 2],
+                                [20, 21],
+                            ],
+                        },
                     ],
                 },
-                { file: "src/b.ts", lines: [[5, 5]] },
+                { code: [{ file: "src/b.ts", lines: [[5, 5]] }] },
             ]),
             diffs,
         );
@@ -89,16 +97,20 @@ describe("checkCoverage", () => {
         const result = checkCoverage(
             restitution([
                 {
-                    file: "src/a.ts",
-                    lines: [
-                        [1, 2],
-                        [20, 21],
+                    code: [
+                        {
+                            file: "src/a.ts",
+                            lines: [
+                                [1, 2],
+                                [20, 21],
+                            ],
+                        },
                     ],
                 },
-                { file: "src/b.ts", lines: [[5, 5]] },
-                { file: "src/gone.ts", lines: [[1, 3]] },
-                { file: "src/a.ts", lines: [[100, 110]] },
-                { file: "src/a.ts", lines: [[2, 2]] },
+                { code: [{ file: "src/b.ts", lines: [[5, 5]] }] },
+                { code: [{ file: "src/gone.ts", lines: [[1, 3]] }] },
+                { code: [{ file: "src/a.ts", lines: [[100, 110]] }] },
+                { code: [{ file: "src/a.ts", lines: [[2, 2]] }] },
             ]),
             diffs,
             [],
@@ -111,16 +123,20 @@ describe("checkCoverage", () => {
     it("counts lines other tabs show, and flags only the current tab's steps", () => {
         const current = restitution([
             {
-                file: "src/a.ts",
-                lines: [
-                    [1, 2],
-                    [20, 21],
+                code: [
+                    {
+                        file: "src/a.ts",
+                        lines: [
+                            [1, 2],
+                            [20, 21],
+                        ],
+                    },
                 ],
             },
         ]);
         const other = restitution([
-            { file: "src/b.ts", lines: [[5, 5]] },
-            { file: "src/ghost.ts", lines: [[1, 1]] },
+            { code: [{ file: "src/b.ts", lines: [[5, 5]] }] },
+            { code: [{ file: "src/ghost.ts", lines: [[1, 1]] }] },
         ]);
         const result = checkCoverage(current, diffs, [other]);
         expect(result).toEqual({ unchanged: [], nowhere: [], unexplained: [] });
@@ -134,7 +150,9 @@ describe("checkCoverage", () => {
 
 describe("uncoveredChanges", () => {
     it("lists, file by file, the changed lines no guide shows", () => {
-        const shownByOne = restitution([{ file: "src/a.ts", lines: [[1, 2]] }]);
+        const shownByOne = restitution([
+            { code: [{ file: "src/a.ts", lines: [[1, 2]] }] },
+        ]);
         const shownByAnother = restitution([]);
         const result = uncoveredChanges(diffs, [shownByOne, shownByAnother]);
         expect(result.map((entry) => [entry.file, entry.ranges])).toEqual([
@@ -153,13 +171,17 @@ describe("uncoveredChanges", () => {
     it("is empty when every change is shown, or there is no diff", () => {
         const all = restitution([
             {
-                file: "src/a.ts",
-                lines: [
-                    [1, 2],
-                    [20, 21],
+                code: [
+                    {
+                        file: "src/a.ts",
+                        lines: [
+                            [1, 2],
+                            [20, 21],
+                        ],
+                    },
                 ],
             },
-            { file: "src/b.ts", lines: [[5, 5]] },
+            { code: [{ file: "src/b.ts", lines: [[5, 5]] }] },
         ]);
         expect(uncoveredChanges(diffs, [all])).toEqual([]);
         expect(uncoveredChanges({}, [all])).toEqual([]);
@@ -167,7 +189,7 @@ describe("uncoveredChanges", () => {
 });
 
 describe("describeSubmit", () => {
-    const r = restitution([{ file: "src/a.ts", lines: [[1, 2]] }]);
+    const r = restitution([{ code: [{ file: "src/a.ts", lines: [[1, 2]] }] }]);
 
     it("points at steps whose code changed since they were explained", () => {
         const clean = { unchanged: [], nowhere: [], unexplained: [] };

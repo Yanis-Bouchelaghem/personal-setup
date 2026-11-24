@@ -10,8 +10,7 @@ const valid = {
             title: "Reject plain-http Apigee URLs",
             steps: [
                 {
-                    file: "src/config.ts",
-                    lines: [[7, 17]],
+                    code: [{ file: "src/config.ts", lines: [[7, 17]] }],
                     why: "Reject non-https URLs at startup, so tokens never travel in clear text.",
                 },
             ],
@@ -48,7 +47,7 @@ function doc(url: string): boolean {
 }
 
 function withLines(lines: unknown): boolean {
-    return accepts({ file: "a.ts", lines });
+    return accepts({ code: [{ file: "a.ts", lines }] });
 }
 
 describe("parseRestitution", () => {
@@ -93,10 +92,19 @@ describe("parseRestitution", () => {
         expect(result.ok).toBe(false);
     });
 
-    it("requires lines whenever a step has a file, and a file whenever it has lines", () => {
-        expect(accepts({ file: "a.ts" })).toBe(false);
-        expect(accepts({ lines: [[1, 2]] })).toBe(false);
-        expect(accepts({ file: "a.ts", lines: [[1, 2]] })).toBe(true);
+    it("takes places in several files, each with its file and lines", () => {
+        expect(
+            accepts({
+                code: [
+                    { file: "a.ts", lines: [[1, 2]] },
+                    { file: "b.ts", lines: [[3, 4]] },
+                    { file: "a.ts", lines: [[9, 9]] },
+                ],
+            }),
+        ).toBe(true);
+        expect(accepts({ code: [{ file: "a.ts" }] })).toBe(false);
+        expect(accepts({ code: [{ lines: [[1, 2]] }] })).toBe(false);
+        expect(accepts({ code: [] })).toBe(false);
         expect(accepts({})).toBe(true);
     });
 

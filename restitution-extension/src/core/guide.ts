@@ -17,19 +17,19 @@ A restitution is a reading guide for the human who asked for the change. They re
 ## How to submit
 
 Call restitution_submit with:
-{ id?, newTab?, label?, request?, note?, goals: [ { title, ref?, steps: [ { file?, lines?, why, link?, examples?: [ { title, body } ], docs?: [ { title, url } ] } ] } ] }
+{ id?, newTab?, label?, request?, note?, goals: [ { title, ref?, steps: [ { code?: [ { file, lines } ], why, link?, examples?: [ { title, body } ], docs?: [ { title, url } ] } ] } ] }
 
 Leave "id" and "note" out, except when you update an existing restitution after the user's review (restitution_feedback tells you). "note" is then one or two sentences on what you changed and why.
 
-- A step that points at code gives BOTH "file" and "lines" (a "which means" step, which only explains, gives neither).
+- A step that points at code gives "code": the places it shows, in reading order, each { "file", "lines" } (a "which means" step, which only explains, gives none).
   - "file" is the path relative to the git root.
   - "lines" is a list of [from, to] ranges: EXACTLY the lines of that file the step shows the reader, nothing more. Use the line numbers of the file as it is now, after your edits.
   - Choose what the reader needs to follow the step: the changed lines and the few lines of unchanged code around them that make them readable. Use several ranges when a step touches separate places, and keep each range as small as it can be.
-  - The card shows the ranges in the order you list them, each as its own block. When a step introduces a function (or any new definition), list where it is used first, then the definition: the reader sees why it exists before how it works. When it is used in another file, that use is the step just before.
+  - The card shows the places in the order you list them, and the ranges of a place in their order, each as its own block, under the file's name whenever the file changes. Places can be in different files, and a file can come back later in the list. So one step can follow one idea across files: when a step introduces a function (or any new definition), list where it is used first, in whatever file, then the definition: the reader sees why it exists before how it works.
   - A removed line has no number any more: it sits with the line just before it, so include that line. For a deleted file, use the line numbers it had before.
 - A step can also point at code that did not change: existing code the change relies on, or that the reader must see to follow it. The card shows those lines as they are now, labelled "Unchanged code". Mix both freely: put a step on existing code in the middle of a goal, right where the reader needs it (the function a new call goes through, the type a change must fit).
 - When the user's request is to explain existing code (not a change of yours), the restitution IS the explanation: goals come from what they asked to understand, in their words, like any request, and steps walk through the code in the order it runs. The changed-lines report doesn't apply then. This is about their request only: a review of your restitution is handled with restitution_feedback, never by restructuring.
-- Every changed line must be shown by some step. The tool saves your restitution, then lists the changed lines no step shows and the steps whose lines hold no change. Treat that as a hint, not a verdict: fix what is really wrong with restitution_edit.
+- Every changed line must be shown by some step. The tool saves your restitution, then lists the changed lines no step shows and the places whose lines hold no change. Treat that as a hint, not a verdict: fix what is really wrong with restitution_edit.
 - The card shows exactly those lines. When the reader opens the step in their editor, the changed lines among them are selected (the unchanged context around them is not), so show enough context to be readable and let the selection point at what changed.
 - Your restitution is one tab in the user's panel (label names it, otherwise the request does). Submitting again replaces your current tab, which is right when it is the same work. For a different restitution in the same session, submit with "newTab": true: it opens another tab, becomes your current one, and the earlier tab stays. The reply gives the tab's id; restitution_list shows all of them, yours marked. Other agents' tabs are never touched: work on a tab that is not your current one (give its id to restitution_submit, restitution_edit or restitution_answer) only when the user's review names it or they ask.
 - Submit when the change is complete. When the code or the guide changes afterwards, fix only the steps concerned with restitution_edit (below). Make the story match the current code instead of appending "then I fixed ...".
@@ -37,7 +37,7 @@ Leave "id" and "note" out, except when you update an existing restitution after 
 ## Changing it: restitution_edit
 
 restitution_edit changes part of your restitution and leaves every other step exactly as it was, so the user keeps what they already read. It takes a list of edits, applied together; labels ("2.1") and goal numbers refer to the restitution as it was before these edits:
-- { "op": "set", "step": "2.1", "fields": { "why": "...", "lines": [[12, 20]] } }: change some fields of a step.
+- { "op": "set", "step": "2.1", "fields": { "why": "...", "code": [ { "file": "src/a.ts", "lines": [[12, 20]] } ] } }: change some fields of a step.
 - { "op": "replace", "step": "2.1", "steps": [ ... ] }: several steps to split it, one to rewrite it, none to remove it.
 - { "op": "insert", "after": "2.1", "steps": [ ... ] } (or "before"): add steps.
 - { "op": "setGoal", "goal": 2, "title": "..." }, { "op": "removeGoal", "goal": 2 }, { "op": "addGoal", "goal": { ... }, "after": 1 }.
@@ -72,7 +72,7 @@ Each step is a card. Between two cards of the same goal sits a connector (a word
 Suggestions, for common cases:
 - "then": this step builds on the previous one (stop before it and the code still works, it is just not finished). The default.
 - "in parallel": this step is independent of the previous one; it could be read before it.
-- "which means": this step changes no code and states what the previous step implies, that the reader must know (behaviour that changes for users, operators or callers; something that now has to happen). Give it no file and no lines.
+- "which means": this step changes no code and states what the previous step implies, that the reader must know (behaviour that changes for users, operators or callers; something that now has to happen). Give it no code.
 - "so": right after such a consequence, the code that deals with it.
 - Anything else that fits: "because", "although", "and since", "to do that", "but", "for example", "which is why", "after that".
 
@@ -121,8 +121,8 @@ The shape only: write your own words, about your own change.
     {
       "title": "<a goal, in the request's words>",
       "steps": [
-        { "file": "src/a.ts", "lines": [[10, 24]], "why": "<Action>, so <reason>." },
-        { "file": "src/b.ts", "lines": [[3, 3], [40, 46]], "link": "then", "why": "<next action>, so <reason>.",
+        { "code": [ { "file": "src/a.ts", "lines": [[10, 24]] } ], "why": "<Action>, so <reason>." },
+        { "code": [ { "file": "src/b.ts", "lines": [[40, 46]] }, { "file": "src/c.ts", "lines": [[3, 9]] } ], "link": "then", "why": "<next action>, so <reason>.",
           "examples": [ { "title": "<what it is and where it comes from>", "body": "<verbatim, short>" } ],
           "docs": [ { "title": "<what the reader learns there> (<source>)", "url": "https://docs.example.com/page#section" } ] },
         { "link": "which means", "why": "<what this implies for the reader>." }

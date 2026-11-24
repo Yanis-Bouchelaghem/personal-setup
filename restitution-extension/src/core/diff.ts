@@ -149,6 +149,13 @@ function parseBodyLine(
     return undefined; // "\ No newline at end of file", blank trailer
 }
 
+/** "12", "12-15", or a comma list of those. */
+export function describeRanges(ranges: readonly LineRange[]): string {
+    return ranges
+        .map(([from, to]) => (from === to ? `${from}` : `${from}-${to}`))
+        .join(",");
+}
+
 /**
  * The ranges in the order the step lists them, which is the order the reader
  * sees them (a call site before the definition it calls, say). Ranges that

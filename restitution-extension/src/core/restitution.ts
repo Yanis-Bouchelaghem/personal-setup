@@ -41,16 +41,24 @@ const DocSchema = z.object({
     url: z.string().refine(isWebUrl, "an http or https address"),
 });
 
-/** A step's fields, before the rule that ties `file` and `lines` together. */
-export const StepFieldsSchema = z.object({
-    why: z.string().min(1),
+/**
+ * One place a step shows: a file and exactly the lines of it the reader sees,
+ * as ranges on the new side (the old side for a deleted file).
+ */
+const PlaceSchema = z.object({
     /** Path relative to the git root. */
-    file: z.string().min(1).optional(),
+    file: z.string().min(1),
+    lines: z.array(LineRangeSchema).min(1),
+});
+
+export const StepSchema = z.object({
+    why: z.string().min(1),
     /**
-     * Exactly the lines of `file` this step shows, as ranges: the new side,
-     * or the old side for a deleted file. Required with `file`.
+     * The code the step shows, in reading order: one entry per place, each
+     * in any file (the same file can come back later). Left out on a step
+     * that only explains.
      */
-    lines: z.array(LineRangeSchema).min(1).optional(),
+    code: z.array(PlaceSchema).min(1).optional(),
     /**
      * The connector word shown before this step, in the reader's
      * language: the page reads as one sentence, the step's text
@@ -62,14 +70,6 @@ export const StepFieldsSchema = z.object({
     examples: z.array(ExampleSchema).min(1).optional(),
     docs: z.array(DocSchema).min(1).optional(),
 });
-
-export const StepSchema = StepFieldsSchema.refine(
-    (step) => (step.file === undefined) === (step.lines === undefined),
-    {
-        message: "file and lines go together: give both, or neither",
-        path: ["lines"],
-    },
-);
 
 export const GoalSchema = z.object({
     title: z.string().min(1),
@@ -97,6 +97,7 @@ export const RestitutionSchema = z.object({
 });
 
 export type Step = z.infer<typeof StepSchema>;
+export type Place = z.infer<typeof PlaceSchema>;
 export type StepExample = z.infer<typeof ExampleSchema>;
 export type StepDoc = z.infer<typeof DocSchema>;
 export type Goal = z.infer<typeof GoalSchema>;

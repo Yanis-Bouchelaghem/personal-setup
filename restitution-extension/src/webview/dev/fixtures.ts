@@ -12,8 +12,7 @@ const many: Restitution = {
             ref: "#1",
             steps: [
                 {
-                    file: "src/config.ts",
-                    lines: [[41, 52]],
+                    code: [{ file: "src/config.ts", lines: [[41, 52]] }],
                     why: "Require https for ADAPTER_APIGEE_URL, so bearer tokens never leave in clear text.",
                 },
                 {
@@ -21,14 +20,12 @@ const many: Restitution = {
                     why: "any environment still set to an http:// URL now fails at startup, and must switch before this ships.",
                 },
                 {
-                    file: "src/swagger.js",
-                    lines: [[1, 6]],
+                    code: [{ file: "src/swagger.js", lines: [[1, 6]] }],
                     link: "so",
                     why: "say in the API description that the URL must be https, so operators switch first.",
                 },
                 {
-                    file: "test/config.test.ts",
-                    lines: [[1, 9]],
+                    code: [{ file: "test/config.test.ts", lines: [[1, 9]] }],
                     link: "then",
                     why: "write the test that rejects an http URL, to catch a regression early.",
                 },
@@ -39,8 +36,12 @@ const many: Restitution = {
             ref: "#2",
             steps: [
                 {
-                    file: "src/gateway/btapGatewayClient.ts",
-                    lines: [[22, 29]],
+                    code: [
+                        {
+                            file: "src/gateway/btapGatewayClient.ts",
+                            lines: [[22, 29]],
+                        },
+                    ],
                     why: "Set Authorization through Headers, because a plain object kept both casings.",
                     docs: [
                         {
@@ -50,14 +51,19 @@ const many: Restitution = {
                     ],
                 },
                 {
-                    file: "src/gateway/tokenCache.ts",
-                    lines: [[8, 15]],
+                    code: [
+                        { file: "src/gateway/tokenCache.ts", lines: [[8, 15]] },
+                    ],
                     link: "and since",
                     why: "the token is already cached per audience, setting it on every call costs nothing.",
                 },
                 {
-                    file: "test/gateway/btapGatewayClient.test.ts",
-                    lines: [[1, 12]],
+                    code: [
+                        {
+                            file: "test/gateway/btapGatewayClient.test.ts",
+                            lines: [[1, 12]],
+                        },
+                    ],
                     link: "then",
                     why: "assert that a single header goes out, to prove the casing clash is gone.",
                 },
@@ -68,8 +74,12 @@ const many: Restitution = {
             ref: "#4",
             steps: [
                 {
-                    file: "src/marketplace/marketplaceSchema.ts",
-                    lines: [[1, 20]],
+                    code: [
+                        {
+                            file: "src/marketplace/marketplaceSchema.ts",
+                            lines: [[1, 20]],
+                        },
+                    ],
                     why: "Parse each plugin on its own, so one bad entry can't fail the catalog.",
                     examples: [
                         {
@@ -79,18 +89,28 @@ const many: Restitution = {
                     ],
                 },
                 {
-                    file: "src/marketplace/marketplaceRewriter.ts",
-                    // Two blocks, apart: each opens its own place.
-                    lines: [
-                        [9, 11],
-                        [16, 18],
+                    // Two blocks of one file, apart, then the type they rely on in
+                    // another file: each block opens its own place.
+                    code: [
+                        {
+                            file: "src/marketplace/marketplaceRewriter.ts",
+                            lines: [
+                                [9, 11],
+                                [16, 18],
+                            ],
+                        },
+                        { file: "src/marketplace/catalog.ts", lines: [[3, 7]] },
                     ],
                     link: "then",
                     why: "rewrite only the plugins that parsed, and keep the skipped count.",
                 },
                 {
-                    file: "test/marketplace/marketplace.test.ts",
-                    lines: [[1, 12]],
+                    code: [
+                        {
+                            file: "test/marketplace/marketplace.test.ts",
+                            lines: [[1, 12]],
+                        },
+                    ],
                     link: "then",
                     why: "write the unit tests to cover what was added, with one broken plugin among good ones.",
                 },
@@ -106,13 +126,21 @@ const long: Restitution = {
             title: "A goal with a very long title that has to wrap onto a second line without breaking the layout",
             steps: [
                 {
-                    file: "src/some/deeply/nested/folder/structure/that/keeps/going/andGoing.ts",
-                    lines: [[1, 3]],
+                    code: [
+                        {
+                            file: "src/some/deeply/nested/folder/structure/that/keeps/going/andGoing.ts",
+                            lines: [[1, 3]],
+                        },
+                    ],
                     why: "Rename the helper everywhere, so the intent reads the same in every call site and in every test that exercises it afterwards.",
                 },
                 {
-                    file: "src/some/other/deeply/nested/folder/structure/that/keeps/going/andGoingToo.ts",
-                    lines: [[1, 3]],
+                    code: [
+                        {
+                            file: "src/some/other/deeply/nested/folder/structure/that/keeps/going/andGoingToo.ts",
+                            lines: [[1, 3]],
+                        },
+                    ],
                     link: "in parallel",
                     why: "update the second module the same way, which does not depend on the first.",
                 },
@@ -233,6 +261,13 @@ const REVIEW = {
 
 /** Existing code a step explains: read from the file, not the diff. */
 const sources = {
+    "src/marketplace/catalog.ts": {
+        3: "export type Catalog = {",
+        4: "    plugins: Plugin[];",
+        5: "    /** Plugins left out because they did not parse. */",
+        6: "    skipped: number;",
+        7: "};",
+    },
     "src/gateway/tokenCache.ts": {
         8: "export async function tokenFor(audience: string): Promise<string> {",
         9: "    const cached = cache.get(audience);",
@@ -256,8 +291,12 @@ const small: Restitution = {
             title: "Send X-Request-Id with every gateway call",
             steps: [
                 {
-                    file: "src/gateway/btapGatewayClient.ts",
-                    lines: [[22, 29]],
+                    code: [
+                        {
+                            file: "src/gateway/btapGatewayClient.ts",
+                            lines: [[22, 29]],
+                        },
+                    ],
                     why: "Add a random X-Request-Id, so each call can be traced.",
                 },
             ],

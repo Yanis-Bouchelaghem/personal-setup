@@ -7,9 +7,9 @@ import {
     type Restitution,
     RestitutionSchema,
     type Step,
-    StepFieldsSchema,
     StepSchema,
 } from "./restitution";
+import { describePlace } from "./source";
 
 /**
  * Partial updates to a restitution: change, split, add or remove steps and
@@ -32,7 +32,7 @@ export const EditSchema = z.discriminatedUnion("op", [
         .object({
             op: z.literal("set"),
             step: Label,
-            fields: StepFieldsSchema.partial(),
+            fields: StepSchema.partial(),
         })
         .describe("Change some fields of a step; the others stay as they are."),
     z
@@ -251,10 +251,9 @@ export function outline(restitution: Restitution): string {
         .flatMap((goal, g) => [
             `${g + 1}. ${goal.title}`,
             ...goal.steps.map((step, s) => {
-                const where =
-                    step.file && step.lines
-                        ? ` ${step.file}:${step.lines.map(([a, b]) => (a === b ? a : `${a}-${b}`)).join(",")}`
-                        : "";
+                const where = step.code
+                    ? ` ${step.code.map(describePlace).join(" + ")}`
+                    : "";
                 const link = step.link && s > 0 ? ` [${step.link}]` : "";
                 return `  ${g + 1}.${s + 1}${link}${where}: ${step.why}`;
             }),

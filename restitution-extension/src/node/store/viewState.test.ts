@@ -3,12 +3,8 @@ import { join } from "node:path";
 
 import { describe, expect, it } from "vitest";
 
-import {
-    codeDigest,
-    isStale,
-    stepFingerprint,
-    stepHunks,
-} from "../../core/fingerprint";
+import { codeDigest, isStale, stepFingerprint } from "../../core/fingerprint";
+import { stepHunks } from "../../core/source";
 import { readCodeSnapshot } from "./code";
 import { writeRestitution } from "./tabs";
 import { restitutionFor, testRepo } from "./testRepo";

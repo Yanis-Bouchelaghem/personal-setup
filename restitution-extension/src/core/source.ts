@@ -1,11 +1,13 @@
 import {
+    changedRanges,
+    describeRanges,
     type FileDiff,
     type Hunk,
     type LineRange,
     readingOrder,
     selectLines,
 } from "./diff";
-import type { Restitution, Step } from "./restitution";
+import type { Place, Restitution, Step } from "./restitution";
 
 /**
  * Code a step points at without changing it: existing code the change relies
@@ -14,33 +16,112 @@ import type { Restitution, Step } from "./restitution";
  */
 export type SourceLines = Readonly<Record<number, string>>;
 
-/** A step that points at code: it has both a file and line ranges. */
-export type AnchoredStep = Step & { file: string; lines: LineRange[] };
-
-function isAnchored(step: Step): step is AnchoredStep {
-    return step.file !== undefined && step.lines !== undefined;
+/** "src/a.ts:3,31-33": a place, as the agent reads it back. */
+export function describePlace(place: Place): string {
+    return `${place.file}:${describeRanges(place.lines)}`;
 }
 
-/** Whether a step's lines hold a change: an added or removed line. */
+/** Whether a place's lines hold a change: an added or removed line. */
 export function showsChange(
-    step: Step,
+    place: Place,
     diffs: Record<string, FileDiff>,
 ): boolean {
-    return selectLines(
-        step.file ? diffs[step.file] : undefined,
-        step.lines ?? [],
-    ).some((hunk) => hunk.lines.some((line) => line.kind !== "ctx"));
+    return selectLines(diffs[place.file], place.lines).some((hunk) =>
+        hunk.lines.some((line) => line.kind !== "ctx"),
+    );
 }
 
-/** Steps that point at code but hold no change, in order. */
-export function unchangedSteps(
+/** Every place the steps show, in order. */
+export function places(restitution: Restitution): Place[] {
+    return restitution.goals.flatMap((goal) =>
+        goal.steps.flatMap((step) => step.code ?? []),
+    );
+}
+
+/** Places that hold no change, in order: existing code, or wrong anchors. */
+export function unchangedPlaces(
     restitution: Restitution,
     diffs: Record<string, FileDiff>,
-): AnchoredStep[] {
-    return restitution.goals
-        .flatMap((goal) => goal.steps)
-        .filter(isAnchored)
-        .filter((step) => !showsChange(step, diffs));
+): Place[] {
+    return places(restitution).filter((place) => !showsChange(place, diffs));
+}
+
+/** The changed lines a step shows, all its places together. */
+export function stepHunks(step: Step, diffs: Record<string, FileDiff>): Hunk[] {
+    return (step.code ?? []).flatMap((place) =>
+        selectLines(diffs[place.file], place.lines),
+    );
+}
+
+/**
+ * What one place shows: the changed lines it chose, or, when they hold no
+ * change, that code as it is now (existing code it explains). No hunks when
+ * the lines are not in the file.
+ */
+export type PlaceCode = {
+    file: string;
+    status: FileDiff["status"] | undefined;
+    unchanged: boolean;
+    hunks: Hunk[];
+    /**
+     * What the editor selects when the place is opened: only what changed
+     * (a place that only removes code has no new-side lines: its ranges).
+     */
+    selection: LineRange[];
+};
+
+export function placeCode(
+    place: Place,
+    diffs: Record<string, FileDiff>,
+    sources: Record<string, SourceLines>,
+): PlaceCode {
+    const diff = diffs[place.file];
+    const changes = selectLines(diff, place.lines);
+    const changed = changes.some((hunk) =>
+        hunk.lines.some((line) => line.kind !== "ctx"),
+    );
+    const existing = changed
+        ? []
+        : sourceHunks(sources[place.file], place.lines);
+    const unchanged = existing.length > 0;
+    const hunks = unchanged ? existing : changes;
+    const added = changedRanges(hunks);
+    return {
+        file: place.file,
+        status: diff?.status,
+        unchanged,
+        hunks,
+        selection: added.length > 0 ? added : place.lines,
+    };
+}
+
+/**
+ * A step's places, with the ones next to each other in the same file put
+ * together: the card gives each run one file header, and separates the
+ * blocks inside it by their line.
+ */
+export type FileRun = {
+    file: string;
+    status: FileDiff["status"] | undefined;
+    places: PlaceCode[];
+};
+
+export function fileRuns(
+    step: Step,
+    diffs: Record<string, FileDiff>,
+    sources: Record<string, SourceLines>,
+): FileRun[] {
+    const runs: FileRun[] = [];
+    for (const place of step.code ?? []) {
+        const code = placeCode(place, diffs, sources);
+        const last = runs.at(-1);
+        if (last?.file === code.file) {
+            last.places.push(code);
+        } else {
+            runs.push({ file: code.file, status: code.status, places: [code] });
+        }
+    }
+    return runs;
 }
 
 /** A file's lines; the newline that ends the file does not start a line. */

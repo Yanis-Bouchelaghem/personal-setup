@@ -6,7 +6,7 @@ import type { OpenRequest } from "../core/messages";
 import { Collapse } from "./Collapse";
 import { DiffView } from "./DiffView";
 import { ChevronIcon, DiffIcon, FileIcon, IconButton } from "./Icons";
-import { FilePath } from "./StepCard";
+import { FilePath } from "./StepCode";
 import { useKeyCommands } from "./useKeyboard";
 
 /** How many changed lines (added or removed) these entries hold. */
@@ -172,17 +172,27 @@ function UncoveredFile({
             <Collapse open={open}>
                 <div className="card-body">
                     <DiffView
-                        hunks={entry.hunks}
-                        onOpen={
-                            canOpen
-                                ? (hunk) =>
+                        blocks={entry.hunks.map((hunk) => ({
+                            key: `${hunk.oldStart}-${hunk.newStart}`,
+                            hunk,
+                            open: canOpen
+                                ? () =>
                                       onOpenRequest({
                                           type: "openFile",
                                           file: entry.file,
                                           ranges: hunkSelection(hunk),
                                       })
-                                : undefined
-                        }
+                                : undefined,
+                            diff:
+                                entry.status === "modified"
+                                    ? () =>
+                                          onOpenRequest({
+                                              type: "openDiff",
+                                              file: entry.file,
+                                              ranges: hunkSelection(hunk),
+                                          })
+                                    : undefined,
+                        }))}
                     />
                 </div>
             </Collapse>

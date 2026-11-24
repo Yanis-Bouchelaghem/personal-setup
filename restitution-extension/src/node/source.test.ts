@@ -11,7 +11,12 @@ import { testRepo } from "./store/testRepo";
 
 const explain = (file: string, lines: [number, number][]): Restitution => ({
     version: 1,
-    goals: [{ title: "Explain", steps: [{ file, lines, why: "Read it." }] }],
+    goals: [
+        {
+            title: "Explain",
+            steps: [{ code: [{ file, lines }], why: "Read it." }],
+        },
+    ],
 });
 
 describe("existing code", () => {
@@ -42,9 +47,18 @@ describe("existing code", () => {
                 {
                     title: "Explain",
                     steps: [
-                        { file: "b.ts", lines: [[1, 2]], why: "Read it." },
-                        { file: "b.ts", lines: [[2, 9]], why: "Too far." },
-                        { file: "gone.ts", lines: [[1, 1]], why: "No file." },
+                        {
+                            code: [{ file: "b.ts", lines: [[1, 2]] }],
+                            why: "Read it.",
+                        },
+                        {
+                            code: [{ file: "b.ts", lines: [[2, 9]] }],
+                            why: "Too far.",
+                        },
+                        {
+                            code: [{ file: "gone.ts", lines: [[1, 1]] }],
+                            why: "No file.",
+                        },
                     ],
                 },
             ],
