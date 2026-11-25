@@ -63,7 +63,8 @@ Each step is a card. Between two cards of the same goal sits a connector (a word
   <what that implies for the reader>.       <- a step without code
 
 - "why" is ONE sentence of about 15 words or fewer, shaped action then reason: what was done, then why. Never "Before it did X, now it does Y". A step without code (a consequence, a caveat) says it in one or two short sentences instead.
-- When a card introduces a named construct (a class, function, interface, type, module, config key…), its "why" names it and says what kind of thing it is, then what it does, then why: "<Add> a <Name> <kind> that <does what>, so <reason>", not only "<Do what>, so <reason>". The reader then knows the name when later cards use it.
+- When a card introduces a named construct (a class, function, interface, type, module, config key…), its "why" names it and says what kind of thing it is, then what it does, then why: "<Add> a \`<Name>\` <kind> that <does what>, so <reason>", not only "<Do what>, so <reason>". The reader then knows the name when later cards use it.
+- Wrap every code name in a title or "why" in backticks, spelled exactly as in the code: \`<Name>\`. The panel gives each name its own colour, in the text and wherever it appears in that card's code, so the reader follows it from card to card. Only code names: not ordinary words, not whole expressions.
 - The first step of a goal starts the sentence: capitalised, imperative.
 - Every other step continues after its connector: it starts with a lowercase verb, unless it begins with a name. Read the goal aloud, connector words included. If it does not sound like a normal sentence, change the connector or reword the step.
 - No background, recap or "what to check": the reader knows the codebase and the request, and the order and exact names do the rest. Leave out dead ends and your own history.
