@@ -16,32 +16,22 @@ A restitution is a reading guide for the human who asked for the change. They re
 
 ## How to submit
 
-Call restitution_submit with:
-{ id?, newTab?, label?, request?, note?, goals: [ { title, ref?, steps: [ { code?: [ { file, lines } ], why, link?, examples?: [ { title, body } ], docs?: [ { title, url } ] } ] } ] }
-
-Leave "id" and "note" out, except when you update an existing restitution after the user's review (restitution_feedback tells you). "note" is then one or two sentences on what you changed and why.
+Call restitution_submit (its schema has the shape; the example at the end shows it filled in). Leave "id" and "note" out, except when you update an existing restitution after the user's review (restitution_feedback tells you). "note" is then one or two sentences on what you changed and why.
 
 - A step that points at code gives "code": the places it shows, in reading order, each { "file", "lines" } (a "which means" step, which only explains, gives none).
   - "file" is the path relative to the git root.
-  - "lines" is a list of [from, to] ranges: EXACTLY the lines of that file the step shows the reader, nothing more. Use the line numbers of the file as it is now, after your edits.
-  - Choose what the reader needs to follow the step: the changed lines and the few lines of unchanged code around them that make them readable. Use several ranges when a step touches separate places, and keep each range as small as it can be.
-  - The card shows the places in the order you list them, and the ranges of a place in their order, each as its own block, under the file's name whenever the file changes. Places can be in different files, and a file can come back later in the list. So one step can follow one idea across files: a new definition, then where it is used, in whatever file.
+  - "lines" is a list of [from, to] ranges: EXACTLY the lines of that file the step shows the reader, nothing more, numbered as the file is now, after your edits. Choose what the reader needs to follow the step: the changed lines and the few lines of unchanged code around them that make them readable, in several ranges when a step touches separate places, each as small as it can be. When the reader opens the step in their editor, only the changed lines among them are selected, so the context stays unselected and the selection points at what changed.
+  - The card shows the places in the order you list them, and the ranges of a place in their order, each as its own block. Places can be in different files, and a file can come back later in the list. So one step can follow one idea across files: a new definition, then where it is used.
   - A removed line has no number any more: it sits with the line just before it, so include that line. For a deleted file, use the line numbers it had before.
 - A step can also point at code that did not change: existing code the change relies on, or that the reader must see to follow it. The card shows those lines as they are now, labelled "Unchanged code". Mix both freely: put a step on existing code in the middle of a goal, just before the step that needs it (the function a new call goes through, the type a change must fit).
 - When the user's request is to explain existing code (not a change of yours), the restitution IS the explanation: goals come from what they asked to understand, in their words, like any request, and steps follow the same order as any restitution (see "Order"). The changed-lines report doesn't apply then. This is about their request only: a review of your restitution is handled with restitution_feedback, never by restructuring.
 - Every changed line must be shown by some step. The tool saves your restitution, then lists the changed lines no step shows and the places whose lines hold no change. Treat that as a hint, not a verdict: fix what is really wrong with restitution_edit.
-- The card shows exactly those lines. When the reader opens the step in their editor, the changed lines among them are selected (the unchanged context around them is not), so show enough context to be readable and let the selection point at what changed.
-- Your restitution is one tab in the user's panel (label names it, otherwise the request does). Submitting again replaces your current tab, which is right when it is the same work. For a different restitution in the same session, submit with "newTab": true: it opens another tab, becomes your current one, and the earlier tab stays. The reply gives the tab's id; restitution_list shows all of them, yours marked. Other agents' tabs are never touched: work on a tab that is not your current one (give its id to restitution_submit, restitution_edit or restitution_answer) only when the user's review names it or they ask.
-- Submit when the change is complete. When the code or the guide changes afterwards, fix only the steps concerned with restitution_edit (below). Make the story match the current code instead of appending "then I fixed ...".
+- Your restitution is one tab in the user's panel (label names it, otherwise the request does). Submitting again replaces your current tab, which is right when it is the same work; for a different restitution in the same session, submit with "newTab": true. Work on a tab that is not your current one (give its id; restitution_list shows them all) only when the user's review names it or they ask.
+- Submit when the change is complete. Afterwards fix only the steps concerned, with restitution_edit, and make the story match the current code instead of appending "then I fixed ...".
 
 ## Changing it: restitution_edit
 
-restitution_edit changes part of your restitution and leaves every other step exactly as it was, so the user keeps what they already read. It takes a list of edits, applied together; labels ("2.1") and goal numbers refer to the restitution as it was before these edits:
-- { "op": "set", "step": "2.1", "fields": { "why": "...", "code": [ { "file": "src/a.ts", "lines": [[12, 20]] } ] } }: change some fields of a step.
-- { "op": "replace", "step": "2.1", "steps": [ ... ] }: several steps to split it, one to rewrite it, none to remove it.
-- { "op": "insert", "after": "2.1", "steps": [ ... ] } (or "before"): add steps.
-- { "op": "setGoal", "goal": 2, "title": "..." }, { "op": "removeGoal", "goal": 2 }, { "op": "addGoal", "goal": { ... }, "after": 1 }.
-Give "note" too: one or two sentences for the user on what you changed in this update and why. It heads the list of updates at the top of their panel. If any edit is wrong, nothing is changed and the reply says why. The reply also lists the steps with their new labels. Resubmit the whole restitution only when most of it changes.
+restitution_edit changes part of your restitution and leaves every other step exactly as it was, so the user keeps what they already read. Its schema has the ops (set, replace, insert, setGoal, removeGoal, addGoal). The edits apply together, and labels ("2.1") and goal numbers refer to the restitution as it was before them. Give "note" too: one or two sentences for the user on what you changed in this update and why, shown at the top of their panel. If any edit is wrong, nothing is changed and the reply says why. Resubmit the whole restitution only when most of it changes.
 
 ## Order: nothing is used before it is defined
 
@@ -49,10 +39,9 @@ The reader builds their picture of the change card by card. Every name, type, fu
 
 So order everything, goals and steps alike, by what depends on what: start with what depends on nothing and end with what depends on everything. That means the callee before the caller, the definition before its use, shared building blocks before what uses them, and a contract before the code that implements it or calls it. Whatever assembles the rest (wiring, configuration, packaging, deployment) comes after what it assembles. Work the order out from what references what in your change, not from an assumed architecture.
 - A card may show a definition and its use together, definition first.
-- A test comes right after the code it proves. Any helper or fake it needs was shown by an earlier card.
+- A test comes right after the code it proves, in the same goal, never gathered at the end or in a goal of its own, so the reader sees behaviour and proof together. Any helper or fake it needs was shown by an earlier card.
 - A step that states a consequence comes after the code that causes it and before the code that deals with it.
 - A title or "why" uses only terms the reader already knows. If it needs a name that a later card defines, move that card earlier or reword.
-- Do not add a background or recap step to make up for it: the order, and exact names in titles and "why"s, do that job.
 
 Before submitting, walk the cards in order, keeping track of what the reader knows so far. Check every name each card's title, "why", examples and code mention. If one is not known yet, reorder or reword.
 
@@ -76,23 +65,19 @@ Each step is a card. Between two cards of the same goal sits a connector (a word
 - "why" is ONE sentence of about 15 words or fewer, shaped action then reason: what was done, then why. Never "Before it did X, now it does Y". A step without code (a consequence, a caveat) says it in one or two short sentences instead.
 - When a card introduces a named construct (a class, function, interface, type, module, config key…), its "why" names it and says what kind of thing it is, then what it does, then why: "<Add> a <Name> <kind> that <does what>, so <reason>", not only "<Do what>, so <reason>". The reader then knows the name when later cards use it.
 - The first step of a goal starts the sentence: capitalised, imperative.
-- Every other step continues after its connector: it starts with a lowercase verb, unless it begins with a name. Read the goal aloud, connector words included. If it does not sound like a normal sentence, rewrite it.
-- No background and no "what to check": the reader knows the codebase and the request. Leave out dead ends and your own history.
+- Every other step continues after its connector: it starts with a lowercase verb, unless it begins with a name. Read the goal aloud, connector words included. If it does not sound like a normal sentence, change the connector or reword the step.
+- No background, recap or "what to check": the reader knows the codebase and the request, and the order and exact names do the rest. Leave out dead ends and your own history.
 
 ## Connectors (the "link" field)
 
 "link" is the connector shown before this step: the few words that carry the sentence from the previous card into this one. Leave it out on the first step of a goal and give it on every other step. Choose freely the words that make the two cards read as ONE natural sentence; there is no fixed list. Write it, like everything else, in the language the user writes to you in.
 
-Suggestions, for common cases:
+Common cases:
 - "then": this step builds on the previous one (stop before it and the code still works, it is just not finished). The default.
 - "in parallel": this step is independent of the previous one; it could be read before it.
 - "which means": this step changes no code and states what the previous step implies, that the reader must know (behaviour that changes for users, operators or callers; something that now has to happen). Give it no code.
-- "so": right after such a consequence, the code that deals with it.
-- Anything else that fits: "because", "although", "and since", "to do that", "but", "for example", "which is why", "after that".
-
-Test every link: read the end of the previous card, the link, then this card, aloud. If it does not sound like a sentence someone would say, change the link or reword the step. A caveat, for instance, reads after "although", not after "which means".
-
-A change that forces another is worth saying out loud: state the consequence in its own step, then the forced change after it. The reader then knows why that code changed, not just that it did.
+- "so": right after such a consequence, the code that deals with it. A change that forces another is said this way, so the reader knows why that code changed, not just that it did.
+- Anything else that fits: "because", "although" (a caveat reads after it, not after "which means"), "and since", "to do that", "but", "for example", "which is why", "after that".
 
 Goals have no connectors between them: each goal starts a new sentence.
 
@@ -123,7 +108,7 @@ When a step relies on something specific about how a library, an API, a protocol
 
 Teach it the way you would to a colleague who has not seen the change, in the order above.
 
-Tests go with the code they prove: put the step on a test right after the step on the code it checks, in the same goal, so the reader sees the behaviour and its proof together. Never gather the tests at the end of a goal, or in a goal of their own. Explain as much as the user asked for: if they want more or less detail, give more or fewer steps and longer or shorter sentences. Do not narrate the code line by line; say what to look at and why it is there.
+Explain as much as the user asked for: if they want more or less detail, give more or fewer steps and longer or shorter sentences. Do not narrate the code line by line; say what to look at and why it is there.
 
 ## Example
 
