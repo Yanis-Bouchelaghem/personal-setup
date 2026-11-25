@@ -25,10 +25,10 @@ Leave "id" and "note" out, except when you update an existing restitution after 
   - "file" is the path relative to the git root.
   - "lines" is a list of [from, to] ranges: EXACTLY the lines of that file the step shows the reader, nothing more. Use the line numbers of the file as it is now, after your edits.
   - Choose what the reader needs to follow the step: the changed lines and the few lines of unchanged code around them that make them readable. Use several ranges when a step touches separate places, and keep each range as small as it can be.
-  - The card shows the places in the order you list them, and the ranges of a place in their order, each as its own block, under the file's name whenever the file changes. Places can be in different files, and a file can come back later in the list. So one step can follow one idea across files: when a step introduces a function (or any new definition), list where it is used first, in whatever file, then the definition: the reader sees why it exists before how it works.
+  - The card shows the places in the order you list them, and the ranges of a place in their order, each as its own block, under the file's name whenever the file changes. Places can be in different files, and a file can come back later in the list. So one step can follow one idea across files: a new definition, then where it is used, in whatever file.
   - A removed line has no number any more: it sits with the line just before it, so include that line. For a deleted file, use the line numbers it had before.
-- A step can also point at code that did not change: existing code the change relies on, or that the reader must see to follow it. The card shows those lines as they are now, labelled "Unchanged code". Mix both freely: put a step on existing code in the middle of a goal, right where the reader needs it (the function a new call goes through, the type a change must fit).
-- When the user's request is to explain existing code (not a change of yours), the restitution IS the explanation: goals come from what they asked to understand, in their words, like any request, and steps walk through the code in the order it runs. The changed-lines report doesn't apply then. This is about their request only: a review of your restitution is handled with restitution_feedback, never by restructuring.
+- A step can also point at code that did not change: existing code the change relies on, or that the reader must see to follow it. The card shows those lines as they are now, labelled "Unchanged code". Mix both freely: put a step on existing code in the middle of a goal, just before the step that needs it (the function a new call goes through, the type a change must fit).
+- When the user's request is to explain existing code (not a change of yours), the restitution IS the explanation: goals come from what they asked to understand, in their words, like any request, and steps follow the same order as any restitution (see "Order"). The changed-lines report doesn't apply then. This is about their request only: a review of your restitution is handled with restitution_feedback, never by restructuring.
 - Every changed line must be shown by some step. The tool saves your restitution, then lists the changed lines no step shows and the places whose lines hold no change. Treat that as a hint, not a verdict: fix what is really wrong with restitution_edit.
 - The card shows exactly those lines. When the reader opens the step in their editor, the changed lines among them are selected (the unchanged context around them is not), so show enough context to be readable and let the selection point at what changed.
 - Your restitution is one tab in the user's panel (label names it, otherwise the request does). Submitting again replaces your current tab, which is right when it is the same work. For a different restitution in the same session, submit with "newTab": true: it opens another tab, becomes your current one, and the earlier tab stays. The reply gives the tab's id; restitution_list shows all of them, yours marked. Other agents' tabs are never touched: work on a tab that is not your current one (give its id to restitution_submit, restitution_edit or restitution_answer) only when the user's review names it or they ask.
@@ -43,11 +43,24 @@ restitution_edit changes part of your restitution and leaves every other step ex
 - { "op": "setGoal", "goal": 2, "title": "..." }, { "op": "removeGoal", "goal": 2 }, { "op": "addGoal", "goal": { ... }, "after": 1 }.
 Give "note" too: one or two sentences for the user on what you changed in this update and why. It heads the list of updates at the top of their panel. If any edit is wrong, nothing is changed and the reply says why. The reply also lists the steps with their new labels. Resubmit the whole restitution only when most of it changes.
 
+## Order: nothing is used before it is defined
+
+The reader builds their picture of the change card by card. Every name, type, function, file, config key or concept a card mentions must already be known to them: an earlier card showed it, or it is ordinary vocabulary of their domain or of the code as it was before your change. Never send them forward to find out what something is. If existing code they need is not obvious, show it in a step on unchanged code before it is needed.
+
+So order everything, goals and steps alike, by what depends on what: start with what depends on nothing and end with what depends on everything. That means the callee before the caller, the definition before its use, shared building blocks before what uses them, and a contract before the code that implements it or calls it. Whatever assembles the rest (wiring, configuration, packaging, deployment) comes after what it assembles. Work the order out from what references what in your change, not from an assumed architecture.
+- A card may show a definition and its use together, definition first.
+- A test comes right after the code it proves. Any helper or fake it needs was shown by an earlier card.
+- A step that states a consequence comes after the code that causes it and before the code that deals with it.
+- A title or "why" uses only terms the reader already knows. If it needs a name that a later card defines, move that card earlier or reword.
+- Do not add a background or recap step to make up for it: the order, and exact names in titles and "why"s, do that job.
+
+Before submitting, walk the cards in order, keeping track of what the reader knows so far. Check every name each card's title, "why", examples and code mention. If one is not known yet, reorder or reword.
+
 ## Goals
 
-Goals come from the request, in its words. A goal stands on its own: it could be reverted without touching any other goal. So:
-- Parts that only make sense together are ONE goal with several steps: a feature with its config, its tests (each right after the code it proves) and its docs; a helper with the code that calls it. Two goals that depend on each other are one goal.
-- Work you did beyond the request gets its own goal, titled "Unrequested: ...".
+Goals come from the request, in its words, using the exact names the code uses: titles and "why"s are what the reader remembers the change by. A goal is one part of the change the reader can name: a feature with its config, its tests and its docs; a building block with what it defines.
+- Goals may depend on each other. Order them by the rule above: a goal can use what an earlier goal defined, never what a later one defines.
+- Work you did beyond the request gets its own goal, titled "Unrequested: ...", placed where the order puts it.
 - There is no limit on the number of steps in a goal. Use as many as it takes to teach the change.
 
 ## Steps: the page reads as one sentence
@@ -80,7 +93,7 @@ Test every link: read the end of the previous card, the link, then this card, al
 
 A change that forces another is worth saying out loud: state the consequence in its own step, then the forced change after it. The reader then knows why that code changed, not just that it did.
 
-Goals have no connectors between them: they are independent.
+Goals have no connectors between them: each goal starts a new sentence.
 
 ## Examples (the "examples" field)
 
@@ -107,7 +120,7 @@ When a step relies on something specific about how a library, an API, a protocol
 
 ## Teaching well
 
-Teach it the way you would to a colleague who has not seen the change: foundations first, then what builds on them, and docs last.
+Teach it the way you would to a colleague who has not seen the change, in the order above.
 
 Tests go with the code they prove: put the step on a test right after the step on the code it checks, in the same goal, so the reader sees the behaviour and its proof together. Never gather the tests at the end of a goal, or in a goal of their own. Explain as much as the user asked for: if they want more or less detail, give more or fewer steps and longer or shorter sentences. Do not narrate the code line by line; say what to look at and why it is there.
 
@@ -136,7 +149,7 @@ export const FEEDBACK_GUIDE = `# Handling the user's review
 
 The user read the restitution below and pasted their review: a list of steps by label ("3.1"), each with "clarify", a comment in quotes, or both. Labels refer to the restitution as it is below.
 
-- "clarify": the user did not follow that step at its current grain. Replace it with several smaller steps, in the same place in the same goal, split by change: each smaller step shows only the lines of its own change (with a little context), says what that change does and why, and continues the sentence after a connector word. The first of them keeps the original step's connector.
+- "clarify": the user did not follow that step at its current grain. Replace it with several smaller steps, in the same place in the same goal, split by change and ordered so nothing is used before it is defined: each smaller step shows only the lines of its own change (with a little context), says what that change does and why, and continues the sentence after a connector word. The first of them keeps the original step's connector.
 - A comment: the user's question or request about that step. If it asks for a change to the code, make the change, then make the step (or new steps) match it. It may follow up one of your earlier answers on that step (listed at the end): answer it in that light, without repeating yourself.
 
 Comments are not a new outline: never add goals for them or reorganise the restitution around them. Each one gets an answer, and changes only the step it is about (when it asks for a change).
