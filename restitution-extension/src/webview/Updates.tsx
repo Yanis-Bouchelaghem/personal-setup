@@ -1,4 +1,6 @@
+import { plainText } from "../core/terms";
 import { Collapse } from "./Collapse";
+import { TermText } from "./Terms";
 
 /** One thing the reader hasn't seen since the agent's last update. */
 export type UpdateItem = {
@@ -46,7 +48,7 @@ export function Updates({
                                 <button
                                     className="updates-row"
                                     type="button"
-                                    title={item.text}
+                                    title={plainText(item.text)}
                                     onClick={() => onGoto(item.label)}
                                 >
                                     <span className="updates-label">
@@ -58,7 +60,11 @@ export function Updates({
                                             : "Updated"}
                                     </span>
                                     <span className="updates-text">
-                                        {item.text}
+                                        {item.kind === "step" ? (
+                                            <TermText text={item.text} />
+                                        ) : (
+                                            item.text
+                                        )}
                                     </span>
                                 </button>
                             </li>

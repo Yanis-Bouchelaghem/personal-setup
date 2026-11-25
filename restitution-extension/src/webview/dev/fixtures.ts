@@ -13,7 +13,7 @@ const many: Restitution = {
             steps: [
                 {
                     code: [{ file: "src/config.ts", lines: [[41, 52]] }],
-                    why: "Require https for ADAPTER_APIGEE_URL, so bearer tokens never leave in clear text.",
+                    why: "Require https for `ADAPTER_APIGEE_URL` in `readApigeeUrl`, so bearer tokens never leave in clear text.",
                 },
                 {
                     link: "which means",
@@ -27,12 +27,12 @@ const many: Restitution = {
                 {
                     code: [{ file: "test/config.test.ts", lines: [[1, 9]] }],
                     link: "then",
-                    why: "write the test that rejects an http URL, to catch a regression early.",
+                    why: "write the test that calls `readApigeeUrl()` with an http URL, to catch a regression early.",
                 },
             ],
         },
         {
-            title: "Stop sending two Authorization headers",
+            title: "Stop sending two `Authorization` headers",
             ref: "#2",
             steps: [
                 {
@@ -42,7 +42,7 @@ const many: Restitution = {
                             lines: [[22, 29]],
                         },
                     ],
-                    why: "Set Authorization through Headers, because a plain object kept both casings.",
+                    why: "Set `Authorization` through `Headers`, because a plain object kept both casings.",
                     docs: [
                         {
                             title: "How Headers.set replaces a header that is already there, whatever its case (MDN)",
@@ -55,7 +55,7 @@ const many: Restitution = {
                         { file: "src/gateway/tokenCache.ts", lines: [[8, 15]] },
                     ],
                     link: "and since",
-                    why: "the token is already cached per audience, setting it on every call costs nothing.",
+                    why: "`tokenFor` already caches each token per audience, setting it on every call costs nothing.",
                 },
                 {
                     code: [
@@ -80,7 +80,7 @@ const many: Restitution = {
                             lines: [[1, 20]],
                         },
                     ],
-                    why: "Parse each plugin on its own, so one bad entry can't fail the catalog.",
+                    why: "Parse each plugin with `PluginSchema`, so one bad entry can't fail the catalog.",
                     examples: [
                         {
                             title: "An example of a catalog the marketplace API could return, with one broken plugin",
@@ -102,7 +102,7 @@ const many: Restitution = {
                         { file: "src/marketplace/catalog.ts", lines: [[3, 7]] },
                     ],
                     link: "then",
-                    why: "rewrite only the plugins that parsed, and keep the skipped count.",
+                    why: "`rewrite` keeps only the plugins that parsed, and `Catalog` counts the `skipped` ones.",
                 },
                 {
                     code: [

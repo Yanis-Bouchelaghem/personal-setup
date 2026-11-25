@@ -6,6 +6,7 @@ import type { OpenRequest } from "../core/messages";
 import type { Step } from "../core/restitution";
 import type { ReviewRequest } from "../core/review";
 import { fileRuns, type SourceLines } from "../core/source";
+import { plainText, termsOf } from "../core/terms";
 import { Collapse } from "./Collapse";
 import { Conversation } from "./Conversation";
 import { DiffView } from "./DiffView";
@@ -20,6 +21,7 @@ import {
 } from "./Icons";
 import { Note } from "./Note";
 import { stepCode } from "./StepCode";
+import { TermText } from "./Terms";
 import { useKeyCommands } from "./useKeyboard";
 import { useLabelsFit } from "./useLabelsFit";
 import { useScrollAnchor } from "./useScrollAnchor";
@@ -203,9 +205,9 @@ export function StepCard({
                 {/* A folded step still says what it does. */}
                 <span
                     className="head-why"
-                    title={viewed ? step.why : undefined}
+                    title={viewed ? plainText(step.why) : undefined}
                 >
-                    {step.why}
+                    <TermText text={step.why} />
                 </span>
                 <span className="actions">
                     <IconButton
@@ -233,7 +235,9 @@ export function StepCard({
                             </span>
                         </p>
                     )}
-                    <p className="why">{step.why}</p>
+                    <p className="why">
+                        <TermText text={step.why} />
+                    </p>
                     {step.docs && (
                         <DocLinks docs={step.docs} onOpen={onOpenUrl} />
                     )}
@@ -245,7 +249,9 @@ export function StepCard({
                             onToggle={() => shownExamples.toggle(index)}
                         />
                     ))}
-                    {blocks.length > 0 && <DiffView blocks={blocks} />}
+                    {blocks.length > 0 && (
+                        <DiffView blocks={blocks} terms={termsOf(step.why)} />
+                    )}
                     {!talking && !replying && (
                         <button
                             className="icon-btn comment-btn"

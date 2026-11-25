@@ -1,6 +1,8 @@
 import { type ReactNode, useRef, useState } from "react";
 
 import type { Hunk } from "../core/diff";
+import { markTerms } from "../core/terms";
+import { Segments } from "./Terms";
 import { useKeyCommands } from "./useKeyboard";
 
 const PREVIEW_LINES = 10;
@@ -27,7 +29,14 @@ export type CodeBlock = {
  * same file are set apart by their line number. Each block opens its own
  * place in the editor when clicked (not when a click ends a text selection).
  */
-export function DiffView({ blocks }: { blocks: CodeBlock[] }) {
+export function DiffView({
+    blocks,
+    terms = [],
+}: {
+    blocks: CodeBlock[];
+    /** Names to colour in the code, as the step's words name them. */
+    terms?: readonly string[];
+}) {
     const [expanded, setExpanded] = useState(false);
     const total = blocks.reduce((sum, block) => sum + size(block), 0);
     const hidden = Math.max(0, total - PREVIEW_LINES);
@@ -54,6 +63,7 @@ export function DiffView({ blocks }: { blocks: CodeBlock[] }) {
                             <Block
                                 block={block}
                                 lines={lines}
+                                terms={terms}
                                 focusable={several}
                             />
                         ) : (
@@ -85,10 +95,12 @@ export function DiffView({ blocks }: { blocks: CodeBlock[] }) {
 function Block({
     block,
     lines,
+    terms,
     focusable,
 }: {
     block: CodeBlock;
     lines: Hunk["lines"];
+    terms: readonly string[];
     focusable: boolean;
 }) {
     const ref = useRef<HTMLDivElement>(null);
@@ -119,7 +131,9 @@ function Block({
                 <div className={`ln ln-${line.kind}`} key={index}>
                     <span className="no">{line.newNo ?? line.oldNo}</span>
                     <span className="sign">{SIGN[line.kind]}</span>
-                    <span className="txt">{line.text}</span>
+                    <span className="txt">
+                        <Segments segments={markTerms(line.text, terms)} />
+                    </span>
                 </div>
             ))}
         </div>

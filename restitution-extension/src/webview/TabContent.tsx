@@ -15,6 +15,7 @@ import type { Restitution } from "../core/restitution";
 import type { Review } from "../core/review";
 import { stepHunks } from "../core/source";
 import type { SourceLines } from "../core/source";
+import { termColours } from "../core/terms";
 import { ErrorList } from "./ErrorList";
 import { FeedbackBar, useCopied } from "./FeedbackBar";
 import { GoalSection, type StepState } from "./GoalSection";
@@ -23,6 +24,7 @@ import { KeyHelp } from "./KeyHelp";
 import { Notice } from "./Notice";
 import { Overview } from "./Overview";
 import { scrollToElement } from "./scrollTo";
+import { TermColours } from "./Terms";
 import { countChanged, UncoveredSection } from "./UncoveredSection";
 import { type UpdateItem, Updates } from "./Updates";
 import { useGoalFolding } from "./useGoalFolding";
@@ -251,7 +253,7 @@ export function TabContent({
         });
 
     return (
-        <>
+        <TermColours value={termColours(restitution)}>
             {restitution.request && (
                 <p className="request">{restitution.request}</p>
             )}
@@ -325,6 +327,6 @@ export function TabContent({
                 onReset={() => act({ type: "reset" })}
             />
             <KeyHelp shown={help} />
-        </>
+        </TermColours>
     );
 }

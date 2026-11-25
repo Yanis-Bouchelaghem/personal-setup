@@ -373,6 +373,52 @@ body {
     white-space: nowrap;
 }
 
+/*
+ * Terms: the code names an agent backticks in its words, coloured the same in
+ * the text and in the card's code. Each slot is a hue turned from the theme's
+ * blue, so all keep its lightness and strength, light or dark; red and green
+ * are left out (the diff's colours). Picked by eye, not evenly spaced: hues
+ * that look alike (40 and 60, 95 and 115, 250 and 280) sit far apart in slot
+ * order, so they only meet in a tab with many terms.
+ */
+.term {
+    color: oklch(
+        from var(--vscode-charts-blue, #3794ff) l max(c, 0.12) var(--term-hue)
+    );
+    font-weight: bolder;
+}
+
+.term-0 {
+    --term-hue: 250;
+}
+.term-1 {
+    --term-hue: 60;
+}
+.term-2 {
+    --term-hue: 305;
+}
+.term-3 {
+    --term-hue: 185;
+}
+.term-4 {
+    --term-hue: 95;
+}
+.term-5 {
+    --term-hue: 345;
+}
+.term-6 {
+    --term-hue: 215;
+}
+.term-7 {
+    --term-hue: 40;
+}
+.term-8 {
+    --term-hue: 280;
+}
+.term-9 {
+    --term-hue: 115;
+}
+
 /* The explanation is what you read: larger and heavier than the rest. */
 .why {
     margin: 0;

@@ -1,5 +1,6 @@
 import type { Goal } from "../core/restitution";
 import type { StepState } from "./GoalSection";
+import { TermText } from "./Terms";
 import { UpdatedTag } from "./UpdatedTag";
 
 /** The goals at a glance, with progress and what changed; a click jumps to one. */
@@ -47,7 +48,7 @@ export function Overview({
                             >
                                 <span className="goal-no">{index + 1}</span>
                                 <span className="overview-goal">
-                                    {goal.title}
+                                    <TermText text={goal.title} />
                                 </span>
                                 <UpdatedTag shown={updated ?? false} />
                                 <span className="goal-progress">

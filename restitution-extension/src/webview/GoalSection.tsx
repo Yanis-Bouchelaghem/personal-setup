@@ -6,10 +6,12 @@ import type { OpenRequest } from "../core/messages";
 import type { Goal } from "../core/restitution";
 import type { ReviewRequest } from "../core/review";
 import type { SourceLines } from "../core/source";
+import { plainText } from "../core/terms";
 import { Collapse } from "./Collapse";
 import { Connector } from "./Connector";
 import { ChevronIcon } from "./Icons";
 import { StepCard } from "./StepCard";
+import { TermText } from "./Terms";
 import { UpdatedTag } from "./UpdatedTag";
 import { useKeyCommands } from "./useKeyboard";
 import { useScrollAnchor } from "./useScrollAnchor";
@@ -126,8 +128,8 @@ export function GoalSection({
                         <ChevronIcon />
                     </span>
                     <span className="goal-no">{number}</span>
-                    <span className="goal-title" title={goal.title}>
-                        {goal.title}
+                    <span className="goal-title" title={plainText(goal.title)}>
+                        <TermText text={goal.title} />
                     </span>
                     <UpdatedTag shown={updated} />
                     <span className="goal-progress" title="Steps viewed">
