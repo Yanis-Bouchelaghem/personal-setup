@@ -49,6 +49,13 @@ describe("centerShift", () => {
         expect(centerShift(350, 450, 100, 700)).toBe(0);
     });
 
+    it("puts the end of a tall box where scrolling down would stop, coming from below", () => {
+        // Area 100..700 (600 tall): the end rests a fifth (120) above the bottom edge.
+        expect(centerShift(-300, 700, 100, 700, true)).toBe(120);
+        // A box that fits is centred whichever way you came.
+        expect(centerShift(500, 600, 100, 700, true)).toBe(150);
+    });
+
     it("puts the top of a box taller than the area at the top", () => {
         expect(centerShift(500, 1500, 100, 700)).toBe(400);
         expect(centerShift(-300, 700, 100, 700)).toBe(-400);

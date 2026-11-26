@@ -312,7 +312,7 @@ function moveWithin(
     const rect = { top: box.top - ahead, bottom: box.bottom - ahead };
     const bottom = readableBottom();
     if (rect.bottom < pinnedTop() || rect.top > bottom) {
-        follow(from);
+        follow(from, command === "prev");
         return true;
     }
     if (from.dataset.nav !== "card") {
@@ -320,7 +320,7 @@ function moveWithin(
     }
     const down = command === "next";
     // Down, the end rests above the edge; up, the start is shown at its margin.
-    const stop = bottom - endPadding(bottom - pinnedTop());
+    const stop = bottom - endPadding(bottom - marginTop(from));
     const hidden = down ? rect.bottom - stop : marginTop(from) - rect.top;
     const room = scrollRoom(down ? 1 : -1);
     const move = throughCard(hidden, room, hold.held, hold.through);
@@ -559,18 +559,19 @@ function show(command: KeyCommand, target: HTMLElement): void {
     } else if (command === "nextGoal" || command === "prevGoal") {
         scrollToElement(target.closest("section") ?? target);
     } else if (command !== "halfDown" && command !== "halfUp") {
-        follow(target);
+        follow(target, command === "prev");
     }
 }
 
 /**
- * Keep the cursor in view. A card is centred; back up to a goal: show it from
+ * Keep the cursor in view. A card is centred (a tall one coming from below
+ * shows its end, so you read it upward); back up to a goal: show it from
  * its start, not just its pinned header; down to one: just enough to see its
  * header.
  */
-function follow(target: HTMLElement): void {
+function follow(target: HTMLElement, fromBelow = false): void {
     if (target.dataset.nav === "card") {
-        centerElement(target, readableBottom());
+        centerElement(target, readableBottom(), fromBelow);
         return;
     }
     const section = target.dataset.nav === "goal" && target.closest("section");

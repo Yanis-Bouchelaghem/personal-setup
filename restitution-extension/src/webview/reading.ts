@@ -40,14 +40,19 @@ export function throughCard(
 /**
  * How far to scroll to centre a box in the reading area (between `areaTop` and
  * `areaBottom`, in window coordinates). A box taller than the area can't be
- * centred: its top wins, because that is where reading starts.
+ * centred: it shows its top, where reading starts, or, arriving from below
+ * (`fromBelow`), its end, resting where scrolling down through it would stop.
  */
 export function centerShift(
     top: number,
     bottom: number,
     areaTop: number,
     areaBottom: number,
+    fromBelow = false,
 ): number {
     const free = areaBottom - areaTop - (bottom - top);
+    if (free < 0 && fromBelow) {
+        return bottom - (areaBottom - endPadding(areaBottom - areaTop));
+    }
     return top - areaTop - Math.max(0, free) / 2;
 }

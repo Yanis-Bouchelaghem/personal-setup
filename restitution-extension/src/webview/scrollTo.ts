@@ -83,11 +83,16 @@ export function scrollToElement(element: Element): void {
 /**
  * Scroll so `element` sits in the middle of the reading area (under the pinned
  * headers, above `bottom`), so moving between cards never leaves you looking at
- * the edge. When it is taller than the area, its top wins.
+ * the edge. When it is taller than the area, its top shows, or its end when
+ * the cursor came up from below.
  */
-export function centerElement(element: Element, bottom: number): void {
+export function centerElement(
+    element: Element,
+    bottom: number,
+    fromBelow = false,
+): void {
     const { top, bottom: end } = element.getBoundingClientRect();
-    const by = centerShift(top, end, marginTop(element), bottom);
+    const by = centerShift(top, end, marginTop(element), bottom, fromBelow);
     if (Math.abs(by) >= 1) {
         scrollToY(window.scrollY + by, FOLLOW_MS);
     }
