@@ -1,3 +1,5 @@
+import { centerShift } from "./reading";
+
 /** How long a jump to a goal takes: quick, but you still see where you went. */
 const JUMP_MS = 260;
 /** Moving the keyboard cursor: just enough to follow it, and keys can repeat. */
@@ -44,6 +46,16 @@ export function scrollAhead(): number {
     return (heading ?? window.scrollY) - window.scrollY;
 }
 
+/**
+ * How far the page can still scroll down (1) or up (-1) from where it is
+ * heading: a key that scrolls must not wait for room that is not there.
+ */
+export function scrollRoom(direction: 1 | -1): number {
+    const at = window.scrollY + scrollAhead();
+    const last = document.documentElement.scrollHeight - window.innerHeight;
+    return direction === 1 ? last - at : at;
+}
+
 /** Scroll by `by` pixels from where the page is heading, quickly. */
 export function scrollLines(by: number): void {
     scrollToY(window.scrollY + scrollAhead() + by, FOLLOW_MS);
@@ -66,6 +78,19 @@ export function marginTop(element: Element): number {
 export function scrollToElement(element: Element): void {
     const top = element.getBoundingClientRect().top + window.scrollY;
     scrollToY(top - marginTop(element), JUMP_MS);
+}
+
+/**
+ * Scroll so `element` sits in the middle of the reading area (under the pinned
+ * headers, above `bottom`), so moving between cards never leaves you looking at
+ * the edge. When it is taller than the area, its top wins.
+ */
+export function centerElement(element: Element, bottom: number): void {
+    const { top, bottom: end } = element.getBoundingClientRect();
+    const by = centerShift(top, end, marginTop(element), bottom);
+    if (Math.abs(by) >= 1) {
+        scrollToY(window.scrollY + by, FOLLOW_MS);
+    }
 }
 
 /**

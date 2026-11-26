@@ -1,11 +1,14 @@
 import { type RefObject, useEffect, useRef } from "react";
 
 import { type KeyCommand, keyName, keyReader } from "./keys";
+import { endPadding, throughCard } from "./reading";
 import {
     followElement,
     marginTop,
+    centerElement,
     scrollAhead,
     scrollLines,
+    scrollRoom,
     scrollToElement,
     scrollToTop,
 } from "./scrollTo";
@@ -54,6 +57,9 @@ const REPEATED: ReadonlySet<KeyCommand> = new Set<KeyCommand>([
     "prevChange",
 ]);
 
+/** A key held down is a hold; one scrolling through a card that long is `through`. */
+type Hold = { held: boolean; through: boolean };
+
 /** How far `j` scrolls through a long card: about three lines. */
 const LINE_STEP = 56;
 
@@ -83,12 +89,16 @@ export function useKeyboard(handlers: Handlers): void {
             block: undefined as number | undefined,
         };
 
+        // Whether the key is auto-repeating, and whether it has been scrolling
+        // through a card: a held key stops at the end of the card.
+        const hold: Hold = { held: false, through: false };
+
         const run = (command: KeyCommand, count: number) => {
             const from = current(place.last);
             if (
                 moveInBlocks(command) ||
                 enterBlocks(command, from) ||
-                moveWithin(command, from) ||
+                moveWithin(command, from, hold) ||
                 moveInTree(command, from)
             ) {
                 return;
@@ -117,6 +127,10 @@ export function useKeyboard(handlers: Handlers): void {
                 return;
             }
             event.preventDefault();
+            hold.held = event.repeat;
+            if (!event.repeat) {
+                hold.through = false;
+            }
             if (read === "pending") {
                 return;
             }
@@ -278,13 +292,16 @@ function current(last: HTMLElement | undefined): HTMLElement | undefined {
 
 /**
  * `j` and `k` on a card the screen can't hold: move through it a few lines at
- * a time, like the cursor in a long block, before leaving it. A card scrolled
- * out of sight comes back first, like vim returning to its cursor. True when
- * that was the move.
+ * a time, like the cursor in a long block, before leaving it. Going down, the
+ * end of the card comes to rest a little above the edge, and a key held down
+ * stops there until released: time to react before the next card takes over.
+ * A card scrolled out of sight comes back first, like vim returning to its
+ * cursor. True when that was the move.
  */
 function moveWithin(
     command: KeyCommand,
     from: HTMLElement | undefined,
+    hold: Hold,
 ): boolean {
     if (!from || (command !== "next" && command !== "prev")) {
         return false;
@@ -301,13 +318,21 @@ function moveWithin(
     if (from.dataset.nav !== "card") {
         return false;
     }
-    const hidden =
-        command === "next" ? rect.bottom - bottom : marginTop(from) - rect.top;
-    if (hidden <= 4) {
+    const down = command === "next";
+    // Down, the end rests above the edge; up, the start is shown at its margin.
+    const stop = bottom - endPadding(bottom - pinnedTop());
+    const hidden = down ? rect.bottom - stop : marginTop(from) - rect.top;
+    const room = scrollRoom(down ? 1 : -1);
+    const move = throughCard(hidden, room, hold.held, hold.through);
+    if (move === "leave") {
+        hold.through = false;
         return false;
     }
-    const by = Math.min(LINE_STEP, hidden);
-    scrollLines(command === "next" ? by : -by);
+    if (move === "scroll") {
+        hold.through = true;
+        const by = Math.min(LINE_STEP, hidden, room);
+        scrollLines(down ? by : -by);
+    }
     return true;
 }
 
@@ -539,10 +564,15 @@ function show(command: KeyCommand, target: HTMLElement): void {
 }
 
 /**
- * Keep the cursor in view. Back up to a goal: show it from its start, not
- * just its pinned header; down to one: just enough to see its header.
+ * Keep the cursor in view. A card is centred; back up to a goal: show it from
+ * its start, not just its pinned header; down to one: just enough to see its
+ * header.
  */
 function follow(target: HTMLElement): void {
+    if (target.dataset.nav === "card") {
+        centerElement(target, readableBottom());
+        return;
+    }
     const section = target.dataset.nav === "goal" && target.closest("section");
     const box =
         section && section.getBoundingClientRect().top < pinnedTop()
