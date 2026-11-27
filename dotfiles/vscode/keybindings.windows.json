@@ -116,10 +116,16 @@
         "command": "renameFile",
         "when": "filesExplorerFocus && !inputFocus && !explorerResourceIsRoot && !explorerResourceReadonly"
     },
-    // ── Terminal toggle ────────────────────────────────────────────────
+    // ── Terminal toggle (focus, press again to close) ──────────────────
     {
-        "key": "f3",
-        "command": "workbench.action.terminal.toggleTerminal"
+        "key": "ctrl+g",
+        "command": "workbench.action.terminal.focus",
+        "when": "!terminalFocus"
+    },
+    {
+        "key": "ctrl+g",
+        "command": "workbench.action.closePanel",
+        "when": "terminalFocus"
     },
     // ── Tab cycling (current group only) ──────────────────────────────
     {
@@ -182,6 +188,27 @@
     {
         "key": "ctrl+alt+right",
         "command": "workbench.action.moveEditorToNextGroup"
+    },
+    // ── Terminal tabs ──────────────────────────────────────────────────
+    {
+        "key": "ctrl+t",
+        "command": "workbench.action.terminal.new",
+        "when": "terminalFocus"
+    },
+    {
+        "key": "ctrl+w",
+        "command": "workbench.action.terminal.kill",
+        "when": "terminalFocus"
+    },
+    {
+        "key": "ctrl+pageup",
+        "command": "workbench.action.terminal.focusPrevious",
+        "when": "terminalFocus"
+    },
+    {
+        "key": "ctrl+pagedown",
+        "command": "workbench.action.terminal.focusNext",
+        "when": "terminalFocus"
     },
     // ── Resize (active split / sidebars / panel) ───────────────────────
     {
